@@ -5,9 +5,9 @@
 #include <Eigen/Geometry>
 
 #include <optional>
-#include <vector>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace rai::cs::control::common::onnx {
 
@@ -40,7 +40,8 @@ struct SE2VelocityRanges {
  *
  * The height scan was flattened from a grid pattern according to IsaacLab conventions.
  * height and colors come from a single pattern and need to have the same length.
- * As soon as the onnx wrapper supports multi-dimensional inputs, we should change this to a 2D array.
+ * As soon as the onnx wrapper supports multi-dimensional inputs, we should change this to a 2D
+ * array.
  */
 struct HeightScan {
   std::vector<double> height;

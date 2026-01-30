@@ -41,6 +41,12 @@ gxx_linux-64 = "*"
 packaging = "==23.0"
 markupsafe = "==2.1.3"
 libstdcxx-ng = "*"
+psutil = "==5.9.8"
+click = "==8.1.7"
+
+# Linting and formatting tools
+ruff = "*"
+clang-format = "*"
 
 [pypi-options]
 extra-index-urls = ["https://pypi.nvidia.com"]
@@ -49,6 +55,8 @@ extra-index-urls = ["https://pypi.nvidia.com"]
 torch = { version = "==2.7.0", index = "https://download.pytorch.org/whl/cu128" }
 torchvision = { version = "==0.22.0", index = "https://download.pytorch.org/whl/cu128" }
 isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
+onnxruntime = "*"
+pytest-gitignore = "*"
 
 [tasks]
 # General tasks
@@ -58,12 +66,19 @@ test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_a
 verify = { depends-on = ["test-import", "test-torch"] }
 pixi-install = { cmd = "pixi install" }
 install-isaaclab = { cmd = "cd IsaacLab && chmod +x isaaclab.sh && ./isaaclab.sh --install", depends-on = ["clone-isaaclab"] }
-setup = { depends-on = ["pixi-install", "install-isaaclab"] }
+install-exporter = "pip install -e ."
+setup = { depends-on = ["pixi-install", "install-isaaclab", "install-exporter"] }
 configure = "cmake -S . -B build -G Ninja"
 build = "cmake --build build"
-test = "ctest --test-dir build"
+test-cpp = "ctest --test-dir build"
+test-python = "pytest -s ."
+test-all = { depends-on = ["test-python", "test-cpp"] }
+test = { depends-on = ["test-all"] }
 install-python = "pip install -e python/"
 clean = "rm -rf IsaacLab .pixi pixi.lock"
+
+# Examples
+export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
 
 ## Isaac Sim
 isaac-sim = { cmd = "isaacsim --disable-extensions isaacsim.ros2.bridge" }
@@ -73,4 +88,19 @@ lab-arms = "python IsaacLab/scripts/demos/arms.py"
 lab-quadrupeds = "python IsaacLab/scripts/demos/quadrupeds.py"
 lab-cartpole = "python IsaacLab/scripts/demos/cartpole.py"
 lab-markers = "python IsaacLab/scripts/demos/markers.py"
+
+# Linting and formatting
+# Python
+lint-python = "ruff check ."
+lint-python-fix = "ruff check --fix ."
+format-python = "ruff format ."
+format-python-check = "ruff format --check ."
+# C++
+format-cpp = "clang-format -i **/*.cpp **/*.hpp"
+format-cpp-check = "clang-format --dry-run **/*.cpp **/*.hpp"
+# Combined
+format = { depends-on = ["format-python", "format-cpp"] }
+format-check = { depends-on = ["format-python-check", "format-cpp-check"] }
+lint = { depends-on = ["lint-python"] }
+check = { depends-on = ["lint", "format-check"] }
 

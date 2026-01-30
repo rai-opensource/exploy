@@ -29,19 +29,25 @@ class MockRobotStateInterface : public RobotStateInterface {
   MOCK_METHOD(bool, setJointPGain, (const std::string& joint_name, double p_gain), (override));
   MOCK_METHOD(bool, setJointDGain, (const std::string& joint_name, double d_gain), (override));
   MOCK_METHOD(bool, initSe2Velocity, (const std::string& frame_name), (override));
-  MOCK_METHOD(bool, setSe2Velocity, (const std::string& frame_name, const SE2Velocity& velocity), (override));
+  MOCK_METHOD(bool, setSe2Velocity, (const std::string& frame_name, const SE2Velocity& velocity),
+              (override));
   MOCK_METHOD(bool, initImuAngularVelocityImu, (const std::string& imu_name), (override));
   MOCK_METHOD(bool, initImuOrientationW, (const std::string& imu_name), (override));
-  MOCK_METHOD(std::optional<Position>, imuAngularVelocityImu, (const std::string& imu_name), (override));
-  MOCK_METHOD(std::optional<Quaternion>, imuOrientationW, (const std::string& imu_name), (override));
+  MOCK_METHOD(std::optional<Position>, imuAngularVelocityImu, (const std::string& imu_name),
+              (override));
+  MOCK_METHOD(std::optional<Quaternion>, imuOrientationW, (const std::string& imu_name),
+              (override));
   MOCK_METHOD(bool, initBodyOrientationW, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyPositionW, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyLinearVelocityB, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyAngularVelocityB, (const std::string& body_name), (override));
   MOCK_METHOD(std::optional<Position>, bodyPositionW, (const std::string& body_name), (override));
-  MOCK_METHOD(std::optional<Quaternion>, bodyOrientationW, (const std::string& body_name), (override));
-  MOCK_METHOD(std::optional<LinearVelocity>, bodyLinearVelocityB, (const std::string& body_name), (override));
-  MOCK_METHOD(std::optional<AngularVelocity>, bodyAngularVelocityB, (const std::string& body_name), (override));
+  MOCK_METHOD(std::optional<Quaternion>, bodyOrientationW, (const std::string& body_name),
+              (override));
+  MOCK_METHOD(std::optional<LinearVelocity>, bodyLinearVelocityB, (const std::string& body_name),
+              (override));
+  MOCK_METHOD(std::optional<AngularVelocity>, bodyAngularVelocityB, (const std::string& body_name),
+              (override));
   MOCK_METHOD(bool, initHeightScan, (const HeightScanConfig& config), (override));
   MOCK_METHOD(std::optional<std::vector<HeightScan>*>, heightScan,
               (const Position& base_pos_w, const Quaternion& base_quat_w), (override));

@@ -1,7 +1,5 @@
 # Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-from isaaclab.envs import ManagerBasedRLEnv
-
 
 class TermResetter:
     """Manager environment elements that are replaced with exporter-friendly versions.
@@ -15,7 +13,7 @@ class TermResetter:
     and setting the term back to a `EELimbMotionGenerator` when export is done.
     """
 
-    def __init__(self, env: ManagerBasedRLEnv):
+    def __init__(self):
         self._resetters = []
 
     def add(self, reset_func: callable):

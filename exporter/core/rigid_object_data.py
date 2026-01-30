@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import copy
-import torch
 
 import isaaclab.utils.math as math_utils
+import torch
 from isaaclab.assets import RigidObject, RigidObjectData
 
 
@@ -89,7 +89,9 @@ class RigidObjectDataSource:
         pose = torch.cat([self.root_pos_w, self.root_quat_w], dim=-1)
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
-            twist[:, 3:], math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]), dim=-1
+            twist[:, 3:],
+            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            dim=-1,
         )
         return torch.cat([pose, twist], dim=-1)
 
@@ -442,7 +444,9 @@ class RigidObjectDataSource:
         """
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
-            twist[:, 3:], math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]), dim=-1
+            twist[:, 3:],
+            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            dim=-1,
         )
         return twist.view(-1, 1, 6)
 
@@ -454,7 +458,9 @@ class RigidObjectDataSource:
         """
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
-            twist[:, 3:], math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]), dim=-1
+            twist[:, 3:],
+            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            dim=-1,
         )
         return twist[:, :3].view(-1, 1, 3)
 

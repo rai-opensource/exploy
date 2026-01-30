@@ -1,7 +1,8 @@
 # Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-import torch
 import typing
+
+import torch
 
 
 class TensorProxy:
@@ -68,7 +69,9 @@ class TensorProxy:
         elif isinstance(split_slice, (list, tuple, torch.Tensor)):
             if isinstance(split_slice, torch.Tensor):
                 split_slice = split_slice.tolist()
-            selected = [self._tensors[i][full_index].unsqueeze(self._split_dim) for i in split_slice]
+            selected = [
+                self._tensors[i][full_index].unsqueeze(self._split_dim) for i in split_slice
+            ]
             return torch.cat(selected, dim=self._split_dim)
 
         else:
@@ -88,14 +91,20 @@ class TensorProxy:
         if isinstance(split_slice, int):
             self._tensors[split_slice][full_index] = value
         else:
-            indices = range(*split_slice.indices(len(self._tensors))) if isinstance(split_slice, slice) else split_slice
+            indices = (
+                range(*split_slice.indices(len(self._tensors)))
+                if isinstance(split_slice, slice)
+                else split_slice
+            )
             if isinstance(indices, torch.Tensor):
                 indices = indices.tolist()
             # value must have same shape as selection along split_dim
             for j, i in enumerate(indices):
                 val_idx = value
                 if value.shape[self._split_dim] > 1 and len(indices) > 1:
-                    val_idx = value.index_select(self._split_dim, torch.tensor([j])).squeeze(self._split_dim)
+                    val_idx = value.index_select(self._split_dim, torch.tensor([j])).squeeze(
+                        self._split_dim
+                    )
                 self._tensors[i][full_index] = val_idx
 
     def to_tensor(self) -> torch.Tensor:
@@ -128,7 +137,11 @@ class TensorProxy:
 
         # todo: Convert TensorProxy to Tensor in kwargs.
 
-        return func.__wrapped__(*new_args, **kwargs) if hasattr(func, "__wrapped__") else func(*new_args, **kwargs)
+        return (
+            func.__wrapped__(*new_args, **kwargs)
+            if hasattr(func, "__wrapped__")
+            else func(*new_args, **kwargs)
+        )
 
     def __repr__(self):
         return f"TensorProxy(shape={self.to_tensor().shape})"

@@ -1,0 +1,34 @@
+{
+	"folders": [
+		{
+			"name": "Export",
+			"path": "."
+		},
+		{
+			"name": "IsaacLab",
+			"path": "IsaacLab/source/isaaclab"
+		},
+		{
+			"name": "IsaacLab Tasks",
+			"path": "IsaacLab/source/isaaclab_tasks"
+		},
+		{
+			"name": "IsaacLab RL",
+			"path": "IsaacLab/source/isaaclab_rl"
+		}
+	],
+	"settings": {
+		"python.analysis.extraPaths": [
+			"${workspaceFolder:Export}",
+			"${workspaceFolder:IsaacLab}",
+			"${workspaceFolder:IsaacLab Tasks}",
+			"${workspaceFolder:IsaacLab RL}"
+		],
+		"python.autoComplete.extraPaths": [
+			"${workspaceFolder:Export}",
+			"${workspaceFolder:IsaacLab}",
+			"${workspaceFolder:IsaacLab Tasks}",
+			"${workspaceFolder:IsaacLab RL}"
+		]
+	}
+}

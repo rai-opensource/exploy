@@ -1,0 +1,126 @@
+# Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+from __future__ import annotations
+
+"""Launch Isaac Sim Simulator first."""
+import argparse
+import pathlib
+import tempfile
+from typing import TYPE_CHECKING
+
+import gymnasium as gym
+from isaaclab.app import AppLauncher
+
+# local imports
+# import cli_args  # isort: skip
+
+
+if TYPE_CHECKING:
+    from isaaclab.envs import ManagerBasedRLEnvCfg
+    from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg
+
+
+def make_simulation_app():
+    # Create argument parser for headless mode
+    parser = argparse.ArgumentParser()
+
+    AppLauncher.add_app_launcher_args(parser)
+    args_cli = parser.parse_args([])
+    args_cli.headless = True
+    args_cli.num_envs = 1
+
+    # launch omniverse app
+    app_launcher = AppLauncher(args_cli)
+    simulation_app = app_launcher.app
+
+    return simulation_app
+
+
+simulation_app = make_simulation_app()
+
+
+# Import tasks to register environments
+import isaaclab_tasks  # noqa: F401
+import torch
+from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
+from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c import *  # noqa: F401, F403
+from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c.flat_env_cfg import (
+    AnymalCFlatEnvCfg_PLAY,
+)
+from isaaclab_tasks.utils import parse_env_cfg
+from rsl_rl.runners import OnPolicyRunner
+
+from exporter import core as exporter_core
+from exporter.core.evaluator import evaluate
+from exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
+
+
+def main():
+    # test_dir = pathlib.Path(tempfile.gettempdir()) / "exporter_tests"
+    test_dir = pathlib.Path(__file__).parent / "exporter_tests"
+
+    task_name = "Isaac-Velocity-Flat-Anymal-C-Play-v0"
+    task_device = "cpu"
+
+    env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(task_name, num_envs=1, device=task_device)
+    agent_cfg: RslRlOnPolicyRunnerCfg = isaaclab_tasks.utils.parse_cfg.load_cfg_from_registry(
+        task_name, "rsl_rl_cfg_entry_point"
+    )
+
+    # create isaac environment
+    # wrap around environment for rsl-rl
+    env = RslRlVecEnvWrapper(gym.make(task_name, cfg=env_cfg, render_mode=None))
+    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=test_dir, device=agent_cfg.device)
+
+    # Get the policy and its normalizer.
+    policy = runner.alg.policy.actor.to(env.device)
+    normalizer = runner.alg.policy.actor_obs_normalizer.to(env.device)
+
+    # Export to ONNX.
+    onnx_export_dir = test_dir
+    onnx_export_file = "test_export.onnx"
+    env_id = 0
+    export_device = "cpu"
+
+    exportable_env = IsaacLabExportableEnvironment(env.unwrapped, env_id=env_id)
+
+    exporter_core.export_environment_as_onnx(
+        env=exportable_env,
+        actor=policy,
+        normalizer=normalizer,
+        path=onnx_export_dir,
+        filename=onnx_export_file,
+        verbose=False,
+        export_device=export_device,
+    )
+
+    exportable_env.cleanup()
+
+    # Make a session wrapper.
+    session_wrapper = exporter_core.SessionWrapper(
+        onnx_folder=onnx_export_dir,
+        onnx_file_name=onnx_export_file,
+        policy=policy,
+        optimize=True,
+    )
+
+    # Evaluate.
+    evaluate_steps = 5000
+    with torch.inference_mode():
+        evaluate(
+            env=exportable_env,
+            context_manager=exportable_env.context_manager(),
+            session_wrapper=session_wrapper,
+            num_steps=evaluate_steps,
+            verbose=True,
+        )
+
+    # Close simulation app.
+    if simulation_app:
+        print("Closing simulation app...")
+        simulation_app.close()
+
+    print("Done.")
+
+
+if __name__ == "__main__":
+    main()

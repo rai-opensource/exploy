@@ -24,6 +24,13 @@ Initialize the environment and install dependencies:
 pixi install
 ```
 
+Setup dependencies, including e.g., `IsaacLab`.
+
+```bash
+pixi run setup
+```
+
+
 ### Building the Project
 
 The project uses CMake and Ninja, managed by Pixi.

@@ -8,9 +8,12 @@ namespace rai::cs::operation::common::data_collection {
 
 class MockDataCollectionInterface : public DataCollectionInterface {
  public:
-  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, std::span<const double> data), (override));
-  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, std::span<const float> data), (override));
-  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, const double& data), (override));
+  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, std::span<const double> data),
+              (override));
+  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, std::span<const float> data),
+              (override));
+  MOCK_METHOD(bool, registerDataSource, (const std::string& prefix, const double& data),
+              (override));
   MOCK_METHOD(bool, collectData, (uint64_t time_us), (override));
 };
 

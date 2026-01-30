@@ -55,7 +55,8 @@ struct OnnxRuntimeOptions {
 /**
  * @brief A class for evaluating ONNX models using ONNX Runtime.
  *
- * The `OnnxRuntime` class manages the initialization, configuration, and inference execution of an ONNX model.
+ * The `OnnxRuntime` class manages the initialization, configuration, and inference execution of an
+ * ONNX model.
  *
  */
 class OnnxRuntime {
@@ -63,8 +64,8 @@ class OnnxRuntime {
   /**
    * @brief Initializes the ONNX model and configures input/output tensors.
    *
-   * Loads the ONNX model from the specified file path, sets up session options, and prepares memory information. If
-   * the model file does not exist, the initialization will fail.
+   * Loads the ONNX model from the specified file path, sets up session options, and prepares memory
+   * information. If the model file does not exist, the initialization will fail.
    *
    * @param model_path The file path to the ONNX model.
    * @param options The runtime options.
@@ -97,7 +98,8 @@ class OnnxRuntime {
    *
    * @tparam T The data type of the tensor elements (e.g., float, int32_t, bool).
    * @param name The name of the input tensor.
-   * @return An optional span to the tensor buffer if it exists and matches the requested type, nullopt otherwise.
+   * @return An optional span to the tensor buffer if it exists and matches the requested type,
+   * nullopt otherwise.
    *
    */
   template <typename T>
@@ -112,7 +114,8 @@ class OnnxRuntime {
    *
    * @tparam T The data type of the tensor elements (e.g., float, int32_t, bool).
    * @param name The name of the output tensor.
-   * @return An optional span to the tensor buffer if it exists and matches the requested type, nullopt otherwise.
+   * @return An optional span to the tensor buffer if it exists and matches the requested type,
+   * nullopt otherwise.
    *
    */
   template <typename T>
@@ -152,7 +155,8 @@ class OnnxRuntime {
 
  private:
   template <typename T>
-  inline std::optional<std::span<T>> getBuffer(Ort::Value& tensor, ONNXTensorElementDataType data_type) {
+  inline std::optional<std::span<T>> getBuffer(Ort::Value& tensor,
+                                               ONNXTensorElementDataType data_type) {
     if (data_type != onnx_type<T>::value) return std::nullopt;
     T* data_ptr = tensor.GetTensorMutableData<T>();
     return std::span<T>(data_ptr, tensor.GetTensorTypeAndShapeInfo().GetElementCount());

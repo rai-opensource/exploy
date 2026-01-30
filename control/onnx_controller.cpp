@@ -29,7 +29,8 @@ void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
 }
 
 void copyToBuffer(const Eigen::VectorXd& from, std::span<float> to) {
-  assert(to.size() == static_cast<std::size_t>(from.size()) && "Buffer size must match input size.");
+  assert(to.size() == static_cast<std::size_t>(from.size()) &&
+         "Buffer size must match input size.");
   std::transform(from.data(), from.data() + from.size(), to.begin(), [](double val) {
     return static_cast<float>(val);
   });
@@ -56,8 +57,9 @@ void copyToBuffer(const Quaternion& from, std::span<float> to) {
 
 }  // namespace
 
-OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface& command,
-                                   operation::common::data_collection::DataCollectionInterface& data_collection)
+OnnxRLController::OnnxRLController(
+    RobotStateInterface& state, CommandInterface& command,
+    operation::common::data_collection::DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {}
 
 bool OnnxRLController::load(const std::string& onnx_model_path) {
@@ -89,7 +91,8 @@ bool OnnxRLController::init(bool enable_data_collection) {
   for (const auto& [key, data] : config_.imu_keys_to_data) {
     if (data.interface == keys::kAngularVelocity) {
       if (!state_.initImuAngularVelocityImu(data.name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of angular velocity failed for IMU " << data.name);
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of angular velocity failed for IMU " << data.name);
         return false;
       }
     } else if (data.interface == keys::kOrientation) {
@@ -116,12 +119,14 @@ bool OnnxRLController::init(bool enable_data_collection) {
       }
     } else if (data.interface == keys::kLinearVelocity) {
       if (!state_.initBodyLinearVelocityB(data.name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of linear velocity failed for body " << data.name);
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of linear velocity failed for body " << data.name);
         return false;
       }
     } else if (data.interface == keys::kAngularVelocity) {
       if (!state_.initBodyAngularVelocityB(data.name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of angular velocity failed for body " << data.name);
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of angular velocity failed for body " << data.name);
         return false;
       }
     } else {
@@ -142,7 +147,8 @@ bool OnnxRLController::init(bool enable_data_collection) {
   for (const auto& [command_name, se2_velocity_data] : config_.se2_velocity_keys_to_data) {
     if (se2_velocity_data.target_frame.empty()) continue;
     if (!state_.initSe2Velocity(se2_velocity_data.target_frame)) {
-      GENERIC_LOG_STREAM(ERROR, "Initialization of se(2) velocity '" << command_name << "' failed.");
+      GENERIC_LOG_STREAM(ERROR,
+                         "Initialization of se(2) velocity '" << command_name << "' failed.");
       return false;
     }
   }
@@ -155,7 +161,8 @@ bool OnnxRLController::init(bool enable_data_collection) {
     }
     for (auto& joint_name : config_.joint_names) {
       if (!state_.initJointPosition(joint_name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of joint position '" << joint_name << "' failed.");
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of joint position '" << joint_name << "' failed.");
         return false;
       }
     }
@@ -169,7 +176,8 @@ bool OnnxRLController::init(bool enable_data_collection) {
     }
     for (auto& joint_name : config_.joint_names) {
       if (!state_.initJointVelocity(joint_name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of joint velocity '" << joint_name << "' failed.");
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of joint velocity '" << joint_name << "' failed.");
         return false;
       }
     }
@@ -216,7 +224,8 @@ bool OnnxRLController::init(bool enable_data_collection) {
       auto maybe_buffer = onnx_model_.outputBuffer<float>(name);
       if (!maybe_buffer.has_value()) continue;
       if (!data_collection_.registerDataSource("model/output/" + name, maybe_buffer.value())) {
-        GENERIC_LOG_STREAM(ERROR, "Registering data source for model/output/" << name << " failed.");
+        GENERIC_LOG_STREAM(ERROR,
+                           "Registering data source for model/output/" << name << " failed.");
         return false;
       }
     }
@@ -245,17 +254,20 @@ bool OnnxRLController::initCommands() {
       SE2VelocityConfig cfg;
       cfg.ranges = config_.se2_velocity_keys_to_data[command_name].ranges;
       if (!command_.initSe2Velocity(command_name, cfg)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of se(2) velocity command " << command_name << " failed.");
+        GENERIC_LOG_STREAM(
+            ERROR, "Initialization of se(2) velocity command " << command_name << " failed.");
         return false;
       }
     } else if (type == keys::kSE3Pose) {
       if (!command_.initSe3Pose(command_name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of SE(3) pose command " << command_name << " failed.");
+        GENERIC_LOG_STREAM(ERROR,
+                           "Initialization of SE(3) pose command " << command_name << " failed.");
         return false;
       }
     } else if (type == keys::kBooleanSelector) {
       if (!command_.initBooleanSelector(command_name)) {
-        GENERIC_LOG_STREAM(ERROR, "Initialization of boolean selector command " << command_name << " failed.");
+        GENERIC_LOG_STREAM(
+            ERROR, "Initialization of boolean selector command " << command_name << " failed.");
         return false;
       }
     } else {
@@ -412,7 +424,8 @@ bool OnnxRLController::readJointState() {
     if (maybe_joint_pos_buffer_model.has_value()) {
       const auto maybe_joint_pos = state_.jointPosition(config_.joint_names[i]);
       if (!maybe_joint_pos.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not read joint position of joint '" << config_.joint_names[i] << "'");
+        GENERIC_LOG_STREAM(
+            ERROR, "Could not read joint position of joint '" << config_.joint_names[i] << "'");
         return false;
       }
       maybe_joint_pos_buffer_model.value()[i] = maybe_joint_pos.value();
@@ -421,7 +434,8 @@ bool OnnxRLController::readJointState() {
     if (maybe_joint_vel_buffer.has_value()) {
       const auto maybe_joint_vel = state_.jointVelocity(config_.joint_names[i]);
       if (!maybe_joint_vel.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not read joint velocity of joint '" << config_.joint_names[i] << "'");
+        GENERIC_LOG_STREAM(
+            ERROR, "Could not read joint velocity of joint '" << config_.joint_names[i] << "'");
         return false;
       }
       maybe_joint_vel_buffer.value()[i] = maybe_joint_vel.value();
@@ -452,15 +466,18 @@ bool OnnxRLController::writeOutputs() {
       auto maybe_vel_buffer = onnx_model_.outputBuffer<float>(joint_target_data.vel_name);
       auto maybe_eff_buffer = onnx_model_.outputBuffer<float>(joint_target_data.eff_name);
       if (!maybe_pos_buffer.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not get position buffer for '" << joint_target_data.pos_name << "'");
+        GENERIC_LOG_STREAM(
+            ERROR, "Could not get position buffer for '" << joint_target_data.pos_name << "'");
         return false;
       }
       if (!maybe_vel_buffer.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not get velocity buffer for '" << joint_target_data.vel_name << "'");
+        GENERIC_LOG_STREAM(
+            ERROR, "Could not get velocity buffer for '" << joint_target_data.vel_name << "'");
         return false;
       }
       if (!maybe_eff_buffer.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not get effort buffer for '" << joint_target_data.eff_name << "'");
+        GENERIC_LOG_STREAM(
+            ERROR, "Could not get effort buffer for '" << joint_target_data.eff_name << "'");
         return false;
       }
 
@@ -503,11 +520,13 @@ bool OnnxRLController::writeOutputs() {
       const double vy = maybe_buffer.value()[1];
       const double ωz = maybe_buffer.value()[2];
       if (!state_.setSe2Velocity(se2_base_velocity_data.target_frame, {vx, vy, ωz})) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to set se(2) target velocity of frame '" << se2_base_velocity_data.target_frame << "'");
+        GENERIC_LOG_STREAM(ERROR, "Failed to set se(2) target velocity of frame '"
+                                      << se2_base_velocity_data.target_frame << "'");
         return false;
       }
     } else {
-      GENERIC_LOG_STREAM(ERROR, "Unknown output type '" << output_type << "' found for '" << output_name << "'");
+      GENERIC_LOG_STREAM(
+          ERROR, "Unknown output type '" << output_type << "' found for '" << output_name << "'");
       return false;
     }
   }
@@ -585,15 +604,17 @@ bool OnnxRLController::readSensors() {
       size_t pattern_index = config_.sensor_key_to_pattern_index[sensor_name];
       if (heightscan == nullptr) {
         GENERIC_LOG_STREAM(ERROR,
-                    "Heightscan pattern is defined but heightscan data is not available. This is likely caused due to "
-                    "missing or incompatible metadata for sensor " << sensor_name);
+                           "Heightscan pattern is defined but heightscan data is not available. "
+                           "This is likely caused due to "
+                           "missing or incompatible metadata for sensor "
+                               << sensor_name);
         return false;
       }
       if (pattern_index >= heightscan->size()) {
-        GENERIC_LOG(
-            ERROR,
-            "The heightscan was initialized with an incompatible number of patterns. This is likely caused due to "
-            "missing or incompatible metadata for the sensors.");
+        GENERIC_LOG(ERROR,
+                    "The heightscan was initialized with an incompatible number of patterns. This "
+                    "is likely caused due to "
+                    "missing or incompatible metadata for the sensors.");
         return false;
       }
       auto maybe_buffer = onnx_model_.inputBuffer<float>(sensor_name);
@@ -631,8 +652,10 @@ bool OnnxRLController::readSensors() {
       auto maybe_buffer_r = onnx_model_.inputBuffer<float>(sensor_name + ".r");
       auto maybe_buffer_g = onnx_model_.inputBuffer<float>(sensor_name + ".g");
       auto maybe_buffer_b = onnx_model_.inputBuffer<float>(sensor_name + ".b");
-      if (!maybe_buffer_g.has_value() || !maybe_buffer_b.has_value() || !maybe_buffer_r.has_value()) {
-        GENERIC_LOG_STREAM(ERROR, "Could not get input buffer for " << sensor_name << " color channels");
+      if (!maybe_buffer_g.has_value() || !maybe_buffer_b.has_value() ||
+          !maybe_buffer_r.has_value()) {
+        GENERIC_LOG_STREAM(ERROR,
+                           "Could not get input buffer for " << sensor_name << " color channels");
         return false;
       }
       copyToBuffer(scan.color.value().r, maybe_buffer_r.value());

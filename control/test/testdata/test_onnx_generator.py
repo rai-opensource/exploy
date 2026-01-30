@@ -3,9 +3,8 @@ import json
 import os
 import sys
 
-import torch
-
 import onnx
+import torch
 
 
 class TestModel(torch.nn.Module):
@@ -60,16 +59,16 @@ class TestModel(torch.nn.Module):
             body_quat,
             memory,
         ]
-        
+
         # Identity operations to keep them in the graph
         processed = [i * 1.0 for i in inputs]
-        
+
         concatenated = torch.cat(processed, dim=1)
-        
+
         joint_pos_targets = concatenated[:, 0:2]
         joint_vel_targets = concatenated[:, 2:4]
         joint_effort_targets = concatenated[:, 4:6]
-        se2_base_velocity_target = processed[6] # cmd_se2_vel
+        se2_base_velocity_target = processed[6]  # cmd_se2_vel
         actions = concatenated[:, 6:8]
         joint_targets_mem = concatenated[:, 8:10]
 

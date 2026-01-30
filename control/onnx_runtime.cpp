@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
-#include "logging_utils.hpp"
 #include "onnx_runtime.hpp"
+#include "logging_utils.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -48,8 +48,8 @@ void initializeTensorData(TensorDataType& tensor_data, std::unique_ptr<Ort::Sess
   tensor_data.allocated_names.reserve(tensor_data.size);
 
   for (std::size_t n = 0; n < tensor_data.size; n++) {
-    auto name_ptr =
-        is_input ? session->GetInputNameAllocated(n, allocator) : session->GetOutputNameAllocated(n, allocator);
+    auto name_ptr = is_input ? session->GetInputNameAllocated(n, allocator)
+                             : session->GetOutputNameAllocated(n, allocator);
     tensor_data.allocated_names.push_back(std::move(name_ptr));
     tensor_data.names.push_back(tensor_data.allocated_names.back().get());
 
@@ -60,7 +60,8 @@ void initializeTensorData(TensorDataType& tensor_data, std::unique_ptr<Ort::Sess
     tensor_data.data_types.push_back(tensor_info.GetElementType());
 
     tensor_data.tensors.push_back(Ort::Value::CreateTensor(allocator, tensor_data.shapes[n].data(),
-                                                           tensor_data.shapes[n].size(), tensor_data.data_types[n]));
+                                                           tensor_data.shapes[n].size(),
+                                                           tensor_data.data_types[n]));
 
     names_to_index[std::string(tensor_data.names.back())] = n;
   }
@@ -90,7 +91,8 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
 
   session_options.SetIntraOpNumThreads(1);
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-  if (options.profiling_path.has_value()) session_options.EnableProfiling(options.profiling_path.value().c_str());
+  if (options.profiling_path.has_value())
+    session_options.EnableProfiling(options.profiling_path.value().c_str());
 
   switch (options.provider) {
     case OnnxRuntimeOptions::ExecutionProvider::CUDA:
@@ -98,7 +100,8 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
         session_options.AppendExecutionProvider_CUDA(createCudaProviderOptions());
         session_ = std::make_unique<Ort::Session>(*env_, model_path.c_str(), session_options);
       } catch (const Ort::Exception& e) {
-        GENERIC_LOG_STREAM(WARN, "Failed to enable CUDA execution provider: " << e.what() << ". Falling back to CPU.");
+        GENERIC_LOG_STREAM(WARN, "Failed to enable CUDA execution provider: "
+                                     << e.what() << ". Falling back to CPU.");
         OnnxRuntimeOptions fallback_options = options;
         fallback_options.provider = OnnxRuntimeOptions::ExecutionProvider::CPU;
         return initialize(model_path, fallback_options);
@@ -121,8 +124,8 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
 bool OnnxRuntime::evaluate() {
   CS_TRACE_SCOPED_ZONE;
   try {
-    session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_.size, output_.names.data(),
-                  output_.tensors.data(), output_.size);
+    session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_.size,
+                  output_.names.data(), output_.tensors.data(), output_.size);
   } catch (const Ort::Exception& e) {
     GENERIC_LOG_STREAM(ERROR, "ONNX Runtime evaluation failed: " << e.what());
     return false;
@@ -167,7 +170,8 @@ bool OnnxRuntime::copyOutputToInput(const std::string& output_name, const std::s
   auto output_index = output_names_to_index_[output_name];
   auto input_index = input_names_to_index_[input_name];
   if (output_.data_types[output_index] != input_.data_types[input_index]) {
-    GENERIC_LOG_STREAM(ERROR, "Data type mismatch for output " << output_name << " and input " << input_name);
+    GENERIC_LOG_STREAM(
+        ERROR, "Data type mismatch for output " << output_name << " and input " << input_name);
     return false;
   }
 

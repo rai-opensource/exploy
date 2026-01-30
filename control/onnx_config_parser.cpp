@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 #include "onnx_config_parser.hpp"
-#include "metadata.hpp"
 #include "logging_utils.hpp"
+#include "metadata.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -72,7 +72,8 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
   for (const auto& [name, value] : sensor_json.items()) {
     auto maybe_type = metadata::safe_json_get<std::string>(value, keys::kType);
     if (!maybe_type) {
-      GENERIC_LOG_STREAM(ERROR, "Failed to get type for sensor " << name << ": " << maybe_type.error());
+      GENERIC_LOG_STREAM(ERROR,
+                         "Failed to get type for sensor " << name << ": " << maybe_type.error());
       return false;
     }
     const std::string type = maybe_type.value();
@@ -80,7 +81,8 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
       if (!onnx_model.inputNames().contains(name)) continue;
       auto maybe_meta = metadata::safe_json_get<metadata::RayCasterMetadata>(value);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for raycaster " << name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(
+            ERROR, "Failed to parse metadata for raycaster " << name << ": " << maybe_meta.error());
         return false;
       }
       metadata::RayCasterMetadata meta = maybe_meta.value();
@@ -103,7 +105,8 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
     } else if (type == keys::kTrailRayCaster) {
       auto maybe_meta = metadata::safe_json_get<metadata::RayCasterMetadata>(value);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for trail raycaster " << name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for trail raycaster "
+                                      << name << ": " << maybe_meta.error());
         return false;
       }
       metadata::RayCasterMetadata meta = maybe_meta.value();
@@ -131,7 +134,8 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
     } else if (type == keys::kLidarRangeImage) {
       auto maybe_meta = metadata::safe_json_get<metadata::RangeImageMetadata>(value);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for lidar range image " << name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for lidar range image "
+                                      << name << ": " << maybe_meta.error());
         return false;
       }
       metadata::RangeImageMetadata meta = maybe_meta.value();
@@ -143,7 +147,8 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
 
       if (config.range_image_config.has_value()) {
         GENERIC_LOG(ERROR,
-                    "The ONNX file contains multiple range image sensor configurations, which are not yet supported.");
+                    "The ONNX file contains multiple range image sensor configurations, which are "
+                    "not yet supported.");
         return false;
       }
 
@@ -160,14 +165,16 @@ bool parseSensorMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
     } else if (type == keys::kDepthImage) {
       auto maybe_meta = metadata::safe_json_get<metadata::DepthImageMetadata>(value);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for depth image " << name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for depth image "
+                                      << name << ": " << maybe_meta.error());
         return false;
       }
       metadata::DepthImageMetadata meta = maybe_meta.value();
 
       if (config.depth_image_config.has_value()) {
         GENERIC_LOG(ERROR,
-                    "The ONNX file contains multiple depth image sensor configurations, which are not yet supported.");
+                    "The ONNX file contains multiple depth image sensor configurations, which are "
+                    "not yet supported.");
         return false;
       }
 
@@ -209,30 +216,39 @@ bool parseCommandMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config)
   for (const auto& [name, cmd_json] : cmd_json.items()) {
     auto maybe_type = metadata::safe_json_get<std::string>(cmd_json, keys::kType);
     if (!maybe_type) {
-      GENERIC_LOG_STREAM(ERROR, "Failed to get type for command " << name << ": " << maybe_type.error());
+      GENERIC_LOG_STREAM(ERROR,
+                         "Failed to get type for command " << name << ": " << maybe_type.error());
       return false;
     }
     const std::string& type = maybe_type.value();
     if (type == keys::kSE2Velocity) {
       auto maybe_meta = metadata::safe_json_get<metadata::SE2VelocityCommandMetadata>(cmd_json);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for SE2Velocity command " << name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for SE2Velocity command "
+                                      << name << ": " << maybe_meta.error());
         return false;
       }
       const metadata::SE2VelocityCommandMetadata meta = maybe_meta.value();
       auto cfg = SE2VelocityConfig{};
       if (meta.ranges.has_value()) {
         cfg.ranges = SE2VelocityRanges{
-            .lin_vel_x = {.min = meta.ranges.value().lin_vel_x.min, .max = meta.ranges.value().lin_vel_x.max},
-            .lin_vel_y = {.min = meta.ranges.value().lin_vel_y.min, .max = meta.ranges.value().lin_vel_y.max},
-            .ang_vel_z = {.min = meta.ranges.value().ang_vel_z.min, .max = meta.ranges.value().ang_vel_z.max},
+            .lin_vel_x = {.min = meta.ranges.value().lin_vel_x.min,
+                          .max = meta.ranges.value().lin_vel_x.max},
+            .lin_vel_y = {.min = meta.ranges.value().lin_vel_y.min,
+                          .max = meta.ranges.value().lin_vel_y.max},
+            .ang_vel_z = {.min = meta.ranges.value().ang_vel_z.min,
+                          .max = meta.ranges.value().ang_vel_z.max},
         };
-        if (cfg.ranges->lin_vel_x.min > 0 || cfg.ranges->lin_vel_y.min > 0 || cfg.ranges->ang_vel_z.min > 0) {
-          GENERIC_LOG_STREAM(ERROR, "Minimum range values must be non-positive for command " << name);
+        if (cfg.ranges->lin_vel_x.min > 0 || cfg.ranges->lin_vel_y.min > 0 ||
+            cfg.ranges->ang_vel_z.min > 0) {
+          GENERIC_LOG_STREAM(ERROR,
+                             "Minimum range values must be non-positive for command " << name);
           return false;
         }
-        if (cfg.ranges->lin_vel_x.max < 0 || cfg.ranges->lin_vel_y.max < 0 || cfg.ranges->ang_vel_z.max < 0) {
-          GENERIC_LOG_STREAM(ERROR, "Maximum range values must be non-negative for command " << name);
+        if (cfg.ranges->lin_vel_x.max < 0 || cfg.ranges->lin_vel_y.max < 0 ||
+            cfg.ranges->ang_vel_z.max < 0) {
+          GENERIC_LOG_STREAM(ERROR,
+                             "Maximum range values must be non-negative for command " << name);
           return false;
         }
       }
@@ -268,7 +284,8 @@ bool parseOutputMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
   for (const auto& [output_name, output_json] : outputs_json.items()) {
     auto maybe_type = metadata::safe_json_get<std::string>(output_json, keys::kType);
     if (!maybe_type) {
-      GENERIC_LOG_STREAM(ERROR, "Failed to get type for output " << output_name << ": " << maybe_type.error());
+      GENERIC_LOG_STREAM(
+          ERROR, "Failed to get type for output " << output_name << ": " << maybe_type.error());
       return false;
     }
     const std::string& output_type = maybe_type.value();
@@ -277,13 +294,16 @@ bool parseOutputMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
     if (output_type == keys::kJointTargets) {
       auto maybe_meta = metadata::safe_json_get<metadata::JointOutputMetadata>(output_json);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for JointTargets output " << output_name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for JointTargets output "
+                                      << output_name << ": " << maybe_meta.error());
         return false;
       }
       const metadata::JointOutputMetadata meta = maybe_meta.value();
 
       if (meta.names.size() != meta.stiffness.size() || meta.names.size() != meta.damping.size()) {
-        GENERIC_LOG(ERROR, "Joint output metadata must have the same number of joint names, stiffness, and damping.");
+        GENERIC_LOG(ERROR,
+                    "Joint output metadata must have the same number of joint names, stiffness, "
+                    "and damping.");
         return false;
       }
 
@@ -306,7 +326,8 @@ bool parseOutputMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
     } else if (output_type == keys::kSE2Velocity) {
       auto maybe_meta = metadata::safe_json_get<metadata::Se2VelocityOutputMetadata>(output_json);
       if (!maybe_meta) {
-        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for SE2Velocity output " << output_name << ": " << maybe_meta.error());
+        GENERIC_LOG_STREAM(ERROR, "Failed to parse metadata for SE2Velocity output "
+                                      << output_name << ": " << maybe_meta.error());
         return false;
       }
       const auto meta = maybe_meta.value();
@@ -315,7 +336,8 @@ bool parseOutputMetadata(OnnxRuntime& onnx_model, OnnxControllerConfig& config) 
       };
       config.known_output_keys.insert(output_name);
     } else {
-      GENERIC_LOG_STREAM(ERROR, "Unknown output type " << output_type << " found for " << output_name);
+      GENERIC_LOG_STREAM(ERROR,
+                         "Unknown output type " << output_type << " found for " << output_name);
       return false;
     }
   }
@@ -328,7 +350,10 @@ bool parseImuNames(OnnxRuntime& onnx_model, OnnxControllerConfig& config) {
     std::vector<std::string> split_key = splitString(key, '.');
     if (split_key.size() == 0 || split_key[0] != keys::kIMUData) continue;
     if (split_key.size() != 3) {
-      GENERIC_LOG_STREAM(ERROR, "Found key starting with " << keys::kIMUData << ", expected `imu_data.<interface>.<imu_name>`, but got " << key);
+      GENERIC_LOG_STREAM(ERROR, "Found key starting with "
+                                    << keys::kIMUData
+                                    << ", expected `imu_data.<interface>.<imu_name>`, but got "
+                                    << key);
       return false;
     }
     config.imu_keys_to_data[key] = BodyData{.name = split_key[2], .interface = split_key[1]};
@@ -342,7 +367,10 @@ bool parseBodyNames(OnnxRuntime& onnx_model, OnnxControllerConfig& config) {
     std::vector<std::string> split_key = splitString(key, '.');
     if (split_key.size() == 0 || split_key[0] != keys::kBody) continue;
     if (split_key.size() != 3) {
-      GENERIC_LOG_STREAM(ERROR, "Found key starting with " << keys::kBody << ", expected `body.<body_name>.<interface>`, but got " << key);
+      GENERIC_LOG_STREAM(ERROR, "Found key starting with "
+                                    << keys::kBody
+                                    << ", expected `body.<body_name>.<interface>`, but got "
+                                    << key);
       return false;
     }
     config.body_keys_to_data[key] = BodyData{.name = split_key[1], .interface = split_key[2]};
@@ -357,7 +385,8 @@ bool parseMemory(OnnxRuntime& onnx_model, OnnxControllerConfig& config) {
 
     if (split_key.size() == 0 || split_key[0] != keys::kMemory) continue;
     if (split_key.size() < 3) {
-      constexpr auto msg = "Found key starting with %s, expected `memory.<output>.in|out`, but got `%s`";
+      constexpr auto msg =
+          "Found key starting with %s, expected `memory.<output>.in|out`, but got `%s`";
       GENERIC_LOG(ERROR, msg, keys::kMemory, key.c_str());
       return false;
     }
@@ -384,8 +413,9 @@ std::optional<OnnxControllerConfig> parseOnnxControllerConfig(OnnxRuntime& onnx_
   OnnxControllerConfig config;
 
   // Add known input and output keys which are always handled.
-  config.known_input_keys = {keys::kStepCount,        keys::kPosBaseInWorld,   keys::kQuatBaseInWorld,
-                             keys::kLinVelBaseInBase, keys::kAngVelBaseInBase, keys::kJointPos,
+  config.known_input_keys = {keys::kStepCount,        keys::kPosBaseInWorld,
+                             keys::kQuatBaseInWorld,  keys::kLinVelBaseInBase,
+                             keys::kAngVelBaseInBase, keys::kJointPos,
                              keys::kJointVel};
   config.known_output_keys = {keys::kObservation, keys::kActions};
 
@@ -401,16 +431,20 @@ std::optional<OnnxControllerConfig> parseOnnxControllerConfig(OnnxRuntime& onnx_
   for (const auto& key : onnx_model.inputNames()) {
     if (config.known_input_keys.contains(key)) continue;
     GENERIC_LOG_STREAM(ERROR,
-                "Input model contains unknown key '" << key << "'. You are probably trying to run a policy which contains new "
-                "features that are not supported by this version of the controller.");
+                       "Input model contains unknown key '"
+                           << key
+                           << "'. You are probably trying to run a policy which contains new "
+                              "features that are not supported by this version of the controller.");
     return std::nullopt;
   }
 
   for (const auto& key : onnx_model.outputNames()) {
     if (config.known_output_keys.contains(key) || key.starts_with("debug.")) continue;
     GENERIC_LOG_STREAM(ERROR,
-                "Output model contains unknown key '" << key << "'. You are probably trying to run a policy which contains new "
-                "features that are not supported by this version of the controller.");
+                       "Output model contains unknown key '"
+                           << key
+                           << "'. You are probably trying to run a policy which contains new "
+                              "features that are not supported by this version of the controller.");
     return std::nullopt;
   }
 

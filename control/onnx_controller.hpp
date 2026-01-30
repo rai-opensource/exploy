@@ -2,12 +2,12 @@
 
 #pragma once
 
+#include "command_interface.hpp"
 #include "data_collection_interface.hpp"
 #include "interfaces.hpp"
-#include "command_interface.hpp"
 #include "onnx_config_parser.hpp"
-#include "state_interface.hpp"
 #include "onnx_runtime.hpp"
+#include "state_interface.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -33,13 +33,14 @@ class OnnxRLController {
    * @param command A CommandInterface to send commands to the controller.
    * @param data_collection A DataCollection interface for data collection.
    */
-  explicit OnnxRLController(RobotStateInterface& state, CommandInterface& command,
-                            operation::common::data_collection::DataCollectionInterface& data_collection);
+  explicit OnnxRLController(
+      RobotStateInterface& state, CommandInterface& command,
+      operation::common::data_collection::DataCollectionInterface& data_collection);
   /**
    * @brief Load the ONNX model and parse configuration.
    *
-   * This function only parses the configuration needed to interface with the ONNX model. Call init() to fully
-   * initialize the controller.
+   * This function only parses the configuration needed to interface with the ONNX model. Call
+   * init() to fully initialize the controller.
    *
    * @param onnx_model_path Path to the ONNX model file.
    * @return True if parsing succeeds, false otherwise.
@@ -57,8 +58,8 @@ class OnnxRLController {
    */
   void reset();
   /**
-   * @brief Update the controller. Read from state, evaluate ONNX model and write to state. Should be run at
-   * updateRate()
+   * @brief Update the controller. Read from state, evaluate ONNX model and write to state. Should
+   * be run at updateRate()
    *
    * @param time_us Timestamp in microseconds.
    * @return True if update succeeds, false otherwise.
@@ -74,17 +75,19 @@ class OnnxRLController {
   /**
    * @brief Get the set of joints managed by the ONNX policy.
    *
-   * The set of joints handled by the ONNX policy includes both joints that are actively controlled (e.g., ones for
-   * which we generate torques from a PD controller) and passive joints (e.g., the front wheel of a driving robot). The
-   * list includes all the joints that were visible to the controller when the ONNX file was generated.
-   * If the ONNX policy does not generate any joint commands, the method returns std::nullopt.
+   * The set of joints handled by the ONNX policy includes both joints that are actively controlled
+   * (e.g., ones for which we generate torques from a PD controller) and passive joints (e.g., the
+   * front wheel of a driving robot). The list includes all the joints that were visible to the
+   * controller when the ONNX file was generated. If the ONNX policy does not generate any joint
+   * commands, the method returns std::nullopt.
    *
    * Note:
-   * The list does not necessarily include all the joints that are available or controllable. For example, the ONNX file
-   * may have been generated for a system that included only the upper body of a humanoid robot. In this case, the list
-   * will not include the lower body joints.
+   * The list does not necessarily include all the joints that are available or controllable. For
+   * example, the ONNX file may have been generated for a system that included only the upper body
+   * of a humanoid robot. In this case, the list will not include the lower body joints.
    *
-   * @return A set of joint names managed by the ONNX policy. If no joints are managed, returns std::nullopt.
+   * @return A set of joint names managed by the ONNX policy. If no joints are managed, returns
+   * std::nullopt.
    */
   std::optional<std::unordered_set<std::string>> jointNames() const {
     // The policy manages joints only if there are joint target outputs configured.

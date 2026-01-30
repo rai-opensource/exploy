@@ -5,8 +5,8 @@
 #include <optional>
 #include <string>
 
-#include "logging_utils.hpp"
 #include "interfaces.hpp"
+#include "logging_utils.hpp"
 
 namespace rai::cs::control::common::onnx {
 
@@ -34,7 +34,8 @@ class CommandInterface {
    * @param command_name The name of the command.
    * @param config The configuration for the commanded se2 velocity.
    */
-  virtual bool initSe2Velocity(const std::string& command_name, const SE2VelocityConfig& /*config*/) {
+  virtual bool initSe2Velocity(const std::string& command_name,
+                               const SE2VelocityConfig& /*config*/) {
     GENERIC_LOG_STREAM(ERROR, "initSe2Velocity() not implemented for command: " << command_name);
     return false;
   }
@@ -77,7 +78,8 @@ class CommandInterface {
    * @param command_name The name of the command.
    */
   virtual bool initBooleanSelector(const std::string& command_name) {
-    GENERIC_LOG_STREAM(ERROR, "initBooleanSelector() not implemented for command: " << command_name);
+    GENERIC_LOG_STREAM(ERROR,
+                       "initBooleanSelector() not implemented for command: " << command_name);
     return false;
   }
   /**

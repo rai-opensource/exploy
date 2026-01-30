@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "logging_utils.hpp"
 #include "interfaces.hpp"
+#include "logging_utils.hpp"
 
 namespace rai::cs::control::common::onnx {
 
@@ -214,72 +214,75 @@ class RobotStateInterface {
    * @brief Set joint position.
    *
    * The following control law is assumed:
-   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain * (joint_velocity -
-   * joint_velocity_measured)
+   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain *
+   * (joint_velocity - joint_velocity_measured)
    *
    * @param joint_name The name of the joint.
    * @param position The joint position to be set.
    */
   virtual bool setJointPosition(const std::string& joint_name, double position) {
-    GENERIC_LOG_STREAM(ERROR,
-                       "setJointPosition() not implemented for joint: " << joint_name << ", position: " << position);
+    GENERIC_LOG_STREAM(ERROR, "setJointPosition() not implemented for joint: "
+                                  << joint_name << ", position: " << position);
     return false;
   }
   /**
    * @brief Set joint velocity.
    *
    * The following control law is assumed:
-   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain * (joint_velocity -
-   * joint_velocity_measured)
+   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain *
+   * (joint_velocity - joint_velocity_measured)
    *
    * @param joint_name The name of the joint.
    * @param velocity The joint velocity to be set.
    */
   virtual bool setJointVelocity(const std::string& joint_name, double velocity) {
-    GENERIC_LOG_STREAM(ERROR,
-                       "setJointVelocity() not implemented for joint: " << joint_name << ", velocity: " << velocity);
+    GENERIC_LOG_STREAM(ERROR, "setJointVelocity() not implemented for joint: "
+                                  << joint_name << ", velocity: " << velocity);
     return false;
   }
   /**
    * @brief Set joint effort.
    *
    * The following control law is assumed:
-   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain * (joint_velocity -
-   * joint_velocity_measured)
+   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain *
+   * (joint_velocity - joint_velocity_measured)
    *
    * @param joint_name The name of the joint.
    * @param effort The joint effort to be set.
    */
   virtual bool setJointEffort(const std::string& joint_name, double effort) {
-    GENERIC_LOG_STREAM(ERROR, "setJointEffort() not implemented for joint: " << joint_name << ", effort: " << effort);
+    GENERIC_LOG_STREAM(ERROR, "setJointEffort() not implemented for joint: "
+                                  << joint_name << ", effort: " << effort);
     return false;
   }
   /**
    * @brief Set joint p-gain.
    *
    * The following control law is assumed:
-   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain * (joint_velocity -
-   * joint_velocity_measured)
+   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain *
+   * (joint_velocity - joint_velocity_measured)
    *
    * @param joint_name The name of the joint.
    * @param p_gain The p-gain to be set.
    */
   virtual bool setJointPGain(const std::string& joint_name, double p_gain) {
-    GENERIC_LOG_STREAM(ERROR, "setJointPGain() not implemented for joint: " << joint_name << ", p_gain: " << p_gain);
+    GENERIC_LOG_STREAM(ERROR, "setJointPGain() not implemented for joint: "
+                                  << joint_name << ", p_gain: " << p_gain);
     return false;
   }
   /**
    * @brief Set joint d-gain.
    *
    * The following control law is assumed:
-   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain * (joint_velocity -
-   * joint_velocity_measured)
+   * u = joint_effort + p_gain * (joint_position - joint_position_measured) + d_gain *
+   * (joint_velocity - joint_velocity_measured)
    *
    * @param joint_name The name of the joint.
    * @param d_gain The d-gain to be set.
    */
   virtual bool setJointDGain(const std::string& joint_name, double d_gain) {
-    GENERIC_LOG_STREAM(ERROR, "setJointDGain() not implemented for joint: " << joint_name << ", d_gain: " << d_gain);
+    GENERIC_LOG_STREAM(ERROR, "setJointDGain() not implemented for joint: "
+                                  << joint_name << ", d_gain: " << d_gain);
     return false;
   }
   /**
@@ -444,8 +447,8 @@ class RobotStateInterface {
   /**
    * @brief Get subsampled heightscan in base frame.
    *
-   * This function returns the flattened (column-major), subsampled heightscan with the pattern specified in the init
-   * function. The pattern is centered around the base.
+   * This function returns the flattened (column-major), subsampled heightscan with the pattern
+   * specified in the init function. The pattern is centered around the base.
    *
    * @param base_pos_w The base position in world frame.
    * @param base_quat_w The base orientation in world frame.

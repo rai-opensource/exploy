@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 #pragma once
 
+#include <cstdint>
 #include <span>
 #include <string>
 #include <vector>
-#include <cstdint>
 
 namespace rai::cs::operation::common::data_collection {
 

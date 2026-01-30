@@ -2,8 +2,8 @@
 
 #include "onnx_controller.hpp"
 #include "mock_command_interface.hpp"
-#include "mock_state_interface.hpp"
 #include "mock_data_collection_interface.hpp"
+#include "mock_state_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -34,11 +34,13 @@ MATCHER_P(HasRanges, expected_ranges, "") {
     return false;
   }
 
-  const auto ranges_matcher = AllOf(
-      Field(&SE2VelocityRanges::lin_vel_x, DoubleRangeIs(expected_ranges.lin_vel_x.min, expected_ranges.lin_vel_x.max)),
-      Field(&SE2VelocityRanges::lin_vel_y, DoubleRangeIs(expected_ranges.lin_vel_y.min, expected_ranges.lin_vel_y.max)),
-      Field(&SE2VelocityRanges::ang_vel_z,
-            DoubleRangeIs(expected_ranges.ang_vel_z.min, expected_ranges.ang_vel_z.max)));
+  const auto ranges_matcher =
+      AllOf(Field(&SE2VelocityRanges::lin_vel_x,
+                  DoubleRangeIs(expected_ranges.lin_vel_x.min, expected_ranges.lin_vel_x.max)),
+            Field(&SE2VelocityRanges::lin_vel_y,
+                  DoubleRangeIs(expected_ranges.lin_vel_y.min, expected_ranges.lin_vel_y.max)),
+            Field(&SE2VelocityRanges::ang_vel_z,
+                  DoubleRangeIs(expected_ranges.ang_vel_z.min, expected_ranges.ang_vel_z.max)));
 
   if (!Matches(ranges_matcher)(arg.ranges.value())) {
     *result_listener << "ranges do not match";
@@ -58,8 +60,8 @@ HeightScan createTestHeightScan(int size) {
                         .b = std::vector<double>(size),
                     }};
 }
-auto kHeightScanData =
-    std::vector<HeightScan>{createTestHeightScan(4), createTestHeightScan(4), createTestHeightScan(8)};
+auto kHeightScanData = std::vector<HeightScan>{createTestHeightScan(4), createTestHeightScan(4),
+                                               createTestHeightScan(8)};
 auto kRangeImageData = std::vector<double>{0, 0, 0, 0};
 auto kDepthImageData = std::vector<double>{0, 0, 0, 0};
 const auto kPositionData = std::make_optional(Position{0, 0, 0});
@@ -119,7 +121,8 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectInitCommands() {
-    EXPECT_CALL(command_mock_, initSe2Velocity("command.se2_vel", Field(&SE2VelocityConfig::ranges, Eq(std::nullopt))))
+    EXPECT_CALL(command_mock_, initSe2Velocity("command.se2_vel",
+                                               Field(&SE2VelocityConfig::ranges, Eq(std::nullopt))))
         .WillOnce(Return(true));
     EXPECT_CALL(command_mock_, initSe2Velocity("command.se2_vel_with_range", HasRanges(kRanges)))
         .WillOnce(Return(true));
@@ -153,18 +156,23 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, imuAngularVelocityImu("imu1")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, imuOrientationW("imu1")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, bodyOrientationW("hand")).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, heightScan(_, _)).WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
+    EXPECT_CALL(state_mock_, heightScan(_, _))
+        .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
     EXPECT_CALL(state_mock_, basePosW()).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, baseQuatW()).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, baseLinVelB()).WillRepeatedly(Return(kLinearVelocityData));
     EXPECT_CALL(state_mock_, baseAngVelB()).WillRepeatedly(Return(kAngularVelocityData));
-    EXPECT_CALL(state_mock_, rangeImage()).WillRepeatedly(Return(std::make_optional(&kRangeImageData)));
-    EXPECT_CALL(state_mock_, depthImage()).WillRepeatedly(Return(std::make_optional(&kDepthImageData)));
+    EXPECT_CALL(state_mock_, rangeImage())
+        .WillRepeatedly(Return(std::make_optional(&kRangeImageData)));
+    EXPECT_CALL(state_mock_, depthImage())
+        .WillRepeatedly(Return(std::make_optional(&kDepthImageData)));
   }
 
   void ExpectReadCommands() {
-    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel")).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel_with_range")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel"))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel_with_range"))
+        .WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(command_mock_, se3Pose("command.se3_pose")).WillRepeatedly(Return(kSE3PoseData));
   }
 };

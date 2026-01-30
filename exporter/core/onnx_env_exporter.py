@@ -3,7 +3,6 @@ import contextlib
 import copy
 import dataclasses
 import functools
-import gymnasium as gym
 import pathlib
 import queue as queue_python
 import re
@@ -12,24 +11,23 @@ import signal
 import sys
 import tempfile
 import time
-import torch
-import torch.multiprocessing as mp
 from argparse import Namespace
 from collections.abc import Generator
 from multiprocessing.context import SpawnProcess
 from typing import Any
 
 import carb  # noqa: F401, F811
-import omni.log
-import wandb
-
-# import rai.core.utils.dict
-from exporter import ExportEnvIdsType
-from exporter.exporter import _OnnxEnvironmentExporter
-
+import gymnasium as gym
 import isaaclab.managers.manager_term_cfg
+import omni.log
+import torch
+import torch.multiprocessing as mp
+import wandb
 from isaaclab.envs import ManagerBasedRLEnv, ManagerBasedRLEnvCfg
 from isaaclab.managers import ObservationGroupCfg
+
+# import rai.core.utils.dict
+from exporter.core.exporter import OnnxEnvironmentExporter
 
 
 class OnnxEnvExporter:
@@ -131,7 +129,9 @@ class OnnxEnvExporter:
         # Note that we do this in the child process so that we don't risk to mess up signal handling
         # of the main process. In this way, we reduce possible interferences with the training.
         def signal_handler(signum, frame) -> None:
-            print(f"[INFO][OnnxEnvExporter.worker] Received signal '{signum}'. Triggering graceful stop.")
+            print(
+                f"[INFO][OnnxEnvExporter.worker] Received signal '{signum}'. Triggering graceful stop."
+            )
             global keep_running
             keep_running = False
 
@@ -209,11 +209,11 @@ class OnnxEnvExporter:
                 onnx_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Define which environment IDs to export.
-            export_env_ids: ExportEnvIdsType = 0
+            export_env_ids: int = 0
 
             # Create the policy exporter.
             assert isinstance(env, ManagerBasedRLEnv), type(env)
-            policy_exporter = _OnnxEnvironmentExporter(
+            policy_exporter = OnnxEnvironmentExporter(
                 env=env,
                 export_env_ids=export_env_ids,
                 actor=actor,
@@ -226,9 +226,11 @@ class OnnxEnvExporter:
                 policy_exporter.export(
                     onnx_path=str(onnx_path.parent),
                     onnx_file_name=onnx_path.name,
-                    model_source=dict(),
+                    model_source={},
                 )
-            print(f"[INFO][OnnxEnvExporter.worker] Exported successfully ONNX file '{onnx_path.name}'.")
+            print(
+                f"[INFO][OnnxEnvExporter.worker] Exported successfully ONNX file '{onnx_path.name}'."
+            )
 
         while keep_running:
             # Create the mutex to enforce exporting ONNX file one at a time.
@@ -371,8 +373,12 @@ class OnnxEnvExporter:
                 raise RuntimeError(msg) from e
 
         try:
-            iteration_number = extract_iteration_number(env_cfg) if env_cfg is not None else env.iteration
-            omni.log.warn(f"[OnnxEnvExporter.__call__] Triggering ONNX export at iteration={iteration_number}.")
+            iteration_number = (
+                extract_iteration_number(env_cfg) if env_cfg is not None else env.iteration
+            )
+            omni.log.warn(
+                f"[OnnxEnvExporter.__call__] Triggering ONNX export at iteration={iteration_number}."
+            )
         except Exception:
             iteration_number = None
             omni.log.warn("[OnnxEnvExporter.__call__] Failed to extract iteration number.")
@@ -418,16 +424,22 @@ class OnnxEnvExporter:
             # This is especially important for the first checkpoint, which is triggered at iteration 0.
             # Since creating the exported environment takes time, the corresponding ONNX file might
             # be generated only after training has already moved on to later iterations.
-            onnx_file_path = f"policy_{iteration_number:07d}.onnx" if iteration_number is not None else file_name
-            onnx_checkpoint_data = copy.deepcopy((
-                export_model_dir,
-                onnx_file_path,
-                args_cli,
-                (actor, normalizer),
-            ))
+            onnx_file_path = (
+                f"policy_{iteration_number:07d}.onnx" if iteration_number is not None else file_name
+            )
+            onnx_checkpoint_data = copy.deepcopy(
+                (
+                    export_model_dir,
+                    onnx_file_path,
+                    args_cli,
+                    (actor, normalizer),
+                )
+            )
 
         # Send the data to the exporter process.
-        omni.log.warn(f"[OnnxEnvExporter.__call__] Sending iteration={iteration_number} data to worker process.")
+        omni.log.warn(
+            f"[OnnxEnvExporter.__call__] Sending iteration={iteration_number} data to worker process."
+        )
         queue.put(onnx_checkpoint_data)
 
         # ===========================
@@ -448,7 +460,6 @@ class OnnxEnvExporter:
             with OnnxEnvExporter.wait_for_file(
                 path=expected_onnx_file_path, polling=5, timeout=60 * 2
             ) as found_onnx_file_path:
-
                 artifact_file_name = "policy.onnx"
                 run_name = re.sub(r"[^A-Za-z0-9._-]+", "_", wandb.run.name)
 
@@ -515,7 +526,9 @@ class OnnxEnvExporter:
         yield path
 
     @contextlib.contextmanager
-    def temporary_file_copy(src: pathlib.Path, file_name: str | None = None) -> Generator[pathlib.Path, None, None]:
+    def temporary_file_copy(
+        src: pathlib.Path, file_name: str | None = None
+    ) -> Generator[pathlib.Path, None, None]:
         """
         Context manager that creates a temporary copy of a file.
 
@@ -562,13 +575,17 @@ class OnnxEnvExporter:
 
         # Send SIGTERM if it gets stuck.
         if process.is_alive():
-            print("[INFO][OnnxEnvExporter.stop] ONNX exporter process still alive, sending SIGTERM.")
+            print(
+                "[INFO][OnnxEnvExporter.stop] ONNX exporter process still alive, sending SIGTERM."
+            )
             process.terminate()
             process.join(timeout=5)
 
         # Send SIGKILL if it is still stuck.
         if process.is_alive():
-            print("[INFO][OnnxEnvExporter.stop] ONNX exporter process still alive, sending SIGKILL.")
+            print(
+                "[INFO][OnnxEnvExporter.stop] ONNX exporter process still alive, sending SIGKILL."
+            )
             process.kill()
             process.join(timeout=5)
 

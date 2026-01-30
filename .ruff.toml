@@ -1,0 +1,43 @@
+# Ruff configuration
+line-length = 100
+target-version = "py311"
+
+[lint]
+# Enable pycodestyle (E), pyflakes (F), isort (I), and other useful rules
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+ignore = [
+    "E501",  # line-too-long (formatter handles this)
+    "E402",  # module-level-import-not-at-top-of-file (needed for some frameworks)
+    "F401",  # unused-import (may be for re-export)
+    "F841",  # unused-variable (sometimes intentional)
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"examples/exporter_scripts/export_isaaclab.py" = ["E402", "F401", "F403"]  # Allow import flexibility for isaaclab
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Exclude patterns
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".pixi",
+    "IsaacLab",
+    "*.egg-info",
+]

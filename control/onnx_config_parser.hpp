@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "command_interface.hpp"
-#include "state_interface.hpp"
 #include "onnx_runtime.hpp"
+#include "state_interface.hpp"
 
 namespace rai::cs::control::common::onnx {
 
@@ -57,7 +57,7 @@ struct BodyData {
   // The name of the body.
   std::string name{};
   // The interface of the body data (e.g., "angular_velocity", "orientation", etc.).
-  std::string interface {};
+  std::string interface{};
 };
 
 // Configuration to write joint target data to commands.
@@ -107,9 +107,11 @@ struct OnnxControllerConfig {
   // Mapping from ONNX output names to their types.
   std::unordered_map<std::string, std::string> output_name_to_type{};
 
-  // Set of known input keys. This is used to validate that the model does not contain unexpected inputs.
+  // Set of known input keys. This is used to validate that the model does not contain unexpected
+  // inputs.
   std::unordered_set<std::string> known_input_keys{};
-  // Set of known output keys. This is used to validate that the model does not contain unexpected outputs.
+  // Set of known output keys. This is used to validate that the model does not contain unexpected
+  // outputs.
   std::unordered_set<std::string> known_output_keys{};
 
   // Names of the robot joints used to read joint states.

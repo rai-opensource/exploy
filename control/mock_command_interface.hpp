@@ -8,8 +8,10 @@ namespace rai::cs::control::common::onnx {
 
 class MockCommandInterface : public CommandInterface {
  public:
-  MOCK_METHOD(bool, initSe2Velocity, (const std::string& command_name, const SE2VelocityConfig& config), (override));
-  MOCK_METHOD(std::optional<SE2Velocity>, se2Velocity, (const std::string& command_name), (override));
+  MOCK_METHOD(bool, initSe2Velocity,
+              (const std::string& command_name, const SE2VelocityConfig& config), (override));
+  MOCK_METHOD(std::optional<SE2Velocity>, se2Velocity, (const std::string& command_name),
+              (override));
   MOCK_METHOD(bool, initSe3Pose, (const std::string& command_name), (override));
   MOCK_METHOD(std::optional<SE3Pose>, se3Pose, (const std::string& command_name), (override));
   MOCK_METHOD(bool, initBooleanSelector, (const std::string& command_name), (override));

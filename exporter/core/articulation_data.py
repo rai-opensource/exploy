@@ -1,13 +1,12 @@
 # Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import copy
-import torch
-
-from exporter import ExportEnvIdsType
-from exporter.tensor_proxy import TensorProxy
 
 import isaaclab.utils.math as math_utils
+import torch
 from isaaclab.assets import Articulation, ArticulationData
+
+from .tensor_proxy import TensorProxy
 
 
 class ArticulationDataSource:
@@ -24,8 +23,9 @@ class ArticulationDataSource:
         self.device = articulation_data.device
 
         # Pose of the com of each body wrt the actor frame of the body.
-        self._coms_pos_b = articulation_data._coms_pos_b.clone()
-        self._coms_quat_b = articulation_data._coms_quat_b.clone()
+        # TODO: port fix back
+        self._coms_pos_b = articulation_data.body_com_pose_b.data[:, :, :3].clone()
+        self._coms_quat_b = articulation_data.body_com_pose_b[:, :, 3:7].clone()
 
         self._com_root_pos_b = self._coms_pos_b[:, 0]
         self._com_root_quat_b = self._coms_quat_b[:, 0]
@@ -118,7 +118,9 @@ class ArticulationDataSource:
         pose = torch.cat([self.root_pos_w, self.root_quat_w], dim=-1)
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
-            twist[:, 3:], math_utils.quat_apply(pose[:, 3:7], -self.com_pos_b[:, 0, :]), dim=-1
+            twist[:, 3:],
+            math_utils.quat_apply(pose[:, 3:7], -self.com_pos_b[:, 0, :]),
+            dim=-1,
         )
         return torch.cat([pose, twist], dim=-1)
 
@@ -653,31 +655,3 @@ class ArticulationDataSource:
     @property
     def default_fixed_tendon_limit(self) -> torch.Tensor:
         return self.default_fixed_tendon_pos_limits
-
-
-def articulation_data_to_dict(
-    source: ArticulationData | ArticulationDataSource,
-    env_id: ExportEnvIdsType,
-    device: str,
-) -> dict[str, torch.Tensor]:
-    return {
-        "pos_base_in_w": source.root_pos_w[env_id].to(device),
-        "world_Q_base": source.root_quat_w[env_id].to(device),
-        "lin_vel_base_in_base": source.root_lin_vel_b[env_id].to(device),
-        "ang_vel_base_in_base": source.root_ang_vel_b[env_id].to(device),
-        "joint_pos": source.joint_pos[env_id].to(device),
-        "joint_vel": source.joint_vel[env_id].to(device),
-    }
-
-
-def dict_to_articulation_data(
-    data: dict[str, torch.Tensor],
-    target: ArticulationData | ArticulationDataSource,
-    env_id: ExportEnvIdsType,
-) -> None:
-    target._body_pos_w[env_id, 0] = data["pos_base_in_w"]
-    target._body_quat_w[env_id, 0] = data["world_Q_base"]
-    target._root_lin_vel_b[env_id] = data["lin_vel_base_in_base"]
-    target._root_ang_vel_b[env_id] = data["ang_vel_base_in_base"]
-    target._joint_pos[env_id] = data["joint_pos"]
-    target._joint_vel[env_id] = data["joint_vel"]
