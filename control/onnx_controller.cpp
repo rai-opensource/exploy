@@ -17,7 +17,6 @@ OnnxRLController::OnnxRLController(
     operation::common::data_collection::DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {
   // Register all matchers
-  context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
   context_.registerMatcher(std::make_unique<JointPositionMatcher>());
   context_.registerMatcher(std::make_unique<JointVelocityMatcher>());
   context_.registerMatcher(std::make_unique<BasePositionMatcher>());
@@ -25,8 +24,11 @@ OnnxRLController::OnnxRLController(
   context_.registerMatcher(std::make_unique<BaseLinearVelocityMatcher>());
   context_.registerMatcher(std::make_unique<BaseAngularVelocityMatcher>());
   context_.registerMatcher(std::make_unique<SE2VelocityMatcher>());
+  context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
+  context_.registerMatcher(std::make_unique<IMUOrientationMatcher>());
   context_.registerMatcher(std::make_unique<RangeImageMatcher>());
   context_.registerMatcher(std::make_unique<DepthImageMatcher>());
+  context_.registerMatcher(std::make_unique<BodyPositionMatcher>());
   context_.registerMatcher(std::make_unique<BodyOrientationMatcher>());
   context_.registerMatcher(std::make_unique<CommandSE3PoseMatcher>());
   context_.registerMatcher(std::make_unique<CommandSE2VelocityMatcher>());

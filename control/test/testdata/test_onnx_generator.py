@@ -15,7 +15,7 @@ class TestModel(torch.nn.Module):
         self,
         joint_pos,
         joint_vel,
-        pos_base_in_w,
+        base_pos_in_w,
         world_Q_base,
         lin_vel_base_in_base,
         ang_vel_base_in_base,
@@ -34,37 +34,13 @@ class TestModel(torch.nn.Module):
         trail_scan_g,
         trail_scan_b,
         depth_image,
+        body_pos,
         body_quat,
         memory,
         step_count,
     ):
-        # use all inputs and ensure they are not optimized away
-        inputs = [
-            joint_pos,
-            joint_vel,
-            pos_base_in_w,
-            world_Q_base,
-            lin_vel_base_in_base,
-            ang_vel_base_in_base,
-            cmd_se2_vel,
-            cmd_se2_vel_with_range,
-            cmd_se3_pose,
-            cmd_boolean,
-            cmd_float,
-            imu_data_quat,
-            imu_data_ang_vel,
-            heightscan,
-            another_heightscan,
-            range_image,
-            trail_scan_height,
-            trail_scan_r,
-            trail_scan_g,
-            trail_scan_b,
-            depth_image,
-            body_quat,
-            memory,
-            step_count,
-        ]
+        # Collect all inputs (excluding self) and ensure they are not optimized away
+        inputs = [v for k, v in locals().items() if k != "self"]
 
         # Identity operations to keep them in the graph
         processed = [i * 1.0 for i in inputs]
@@ -101,21 +77,28 @@ def main():
     # Define dummy inputs
     joint_pos = torch.rand((1, 3), dtype=torch.float32)
     joint_vel = torch.rand((1, 3), dtype=torch.float32)
-    pos_base_in_w = torch.rand((1, 3), dtype=torch.float32)
-    world_Q_base = torch.rand((1, 4), dtype=torch.float32)
-    lin_vel_base_in_base = torch.rand((1, 3), dtype=torch.float32)
-    ang_vel_base_in_base = torch.rand((1, 3), dtype=torch.float32)
+
+    base_pos = torch.rand((1, 3), dtype=torch.float32)
+    base_orientation = torch.rand((1, 4), dtype=torch.float32)
+    base_lin_vel = torch.rand((1, 3), dtype=torch.float32)
+    base_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+
     se2_velocity_command = torch.rand((1, 3), dtype=torch.float32)
     se3_pose_command = torch.rand((1, 7), dtype=torch.float32)
     boolean_command = torch.tensor([[True]], dtype=torch.bool)
     float_command = torch.tensor([[3.14]], dtype=torch.float32)
+
     imu_data_quat = torch.rand((1, 4), dtype=torch.float32)
     imu_data_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+
     heightscan = torch.rand((1, 4), dtype=torch.float32)
     range_image = torch.rand((1, 4), dtype=torch.float32)
     depth_image = torch.rand((1, 4), dtype=torch.float32)
     trail_scan = torch.rand((1, 8), dtype=torch.float32)
+
+    body_pos = torch.rand((1, 3), dtype=torch.float32)
     body_quat = torch.rand((1, 4), dtype=torch.float32)
+
     memory = torch.rand((1, 2), dtype=torch.float32)
     step_count = torch.tensor([[42]], dtype=torch.int32)
 
@@ -127,19 +110,24 @@ def main():
     torch.onnx.export(
         model,
         (
+            # joints
             joint_pos,
             joint_vel,
-            pos_base_in_w,
-            world_Q_base,
-            lin_vel_base_in_base,
-            ang_vel_base_in_base,
+            # base
+            base_pos,
+            base_orientation,
+            base_lin_vel,
+            base_ang_vel,
+            # commands
             se2_velocity_command,
             se2_velocity_command,
             se3_pose_command,
             boolean_command,
             float_command,
+            # IMU
             imu_data_quat,
             imu_data_ang_vel,
+            # sensors
             heightscan,
             heightscan,
             range_image,
@@ -148,25 +136,34 @@ def main():
             trail_scan,  # g
             trail_scan,  # b
             depth_image,
+            # body
+            body_pos,
             body_quat,
+            # memory
             memory,
+            # step count
             step_count,
         ),
         output_path,
         input_names=[
-            "articulation.joint.pos",
-            "articulation.joint.vel",
-            "articulation.bodies.pelvis.pos_base_in_w",
-            "articulation.bodies.pelvis.world_Q_body",
-            "articulation.bodies.pelvis.lin_vel_base_in_base",
-            "articulation.bodies.pelvis.ang_vel_base_in_base",
-            "command.se2_velocity.vel",
-            "command.se2_velocity.vel_with_range",
-            "command.se3_pose.pose",
-            "command.boolean.selector",
-            "command.float.value",
-            "articulation.bodies.torso.world_Q_body",
-            "articulation.bodies.torso.ang_vel_body",
+            # joints
+            "obj.robot1.joint.pos",
+            "obj.robot1.joint.vel",
+            # base
+            "obj.robot1.base.body_pos_in_w",
+            "obj.robot1.base.world_Q_body",
+            "obj.robot1.base.lin_vel_body_in_body",
+            "obj.robot1.base.ang_vel_body_in_body",
+            # commands
+            "cmd.se2_velocity.vel",
+            "cmd.se2_velocity.vel_with_range",
+            "cmd.se3_pose.pose",
+            "cmd.boolean.selector",
+            "cmd.float.value",
+            # IMU
+            "sensor.imu.torso.world_Q_body",
+            "sensor.imu.pelvis.ang_vel_body",
+            # sensors
             "sensor.height_scanner.one.height",
             "sensor.height_scanner.two.height",
             "sensor.range_image.one",
@@ -175,9 +172,13 @@ def main():
             "sensor.height_scanner.trail.g",
             "sensor.height_scanner.trail.b",
             "sensor.depth_image.one",
-            "rigid_bodies.box.body_Q_body",
+            # body
+            "obj.box1.bodies.box.pos_body_in_w",
+            "obj.box1.bodies.box.world_Q_body",
+            # memory
             "memory.output.joint_targets.pos.in",
-            "step_count",
+            # step count
+            "ctx.step_count",
         ],
         output_names=[
             "output.joint_targets.pos",
@@ -243,8 +244,8 @@ def main():
     }
 
     command_metadata = {
-        "command.se2_velocity.vel": {},
-        "command.se2_velocity.vel_with_range": {
+        "cmd.se2_velocity.vel": {},
+        "cmd.se2_velocity.vel_with_range": {
             "ranges": {
                 "lin_vel_x": [-1.5, 1.5],
                 "lin_vel_y": [-0.75, 0.75],
@@ -258,10 +259,10 @@ def main():
     }
 
     articulation_metadata = {
-        "articulation.joint.pos": {
+        "obj.robot1.joint.pos": {
             "names": ["j1", "j2", "j3"],
         },
-        "articulation.joint.vel": {
+        "obj.robot1.joint.vel": {
             "names": ["j1", "j2", "j3"],
         },
     }

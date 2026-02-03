@@ -25,18 +25,6 @@ struct Output {
                      CommandInterface& command) = 0;
 };
 
-class IMUAngularVelocityInput : public Input {
- public:
-  IMUAngularVelocityInput(const std::string& key, const std::string& imu_name);
-  bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
-            const CommandInterface& command) override;
-
- private:
-  std::string imu_name_;
-  std::string key_;
-};
-
 class JointPositionInput : public Input {
  public:
   JointPositionInput(const std::string& key, const std::vector<std::string>& joint_names);
@@ -105,6 +93,30 @@ class BaseAngularVelocityInput : public Input {
   std::string key_;
 };
 
+class IMUAngularVelocityInput : public Input {
+ public:
+  IMUAngularVelocityInput(const std::string& key, const std::string& imu_name);
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
+            const CommandInterface& command) override;
+
+ private:
+  std::string imu_name_;
+  std::string key_;
+};
+
+class IMUOrientationInput : public Input {
+ public:
+  IMUOrientationInput(const std::string& key, const std::string& imu_name);
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
+            const CommandInterface& command) override;
+
+ private:
+  std::string imu_name_;
+  std::string key_;
+};
+
 class HeightScanInput : public Input {
  public:
   HeightScanInput(const std::string& key, const std::string& sensor_name,
@@ -148,6 +160,18 @@ class DepthImageInput : public Input {
 class BodyOrientationInput : public Input {
  public:
   BodyOrientationInput(const std::string& key, const std::string& body_name);
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
+            const CommandInterface& command) override;
+
+ private:
+  std::string key_;
+  std::string body_name_;
+};
+
+class BodyPositionInput : public Input {
+ public:
+  BodyPositionInput(const std::string& key, const std::string& body_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
             const CommandInterface& command) override;

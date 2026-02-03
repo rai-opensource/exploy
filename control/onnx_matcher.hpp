@@ -53,12 +53,7 @@ class GroupMatcher {
   std::unordered_map<std::string, GroupMatch> found_matches_;
 };
 
-class IMUAngularVelocityMatcher : public Matcher {
- public:
-  bool matches(const Match& maybe_match) override;
-  std::vector<std::unique_ptr<Input>> createInputs() const override;
-};
-
+// ---------------  Joint matchers --------------------------------
 class JointPositionMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -70,7 +65,9 @@ class JointVelocityMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
+// ---------------------------------------------------------------
 
+// ---------------  Base matchers --------------------------------
 class BasePositionMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -94,7 +91,9 @@ class BaseAngularVelocityMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
+// ---------------------------------------------------------------
 
+// ---------------  Output matchers --------------------------------
 class JointTargetMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -106,7 +105,9 @@ class SE2VelocityMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
+// ---------------------------------------------------------------
 
+// ---------------  Sensor matchers ------------------------------
 class HeightScanMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -129,12 +130,20 @@ class DepthImageMatcher : public Matcher {
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
-class BodyOrientationMatcher : public Matcher {
+class IMUAngularVelocityMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
+class IMUOrientationMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+// ---------------------------------------------------------------
+
+// ---------------  Command matchers ------------------------------
 class CommandSE3PoseMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -158,7 +167,23 @@ class CommandFloatMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
+// ---------------------------------------------------------------
 
+// ---------------  Body matchers --------------------------------
+class BodyPositionMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+class BodyOrientationMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+// ---------------------------------------------------------------
+
+// ---------------  Context matchers --------------------------------
 class MemoryMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
@@ -170,5 +195,6 @@ class StepCountMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
+// ---------------------------------------------------------------
 
 }  // namespace rai::cs::control::common::onnx

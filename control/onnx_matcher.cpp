@@ -11,27 +11,9 @@
 
 namespace rai::cs::control::common::onnx {
 
-bool IMUAngularVelocityMatcher::matches(const Match& maybe_match) {
-  std::regex pattern =
-      std::regex(fmt::format("articulation\\.bodies\\.({})\\.ang_vel_body", alphanumeric));
-  std::smatch match;
-  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 1) {
-    found_matches_[match[1].str()] = maybe_match;
-    return true;
-  }
-  return false;
-}
-
-std::vector<std::unique_ptr<Input>> IMUAngularVelocityMatcher::createInputs() const {
-  std::vector<std::unique_ptr<Input>> inputs;
-  for (const auto& [imu_name, found_match] : found_matches_) {
-    inputs.push_back(std::make_unique<IMUAngularVelocityInput>(found_match.name, imu_name));
-  }
-  return inputs;
-}
-
+// ---------------  Joint matchers --------------------------------
 bool JointPositionMatcher::matches(const Match& maybe_match) {
-  std::regex pattern = std::regex("articulation\\.joint\\.pos");
+  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.joint\\.pos", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -52,7 +34,7 @@ std::vector<std::unique_ptr<Input>> JointPositionMatcher::createInputs() const {
 }
 
 bool JointVelocityMatcher::matches(const Match& maybe_match) {
-  std::regex pattern = std::regex("articulation\\.joint\\.vel");
+  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.joint\\.vel", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -71,10 +53,11 @@ std::vector<std::unique_ptr<Input>> JointVelocityMatcher::createInputs() const {
   }
   return inputs;
 }
+// ---------------------------------------------------------------
 
+// ---------------  Base matchers --------------------------------
 bool BasePositionMatcher::matches(const Match& maybe_match) {
-  std::regex pattern =
-      std::regex(fmt::format("articulation\\.bodies\\.({})\\.pos_base_in_w", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.base\\.body_pos_in_w", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -91,8 +74,7 @@ std::vector<std::unique_ptr<Input>> BasePositionMatcher::createInputs() const {
 }
 
 bool BaseOrientationMatcher::matches(const Match& maybe_match) {
-  std::regex pattern =
-      std::regex(fmt::format("articulation\\.bodies\\.({})\\.world_Q_body", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.base\\.world_Q_body", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -110,7 +92,7 @@ std::vector<std::unique_ptr<Input>> BaseOrientationMatcher::createInputs() const
 
 bool BaseLinearVelocityMatcher::matches(const Match& maybe_match) {
   std::regex pattern =
-      std::regex(fmt::format("articulation\\.bodies\\.({})\\.lin_vel_base_in_base", alphanumeric));
+      std::regex(fmt::format("obj\\.({})\\.base\\.lin_vel_body_in_body", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -128,7 +110,7 @@ std::vector<std::unique_ptr<Input>> BaseLinearVelocityMatcher::createInputs() co
 
 bool BaseAngularVelocityMatcher::matches(const Match& maybe_match) {
   std::regex pattern =
-      std::regex(fmt::format("articulation\\.bodies\\.({})\\.ang_vel_base_in_base", alphanumeric));
+      std::regex(fmt::format("obj\\.({})\\.base\\.ang_vel_body_in_body", alphanumeric));
   if (std::regex_match(maybe_match.name, pattern)) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
@@ -143,7 +125,9 @@ std::vector<std::unique_ptr<Input>> BaseAngularVelocityMatcher::createInputs() c
   }
   return inputs;
 }
+// ---------------------------------------------------------------
 
+// ---------------  Output matchers --------------------------------
 bool JointTargetMatcher::matches(const Match& maybe_match) {
   std::regex pattern = std::regex(fmt::format("(output\\.joint_targets)\\.(pos|vel|effort)"));
   std::smatch match;
@@ -193,6 +177,44 @@ std::vector<std::unique_ptr<Output>> SE2VelocityMatcher::createOutputs() const {
     outputs.push_back(std::make_unique<SE2VelocityOutput>(match.name, maybe_metadata.value()));
   }
   return outputs;
+}
+// ---------------------------------------------------------------
+
+// ---------------  Sensor matchers ------------------------------
+bool IMUAngularVelocityMatcher::matches(const Match& maybe_match) {
+  std::regex pattern = std::regex(fmt::format("sensor\\.imu\\.({})\\.ang_vel_body", alphanumeric));
+  std::smatch match;
+  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 1) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> IMUAngularVelocityMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [imu_name, found_match] : found_matches_) {
+    inputs.push_back(std::make_unique<IMUAngularVelocityInput>(found_match.name, imu_name));
+  }
+  return inputs;
+}
+
+bool IMUOrientationMatcher::matches(const Match& maybe_match) {
+  std::regex pattern = std::regex(fmt::format("sensor\\.imu\\.({})\\.world_Q_body", alphanumeric));
+  std::smatch match;
+  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 1) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> IMUOrientationMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [imu_name, found_match] : found_matches_) {
+    inputs.push_back(std::make_unique<IMUOrientationInput>(found_match.name, imu_name));
+  }
+  return inputs;
 }
 
 bool HeightScanMatcher::matches(const Match& maybe_match) {
@@ -270,12 +292,34 @@ std::vector<std::unique_ptr<Input>> DepthImageMatcher::createInputs() const {
   }
   return inputs;
 }
+// ---------------------------------------------------------------
+
+// ---------------  Body matchers ------------------------------
+bool BodyPositionMatcher::matches(const Match& maybe_match) {
+  std::smatch match;
+  std::regex pattern = std::regex(
+      fmt::format("obj\\.({})\\.bodies\\.({})\\.pos_body_in_w", alphanumeric, alphanumeric));
+  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
+    found_matches_[match[2].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> BodyPositionMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [name, match] : found_matches_) {
+    inputs.push_back(std::make_unique<BodyPositionInput>(match.name, name));
+  }
+  return inputs;
+}
 
 bool BodyOrientationMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("rigid_bodies\\.({})\\.body_Q_body", alphanumeric));
-  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 1) {
-    found_matches_[match[1].str()] = maybe_match;
+  std::regex pattern = std::regex(
+      fmt::format("obj\\.({})\\.bodies\\.({})\\.world_Q_body", alphanumeric, alphanumeric));
+  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
+    found_matches_[match[2].str()] = maybe_match;
     return true;
   }
   return false;
@@ -288,10 +332,12 @@ std::vector<std::unique_ptr<Input>> BodyOrientationMatcher::createInputs() const
   }
   return inputs;
 }
+// ---------------------------------------------------------------
 
+// ---------------  Command matchers ------------------------------
 bool CommandSE3PoseMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("command\\.se3_pose\\.({})", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("cmd\\.se3_pose\\.({})", alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
     found_matches_[match[1].str()] = maybe_match;
     return true;
@@ -309,7 +355,7 @@ std::vector<std::unique_ptr<Input>> CommandSE3PoseMatcher::createInputs() const 
 
 bool CommandBooleanMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("command\\.boolean\\.({})", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("cmd\\.boolean\\.({})", alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
     found_matches_[match[1].str()] = maybe_match;
     return true;
@@ -327,7 +373,7 @@ std::vector<std::unique_ptr<Input>> CommandBooleanMatcher::createInputs() const 
 
 bool CommandFloatMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("command\\.float\\.({})", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("cmd\\.float\\.({})", alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
     found_matches_[match[1].str()] = maybe_match;
     return true;
@@ -345,7 +391,7 @@ std::vector<std::unique_ptr<Input>> CommandFloatMatcher::createInputs() const {
 
 bool CommandSE2VelocityMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("command\\.se2_velocity\\.({})", alphanumeric));
+  std::regex pattern = std::regex(fmt::format("cmd\\.se2_velocity\\.({})", alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
     found_matches_[match[1].str()] = maybe_match;
     return true;
@@ -365,7 +411,9 @@ std::vector<std::unique_ptr<Input>> CommandSE2VelocityMatcher::createInputs() co
   }
   return inputs;
 }
+// ---------------------------------------------------------------
 
+// ---------------  Context matcher ------------------------------
 bool MemoryMatcher::matches(const Match& maybe_match) {
   std::regex pattern = std::regex(fmt::format("memory\\.(.*)\\.(in|out)"));
   std::smatch match;
@@ -385,7 +433,7 @@ std::vector<std::unique_ptr<Output>> MemoryMatcher::createOutputs() const {
 }
 
 bool StepCountMatcher::matches(const Match& maybe_match) {
-  if (maybe_match.name == "step_count") {
+  if (maybe_match.name == "ctx.step_count") {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
   }
@@ -399,5 +447,6 @@ std::vector<std::unique_ptr<Input>> StepCountMatcher::createInputs() const {
   }
   return inputs;
 }
+// ---------------------------------------------------------------
 
 }  // namespace rai::cs::control::common::onnx

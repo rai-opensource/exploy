@@ -54,9 +54,7 @@ void copyToBuffer(const Quaternion& from, std::span<float> to) {
 // Implementation of IMUAngularVelocityInput methods
 IMUAngularVelocityInput::IMUAngularVelocityInput(const std::string& key,
                                                  const std::string& imu_name)
-    : key_(key), imu_name_(imu_name) {
-  key_ = std::format("articulation.bodies.{}.ang_vel_body", imu_name_);
-}
+    : key_(key), imu_name_(imu_name) {}
 
 bool IMUAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initImuAngularVelocityImu(imu_name_);
@@ -69,6 +67,23 @@ bool IMUAngularVelocityInput::read(OnnxRuntime& runtime, const RobotStateInterfa
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
   copyToBuffer(maybe_angvel.value(), maybe_buffer.value());
+  return true;
+}
+
+IMUOrientationInput::IMUOrientationInput(const std::string& key, const std::string& imu_name)
+    : key_(key), imu_name_(imu_name) {}
+
+bool IMUOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
+  return state.initImuOrientationW(imu_name_);
+}
+
+bool IMUOrientationInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                               const CommandInterface&) {
+  auto maybe_quaternion = state.imuOrientationW(imu_name_);
+  if (!maybe_quaternion.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_quaternion.value(), maybe_buffer.value());
   return true;
 }
 
@@ -381,23 +396,6 @@ bool DepthImageInput::read(OnnxRuntime& runtime, const RobotStateInterface& stat
   return true;
 }
 
-BodyOrientationInput::BodyOrientationInput(const std::string& key, const std::string& body_name)
-    : key_(key), body_name_(body_name) {}
-
-bool BodyOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBodyOrientationW(body_name_);
-}
-
-bool BodyOrientationInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
-                                const CommandInterface&) {
-  auto maybe_quaternion = state.bodyOrientationW(body_name_);
-  if (!maybe_quaternion.has_value()) return false;
-  auto maybe_buffer = runtime.inputBuffer<float>(key_);
-  if (!maybe_buffer.has_value()) return false;
-  copyToBuffer(maybe_quaternion.value(), maybe_buffer.value());
-  return true;
-}
-
 // Implementation of CommandSE3PoseInput methods
 CommandSE3PoseInput::CommandSE3PoseInput(const std::string& key, const std::string& command_name)
     : key_(key), command_name_(command_name) {}
@@ -466,6 +464,39 @@ bool CommandFloatInput::read(OnnxRuntime& runtime, const RobotStateInterface& st
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
   maybe_buffer.value()[0] = maybe_float.value();
+  return true;
+}
+
+BodyPositionInput::BodyPositionInput(const std::string& key, const std::string& body_name)
+    : key_(key), body_name_(body_name) {}
+
+bool BodyPositionInput::init(RobotStateInterface& state, CommandInterface&) {
+  return state.initBodyPositionW(body_name_);
+}
+bool BodyPositionInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                             const CommandInterface&) {
+  auto maybe_pos = state.bodyPositionW(body_name_);
+  if (!maybe_pos.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_pos.value(), maybe_buffer.value());
+  return true;
+}
+
+BodyOrientationInput::BodyOrientationInput(const std::string& key, const std::string& body_name)
+    : key_(key), body_name_(body_name) {}
+
+bool BodyOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
+  return state.initBodyOrientationW(body_name_);
+}
+
+bool BodyOrientationInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                                const CommandInterface&) {
+  auto maybe_quaternion = state.bodyOrientationW(body_name_);
+  if (!maybe_quaternion.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_quaternion.value(), maybe_buffer.value());
   return true;
 }
 

@@ -34,7 +34,7 @@ class OnnxComponentsTest : public ::testing::Test {
 TEST_F(OnnxComponentsTest, JointPositionInput_InitAndRead) {
   // Arrange
   std::vector<std::string> joint_names = {"joint1", "joint2", "joint3"};
-  JointPositionInput joint_input("articulation.joint.pos", joint_names);
+  JointPositionInput joint_input("obj.robot1.joint.pos", joint_names);
 
   // Test initialization
   EXPECT_CALL(state_mock_, initJointPosition("joint1")).WillOnce(Return(true));
@@ -52,7 +52,7 @@ TEST_F(OnnxComponentsTest, JointPositionInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitAndRead) {
-  BasePositionInput base_input("articulation.bodies.pelvis.pos_base_in_w");
+  BasePositionInput base_input("obj.robot1.base.body_pos_in_w");
 
   // Test successful initialization
   EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(true));
@@ -66,13 +66,13 @@ TEST_F(OnnxComponentsTest, BasePositionInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitFailure) {
-  BasePositionInput base_input("base_pos");
+  BasePositionInput base_input("obj.robot1.base.pos_body_in_w");
   EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(false));
   EXPECT_FALSE(base_input.init(state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BaseOrientationInput_InitAndRead) {
-  BaseOrientationInput base_input("articulation.bodies.pelvis.world_Q_body");
+  BaseOrientationInput base_input("obj.robot1.base.world_Q_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseQuatW()).WillOnce(Return(true));
@@ -86,7 +86,7 @@ TEST_F(OnnxComponentsTest, BaseOrientationInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BaseLinearVelocityInput_InitAndRead) {
-  BaseLinearVelocityInput base_input("articulation.bodies.pelvis.lin_vel_base_in_base");
+  BaseLinearVelocityInput base_input("obj.robot1.base.lin_vel_body_in_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
@@ -100,7 +100,7 @@ TEST_F(OnnxComponentsTest, BaseLinearVelocityInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BaseAngularVelocityInput_InitAndRead) {
-  BaseAngularVelocityInput base_input("articulation.bodies.pelvis.ang_vel_base_in_base");
+  BaseAngularVelocityInput base_input("obj.robot1.base.ang_vel_body_in_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
@@ -115,7 +115,7 @@ TEST_F(OnnxComponentsTest, BaseAngularVelocityInput_InitAndRead) {
 
 TEST_F(OnnxComponentsTest, JointVelocityInput_InitAndRead) {
   std::vector<std::string> joint_names = {"joint1", "joint2", "joint3"};
-  JointVelocityInput joint_input("articulation.joint.vel", joint_names);
+  JointVelocityInput joint_input("obj.robot1.joint.vel", joint_names);
 
   // Test initialization
   EXPECT_CALL(state_mock_, initJointVelocity("joint1")).WillOnce(Return(true));
@@ -132,7 +132,7 @@ TEST_F(OnnxComponentsTest, JointVelocityInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
-  BodyOrientationInput body_input("rigid_bodies.box.body_Q_body", "test_body");
+  BodyOrientationInput body_input("obj.box1.bodies.box.world_Q_body", "test_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBodyOrientationW("test_body")).WillOnce(Return(true));
@@ -147,10 +147,10 @@ TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
 
 TEST_F(OnnxComponentsTest, StepCountInput_WithRealRuntime) {
   // Arrange
-  StepCountInput step_input("step_count");
+  StepCountInput step_input("ctx.step_count");
 
   // Get initial buffer state
-  auto buffer = runtime.inputBuffer<int32_t>("step_count");
+  auto buffer = runtime.inputBuffer<int32_t>("ctx.step_count");
   ASSERT_TRUE(buffer.has_value()) << "step_count input should exist in test model";
 
   int32_t initial_value = buffer.value()[0];
