@@ -28,8 +28,10 @@ OnnxRLController::OnnxRLController(
   context_.registerMatcher(std::make_unique<RangeImageMatcher>());
   context_.registerMatcher(std::make_unique<DepthImageMatcher>());
   context_.registerMatcher(std::make_unique<BodyOrientationMatcher>());
-  context_.registerMatcher(std::make_unique<SE3PoseMatcher>());
+  context_.registerMatcher(std::make_unique<CommandSE3PoseMatcher>());
   context_.registerMatcher(std::make_unique<CommandSE2VelocityMatcher>());
+  context_.registerMatcher(std::make_unique<CommandBooleanMatcher>());
+  context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
   context_.registerMatcher(std::make_unique<StepCountMatcher>());
 
   context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());

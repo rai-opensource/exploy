@@ -16,7 +16,11 @@ class MockCommandInterface : public CommandInterface {
   MOCK_METHOD(std::optional<SE3Pose>, se3Pose, (const std::string& command_name),
               (const, override));
   MOCK_METHOD(bool, initBooleanSelector, (const std::string& command_name), (override));
-  MOCK_METHOD(std::optional<bool>, booleanSelector, (const std::string& command_name), (override));
+  MOCK_METHOD(std::optional<bool>, booleanSelector, (const std::string& command_name),
+              (const override));
+  MOCK_METHOD(bool, initFloatValue, (const std::string& command_name), (override));
+  MOCK_METHOD(std::optional<float>, floatValue, (const std::string& command_name),
+              (const override));
 };
 
 }  // namespace rai::cs::control::common::onnx

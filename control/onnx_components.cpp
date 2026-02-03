@@ -398,16 +398,16 @@ bool BodyOrientationInput::read(OnnxRuntime& runtime, const RobotStateInterface&
   return true;
 }
 
-// Implementation of SE3PoseInput methods
-SE3PoseInput::SE3PoseInput(const std::string& key, const std::string& command_name)
+// Implementation of CommandSE3PoseInput methods
+CommandSE3PoseInput::CommandSE3PoseInput(const std::string& key, const std::string& command_name)
     : key_(key), command_name_(command_name) {}
 
-bool SE3PoseInput::init(RobotStateInterface& state, CommandInterface& command) {
+bool CommandSE3PoseInput::init(RobotStateInterface& state, CommandInterface& command) {
   return command.initSe3Pose(command_name_);
 }
 
-bool SE3PoseInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
-                        const CommandInterface& command) {
+bool CommandSE3PoseInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                               const CommandInterface& command) {
   auto maybe_pose = command.se3Pose(command_name_);
   if (!maybe_pose.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
@@ -430,6 +430,42 @@ bool CommandSE2VelocityInput::init(RobotStateInterface& state, CommandInterface&
 
 bool CommandSE2VelocityInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
                                    const CommandInterface& command) {
+  return true;
+}
+
+// Implementation of CommandBooleanInput methods
+CommandBooleanInput::CommandBooleanInput(const std::string& key, const std::string& command_name)
+    : key_(key), command_name_(command_name) {}
+
+bool CommandBooleanInput::init(RobotStateInterface& state, CommandInterface& command) {
+  return command.initBooleanSelector(command_name_);
+}
+
+bool CommandBooleanInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                               const CommandInterface& command) {
+  auto maybe_bool = command.booleanSelector(command_name_);
+  if (!maybe_bool.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<bool>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  maybe_buffer.value()[0] = maybe_bool.value();
+  return true;
+}
+
+// Implementation of CommandFloatInput methods
+CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& command_name)
+    : key_(key), command_name_(command_name) {}
+
+bool CommandFloatInput::init(RobotStateInterface& state, CommandInterface& command) {
+  return command.initFloatValue(command_name_);
+}
+
+bool CommandFloatInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
+                             const CommandInterface& command) {
+  auto maybe_float = command.floatValue(command_name_);
+  if (!maybe_float.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  maybe_buffer.value()[0] = maybe_float.value();
   return true;
 }
 

@@ -289,7 +289,7 @@ std::vector<std::unique_ptr<Input>> BodyOrientationMatcher::createInputs() const
   return inputs;
 }
 
-bool SE3PoseMatcher::matches(const Match& maybe_match) {
+bool CommandSE3PoseMatcher::matches(const Match& maybe_match) {
   std::smatch match;
   std::regex pattern = std::regex(fmt::format("command\\.se3_pose\\.({})", alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
@@ -299,10 +299,46 @@ bool SE3PoseMatcher::matches(const Match& maybe_match) {
   return false;
 }
 
-std::vector<std::unique_ptr<Input>> SE3PoseMatcher::createInputs() const {
+std::vector<std::unique_ptr<Input>> CommandSE3PoseMatcher::createInputs() const {
   std::vector<std::unique_ptr<Input>> inputs;
   for (const auto& [name, match] : found_matches_) {
-    inputs.push_back(std::make_unique<SE3PoseInput>(match.name, name));
+    inputs.push_back(std::make_unique<CommandSE3PoseInput>(match.name, name));
+  }
+  return inputs;
+}
+
+bool CommandBooleanMatcher::matches(const Match& maybe_match) {
+  std::smatch match;
+  std::regex pattern = std::regex(fmt::format("command\\.boolean\\.({})", alphanumeric));
+  if (std::regex_match(maybe_match.name, match, pattern)) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> CommandBooleanMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [name, match] : found_matches_) {
+    inputs.push_back(std::make_unique<CommandBooleanInput>(match.name, name));
+  }
+  return inputs;
+}
+
+bool CommandFloatMatcher::matches(const Match& maybe_match) {
+  std::smatch match;
+  std::regex pattern = std::regex(fmt::format("command\\.float\\.({})", alphanumeric));
+  if (std::regex_match(maybe_match.name, match, pattern)) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> CommandFloatMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [name, match] : found_matches_) {
+    inputs.push_back(std::make_unique<CommandFloatInput>(match.name, name));
   }
   return inputs;
 }

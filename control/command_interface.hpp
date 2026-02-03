@@ -71,7 +71,7 @@ class CommandInterface {
     return std::nullopt;
   }
   /**
-   * @brief Initialize data source of a boolean selector.
+   * @brief Initialize data source of a boolean.
    *
    * Called once during initialization (usually non real-time).
    *
@@ -88,8 +88,29 @@ class CommandInterface {
    * @param command_name The name of the command.
    * @return The commanded bool.
    */
-  virtual std::optional<bool> booleanSelector(const std::string& command_name) {
+  virtual std::optional<bool> booleanSelector(const std::string& command_name) const {
     GENERIC_LOG_STREAM(ERROR, "booleanSelector() not implemented for command: " << command_name);
+    return std::nullopt;
+  }
+  /**
+   * @brief Initialize data source of a float.
+   *
+   * Called once during initialization (usually non real-time).
+   *
+   * @param command_name The name of the command.
+   */
+  virtual bool initFloatValue(const std::string& command_name) {
+    GENERIC_LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << command_name);
+    return false;
+  }
+  /**
+   * @brief Get commanded float value.
+   *
+   * @param command_name The name of the command.
+   * @return The commanded float.
+   */
+  virtual std::optional<float> floatValue(const std::string& command_name) const {
+    GENERIC_LOG_STREAM(ERROR, "floatValue() not implemented for command: " << command_name);
     return std::nullopt;
   }
 };

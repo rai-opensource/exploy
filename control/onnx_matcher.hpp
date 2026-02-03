@@ -135,13 +135,25 @@ class BodyOrientationMatcher : public Matcher {
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
-class SE3PoseMatcher : public Matcher {
+class CommandSE3PoseMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class CommandSE2VelocityMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+class CommandBooleanMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+class CommandFloatMatcher : public Matcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;

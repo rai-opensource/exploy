@@ -131,6 +131,8 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(command_mock_, initSe2Velocity("vel_with_range", HasRanges(kRanges)))
         .WillOnce(Return(true));
     EXPECT_CALL(command_mock_, initSe3Pose("pose")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initBooleanSelector("selector")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initFloatValue("value")).WillOnce(Return(true));
   }
 
   void ExpectSetOutput() {
@@ -181,6 +183,10 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(command_mock_, se2Velocity("vel")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(command_mock_, se2Velocity("vel_with_range")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(command_mock_, se3Pose("pose")).WillRepeatedly(Return(kSE3PoseData));
+    EXPECT_CALL(command_mock_, booleanSelector("selector"))
+        .WillRepeatedly(Return(std::make_optional(true)));
+    EXPECT_CALL(command_mock_, floatValue("value"))
+        .WillRepeatedly(Return(std::make_optional(1.23f)));
   }
 };
 

@@ -22,6 +22,8 @@ class TestModel(torch.nn.Module):
         cmd_se2_vel,
         cmd_se2_vel_with_range,
         cmd_se3_pose,
+        cmd_boolean,
+        cmd_float,
         imu_data_quat,
         imu_data_ang_vel,
         heightscan,
@@ -47,6 +49,8 @@ class TestModel(torch.nn.Module):
             cmd_se2_vel,
             cmd_se2_vel_with_range,
             cmd_se3_pose,
+            cmd_boolean,
+            cmd_float,
             imu_data_quat,
             imu_data_ang_vel,
             heightscan,
@@ -103,6 +107,8 @@ def main():
     ang_vel_base_in_base = torch.rand((1, 3), dtype=torch.float32)
     se2_velocity_command = torch.rand((1, 3), dtype=torch.float32)
     se3_pose_command = torch.rand((1, 7), dtype=torch.float32)
+    boolean_command = torch.tensor([[True]], dtype=torch.bool)
+    float_command = torch.tensor([[3.14]], dtype=torch.float32)
     imu_data_quat = torch.rand((1, 4), dtype=torch.float32)
     imu_data_ang_vel = torch.rand((1, 3), dtype=torch.float32)
     heightscan = torch.rand((1, 4), dtype=torch.float32)
@@ -130,6 +136,8 @@ def main():
             se2_velocity_command,
             se2_velocity_command,
             se3_pose_command,
+            boolean_command,
+            float_command,
             imu_data_quat,
             imu_data_ang_vel,
             heightscan,
@@ -155,6 +163,8 @@ def main():
             "command.se2_velocity.vel",
             "command.se2_velocity.vel_with_range",
             "command.se3_pose.pose",
+            "command.boolean.selector",
+            "command.float.value",
             "articulation.bodies.torso.world_Q_body",
             "articulation.bodies.torso.ang_vel_body",
             "sensor.height_scanner.one.height",

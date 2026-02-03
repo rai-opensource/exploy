@@ -157,9 +157,9 @@ class BodyOrientationInput : public Input {
   std::string body_name_;
 };
 
-class SE3PoseInput : public Input {
+class CommandSE3PoseInput : public Input {
  public:
-  SE3PoseInput(const std::string& key, const std::string& command_name);
+  CommandSE3PoseInput(const std::string& key, const std::string& command_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
             const CommandInterface& command) override;
@@ -181,6 +181,30 @@ class CommandSE2VelocityInput : public Input {
   std::string key_;
   std::string command_name_;
   metadata::SE2VelocityCommandMetadata metadata_;
+};
+
+class CommandBooleanInput : public Input {
+ public:
+  CommandBooleanInput(const std::string& key, const std::string& command_name);
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
+            const CommandInterface& command) override;
+
+ private:
+  std::string key_;
+  std::string command_name_;
+};
+
+class CommandFloatInput : public Input {
+ public:
+  CommandFloatInput(const std::string& key, const std::string& command_name);
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
+            const CommandInterface& command) override;
+
+ private:
+  std::string key_;
+  std::string command_name_;
 };
 
 class StepCountInput : public Input {
