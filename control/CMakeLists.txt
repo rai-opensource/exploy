@@ -64,14 +64,19 @@ add_custom_command(
     COMMENT "Generating test ONNX model..."
 )
 
-add_executable(onnx_controller_test test/onnx_controller_test.cpp test/onnx_components_test.cpp "${GEN_OUTPUT}")
-target_compile_definitions(onnx_controller_test PRIVATE
+add_executable(control_test
+    test/onnx_controller_test.cpp
+    test/onnx_components_test.cpp
+    test/onnx_context_test.cpp
+    "${GEN_OUTPUT}"
+)
+target_compile_definitions(control_test PRIVATE
     TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/testdata"
 )
-target_link_libraries(onnx_controller_test PRIVATE
+target_link_libraries(control_test PRIVATE
     onnx_controller
     GTest::gtest_main
     GTest::gmock
     fmt::fmt
 )
-add_test(NAME onnx_controller_test COMMAND onnx_controller_test)
+add_test(NAME control_test COMMAND control_test)
