@@ -68,6 +68,7 @@ add_executable(control_test
     test/onnx_controller_test.cpp
     test/onnx_components_test.cpp
     test/onnx_context_test.cpp
+    test/onnx_runtime_test.cpp
     "${GEN_OUTPUT}"
 )
 target_compile_definitions(control_test PRIVATE

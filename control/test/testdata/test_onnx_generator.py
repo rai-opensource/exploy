@@ -43,6 +43,8 @@ INPUT_NAMES = [
     "memory.output.joint_targets.pos.in",
     # step count
     "ctx.step_count",
+    # custom extensible data for testing
+    "custom.extensible_data",
 ]
 
 OUTPUT_NAMES = [
@@ -58,7 +60,7 @@ OUTPUT_NAMES = [
 # ========== Model Definition ==========
 
 
-class TestModel(torch.nn.Module):
+class FullTestModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -89,6 +91,7 @@ class TestModel(torch.nn.Module):
         body_quat,
         memory,
         step_count,
+        custom_extensible_data,
     ):
         # Collect all inputs (excluding self) and ensure they are not optimized away
         inputs = [v for k, v in locals().items() if k != "self"]
@@ -174,6 +177,11 @@ def get_sensor_metadata() -> dict:
             "offset_x": 0.0,
             "offset_y": 0.0,
         },
+        "custom.extensible_data": {
+            "data_type": "extensible",
+            "description": "Custom extensible data for testing user extensions",
+            "dimension": 3,
+        },
     }
 
 
@@ -249,6 +257,9 @@ def create_dummy_inputs() -> tuple:
     memory = torch.rand((1, 2), dtype=torch.float32)
     step_count = torch.tensor([[42]], dtype=torch.int32)
 
+    # Custom extensible data
+    custom_extensible_data = torch.rand((1, 3), dtype=torch.float32)
+
     return (
         # joints
         joint_pos,
@@ -283,6 +294,8 @@ def create_dummy_inputs() -> tuple:
         memory,
         # step count
         step_count,
+        # custom extensible data
+        custom_extensible_data,
     )
 
 
@@ -296,9 +309,11 @@ def add_metadata(path: str, metadata: dict):
     onnx.save(onnx_model, path)
 
 
-def export_model(output_path: str):
+def export_model(data_dir: str):
     """Exports the test model to ONNX format with metadata."""
-    model = TestModel()
+    output_path = os.path.join(data_dir, "test_export.onnx")
+
+    model = FullTestModel()
     model.eval()  # Set to evaluation mode before export
     dummy_inputs = create_dummy_inputs()
 
@@ -322,17 +337,55 @@ def export_model(output_path: str):
     add_metadata(output_path, all_metadata)
 
 
+class SimpleTestModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, float_input, int_input, bool_input):
+        # Simple pass-through model that just forwards inputs to outputs
+        float_output = float_input * 2.0  # Simple transformation
+        int_output = int_input + 1  # Simple transformation
+        bool_output = torch.logical_not(bool_input)  # Simple transformation
+
+        return float_output, int_output, bool_output
+
+
+def export_simple_model(data_dir: str):
+    """Export the simple test model to ONNX format with metadata."""
+    output_path_simple = os.path.join(data_dir, "test_simple.onnx")
+    simple_model = SimpleTestModel()
+
+    # Create test inputs with different types
+    float_input = torch.tensor([[1.5, 2.5, 3.5]], dtype=torch.float32)
+    int_input = torch.tensor([[10, 20, 30]], dtype=torch.int32)
+    bool_input = torch.tensor([[True, False, True]], dtype=torch.bool)
+
+    torch.onnx.export(
+        simple_model,
+        (float_input, int_input, bool_input),
+        output_path_simple,
+        input_names=["float_input", "int_input", "bool_input"],
+        output_names=["float_output", "int_output", "bool_output"],
+    )
+
+    # Add simple metadata to the simple test model
+    simple_metadata = {
+        "model_version": "1.0",
+        "model_type": "simple_test",
+    }
+
+    add_metadata(output_path_simple, simple_metadata)
+
+
 # ========== Main ==========
 
 
 def main():
     """Main entry point for generating test ONNX model."""
     data_dir = os.path.dirname(os.path.abspath(__file__))
-    output_path = (
-        sys.argv[1] if len(sys.argv) > 1 else os.path.join(data_dir, "test.onnx")
-    )
 
-    export_model(output_path)
+    export_simple_model(data_dir)
+    export_model(data_dir)
 
 
 if __name__ == "__main__":
