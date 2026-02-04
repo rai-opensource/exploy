@@ -32,6 +32,7 @@ def evaluate(
 
     Args:
         env: The environment to run the evaluation in.
+        context_manager: The context manager handling inputs and outputs.
         session_wrapper: An ONNX session wrapper.
         num_steps: The number of steps to run the evaluation for.
         observations: The initial observations. If None, the environment is reset. Defaults to None.
@@ -66,7 +67,9 @@ def evaluate(
         # We always use the previous ONNX memory outputs as inputs to the next ONNX inference.
         memory_components = context_manager.get_memory_components()
         for memory in memory_components:
-            onnx_inputs[memory.input_name] = session_wrapper.get_output_value(memory.output_name)
+            onnx_inputs[memory.input_name] = session_wrapper.get_output_value(
+                memory.output_name
+            )
         onnx_inputs["step_count"] = np.array([step_ctr], dtype=np.int32)
         session_wrapper(**onnx_inputs)
 
@@ -109,7 +112,9 @@ def evaluate(
             None
             if session_wrapper._results is None
             else {
-                out_name: torch.from_numpy(session_wrapper.get_output_value(out_name)).clone()
+                out_name: torch.from_numpy(
+                    session_wrapper.get_output_value(out_name)
+                ).clone()
                 for out_name in context_manager.get_output_names()
             }
         )
@@ -137,8 +142,12 @@ def evaluate(
 
         # Get observations and actions. Needs to be called before env.step() to get them
         # from the full model.
-        ort_observations = torch.from_numpy(session_wrapper.get_output_value("obs")).clone()
-        ort_actions = torch.from_numpy(session_wrapper.get_output_value("actions")).clone()
+        ort_observations = torch.from_numpy(
+            session_wrapper.get_output_value("obs")
+        ).clone()
+        ort_actions = torch.from_numpy(
+            session_wrapper.get_output_value("actions")
+        ).clone()
 
         # Get the environment's outputs.
         env_outputs = {

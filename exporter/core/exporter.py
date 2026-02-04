@@ -4,13 +4,13 @@ import copy
 import datetime
 import json
 import os
-import pathlib
 from enum import Enum
 
 import onnx
 import torch
 
 from exporter.utils.onnx import construct_decimation_wrapper
+from exporter.utils.paths import prepare_onnx_paths
 
 from .exportable_environment import ExportableEnvironment
 
@@ -175,7 +175,9 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                     #     command_term._update_command()
 
                     # Compute observations.
-                    observations = self._env.compute_observations(device=self._export_device)
+                    observations = self._env.compute_observations(
+                        device=self._export_device
+                    )
 
                     # Compute actions.
                     actions = self.actor(self.normalizer(observations))
@@ -238,28 +240,24 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             verbose=True,
         )
 
-        path = pathlib.Path(onnx_path)
-        ext = ".onnx"
-        file_name = pathlib.Path(onnx_file_name)
-        if file_name.suffix != ext:
-            file_name = file_name.with_suffix(ext)
-        debug_path = path / "debug"
-        debug_path.mkdir(parents=True, exist_ok=True)
-
-        onnx_file_path_default = str(debug_path / f"{file_name.stem}_default{ext}")
-        onnx_file_path_process_actions = str(debug_path / f"{file_name.stem}_process_actions{ext}")
+        # Prepare all export paths
+        export_paths = prepare_onnx_paths(
+            output_dir=onnx_path,
+            filename=onnx_file_name,
+            debug_suffixes=["default", "process_actions"],
+        )
 
         self._export_device = export_device
 
         for mode, file_path in (
-            (ExportMode.ProcessActions, onnx_file_path_process_actions),
-            (ExportMode.Default, onnx_file_path_default),
+            (ExportMode.ProcessActions, export_paths.get_debug_path("process_actions")),
+            (ExportMode.Default, export_paths.get_debug_path("default")),
         ):
             self.export_mode = mode
             torch.onnx.export(
                 self,
                 input_values,
-                file_path,
+                str(file_path),
                 export_params=True,
                 opset_version=self._opset_version,
                 verbose=self.verbose,
@@ -268,17 +266,16 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             )
 
         wrapper_model = construct_decimation_wrapper(
-            model_a=onnx.load(onnx_file_path_default),
-            model_b=onnx.load(onnx_file_path_process_actions),
+            model_a=onnx.load(str(export_paths.get_debug_path("default"))),
+            model_b=onnx.load(str(export_paths.get_debug_path("process_actions"))),
             decimation=self._env.decimation,
             opset_version=self._opset_version,
             ir_version=self._ir_version,
         )
-        onnx_file_path = str(path / file_name)
-        onnx.save(wrapper_model, onnx_file_path)
+        onnx.save(wrapper_model, str(export_paths.main))
 
         # Load the ONNX model to add metadata to it.
-        onnx_model = onnx.load(onnx_file_path)
+        onnx_model = onnx.load(str(export_paths.main))
 
         # Model data, including wandb link (if available).
         meta = onnx_model.metadata_props.add()
@@ -303,9 +300,9 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             meta.value = json.dumps(value)
 
         # Save the modified model.
-        onnx.save(onnx_model, onnx_file_path)
+        onnx.save(onnx_model, str(export_paths.main))
 
         # Copy metadata to decimation model.
-        onnx_default_model = onnx.load(onnx_file_path_default)
+        onnx_default_model = onnx.load(str(export_paths.get_debug_path("default")))
         onnx_default_model.metadata_props.extend(onnx_model.metadata_props)
-        onnx.save(onnx_default_model, onnx_file_path_default)
+        onnx.save(onnx_default_model, str(export_paths.get_debug_path("default")))

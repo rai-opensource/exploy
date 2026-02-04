@@ -1463,7 +1463,7 @@ packages:
 - pypi: ./exporter/frameworks/isaaclab
   name: exporter-isaaclab
   version: 0.1.0
-  sha256: 273da9ef32ae3cc07f5c82a6b45fe2c726475a9b3cc94ef288b02b94cdcbdac6
+  sha256: de94b2eae8ed62b7a8827314afddb4b474865551050962605d3713656ef3ac66
   requires_dist:
   - torch
   - numpy

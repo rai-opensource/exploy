@@ -1,11 +1,16 @@
-
+# Pixi & Build
 .pixi/
 build/
 
+# python
 __pycache__/
 .pytest_cache/
-
-IsaacLab/
-*.onnx
+.ruff_cache/
+dist/
 *.egg-info
 *.whl
+
+# IsaacLab & ONNX
+IsaacLab/
+*.onnx
+*.onnx.data

@@ -4,6 +4,8 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
+from exporter.utils.paths import prepare_onnx_paths
+
 
 class SessionWrapper:
     """Manage a torch Module and its associated ONNX inference session."""
@@ -23,31 +25,32 @@ class SessionWrapper:
             policy: A `torch.nn.Module` representing the actor.
             optimize: If true, optimize the ONNX graph, save it to file, and use it for inference.
         """
-        # Check if the file name includes the extension.
-        expected_extension = ".onnx"
-        onnx_file_name = pathlib.Path(onnx_file_name)
-        if onnx_file_name.suffix != expected_extension:
-            onnx_file_name = onnx_file_name.with_suffix(expected_extension)
+        # Prepare file paths
+        session_paths = prepare_onnx_paths(
+            output_dir=onnx_folder,
+            filename=onnx_file_name,
+            debug_suffixes=["optimized"],
+        )
 
         sess_options = None
 
         # If required, optimize the computational graph.
         if optimize:
             sess_options = ort.SessionOptions()
-            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+            sess_options.graph_optimization_level = (
+                ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+            )
             # Setting `optimized_model_filepath` tells ONNX to store the optimized graph to a file.
             # This additional optimized ONNX file is useful for inspection with Netron (see https://github.com/lutzroeder/netron),
             # since the computational graph is optimized and cleaned up.
             # The optimization of the computational graph depends on additional features in ONNX and version control of
             # the ONNX dependencies, which are not correctly managed in control. For this reason, this file
             # is to be used, at the moment, only for debugging.
-            onnx_debug_path = onnx_folder / "debug"
-            onnx_debug_path.mkdir(parents=True, exist_ok=True)
             sess_options.optimized_model_filepath = str(
-                onnx_debug_path / f"{onnx_file_name.stem}_optimized{expected_extension}"
+                session_paths.get_debug_path("optimized")
             )
 
-        self._onnx_file_path = onnx_folder / onnx_file_name
+        self._onnx_file_path = session_paths.main
         session = ort.InferenceSession(
             str(self._onnx_file_path),
             sess_options=sess_options,

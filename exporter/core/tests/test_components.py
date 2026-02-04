@@ -20,7 +20,6 @@ class TestInput:
         inp = Input(
             name="test_input",
             get_from_env_cb=getter,
-            set_to_env_cb=lambda x: None,
             metadata={"unit": "radians"},
         )
 
@@ -33,38 +32,28 @@ class TestInput:
         inp = Input(
             name="test",
             get_from_env_cb=lambda: data,
-            set_to_env_cb=lambda x: None,
         )
 
         numpy_data = inp.input_data_numpy
         assert isinstance(numpy_data, np.ndarray)
         assert np.array_equal(numpy_data, data.numpy())
 
-    def test_input_read_write(self):
-        """Test reading and writing input data."""
-        initial_data = torch.tensor([1.0, 2.0, 3.0])
-        stored = {"value": initial_data}
+    def test_input_read(self):
+        """Test reading input data."""
+        stored = {"value": torch.tensor([1.0, 2.0, 3.0])}
 
         def getter():
             return stored["value"]
 
-        def setter(value):
-            stored["value"] = value
-
         inp = Input(
             name="test",
             get_from_env_cb=getter,
-            set_to_env_cb=setter,
         )
 
-        # Modify stored data
-        stored["value"] = torch.tensor([7.0, 8.0, 9.0])
+        # Initial data should be captured on creation
+        assert torch.equal(inp.input_data, torch.tensor([1.0, 2.0, 3.0]))
 
-        # Write initial data to environment
-        inp.write()
-        assert torch.equal(stored["value"], initial_data)
-
-        # Read from environment
+        # Read from environment after data changes
         stored["value"] = torch.tensor([10.0, 11.0, 12.0])
         inp.read()
         assert torch.equal(inp.input_data, stored["value"])
@@ -113,13 +102,9 @@ class TestMemory:
         def getter():
             return data
 
-        def setter(value):
-            pass
-
         mem = Memory(
             name="actions",
             get_from_env_cb=getter,
-            set_to_env_cb=setter,
         )
 
         assert mem.input_name == "memory.actions.in"
@@ -132,7 +117,6 @@ class TestMemory:
         mem = Memory(
             name="actions",
             get_from_env_cb=lambda: torch.zeros(3),
-            set_to_env_cb=lambda x: None,
         )
 
         # Test io_name_to_name
@@ -151,7 +135,6 @@ class TestGroup:
         inp1 = Input(
             name="input1",
             get_from_env_cb=lambda: torch.zeros(3),
-            set_to_env_cb=lambda x: None,
         )
         out1 = Output(name="output1", get_from_env_cb=lambda: torch.zeros(2))
 
@@ -170,7 +153,6 @@ class TestGroup:
         inp = Input(
             name="joint_pos",
             get_from_env_cb=lambda: torch.zeros(12),
-            set_to_env_cb=lambda x: None,
         )
         out = Output(name="joint_targets", get_from_env_cb=lambda: torch.zeros(12))
 

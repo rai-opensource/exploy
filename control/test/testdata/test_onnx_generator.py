@@ -7,6 +7,57 @@ import onnx
 import torch
 
 
+# ========== Constants ==========
+
+INPUT_NAMES = [
+    # joints
+    "obj.robot1.joint.pos",
+    "obj.robot1.joint.vel",
+    # base
+    "obj.robot1.base.body_pos_in_w",
+    "obj.robot1.base.world_Q_body",
+    "obj.robot1.base.lin_vel_body_in_body",
+    "obj.robot1.base.ang_vel_body_in_body",
+    # commands
+    "cmd.se2_velocity.vel",
+    "cmd.se2_velocity.vel_with_range",
+    "cmd.se3_pose.pose",
+    "cmd.boolean.selector",
+    "cmd.float.value",
+    # IMU
+    "sensor.imu.torso.world_Q_body",
+    "sensor.imu.pelvis.ang_vel_body",
+    # sensors
+    "sensor.height_scanner.one.height",
+    "sensor.height_scanner.two.height",
+    "sensor.range_image.one",
+    "sensor.height_scanner.trail.height",
+    "sensor.height_scanner.trail.r",
+    "sensor.height_scanner.trail.g",
+    "sensor.height_scanner.trail.b",
+    "sensor.depth_image.one",
+    # body
+    "obj.box1.bodies.box.pos_body_in_w",
+    "obj.box1.bodies.box.world_Q_body",
+    # memory
+    "memory.output.joint_targets.pos.in",
+    # step count
+    "ctx.step_count",
+]
+
+OUTPUT_NAMES = [
+    "output.joint_targets.pos",
+    "output.joint_targets.vel",
+    "output.joint_targets.effort",
+    "output.se2_velocity",
+    "actions",
+    "memory.output.joint_targets.pos.out",
+]
+
+
+# ========== Model Definition ==========
+
+
 class TestModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -64,133 +115,12 @@ class TestModel(torch.nn.Module):
         )
 
 
-def add_metadata(path: str, metadata: dict):
-    onnx_model = onnx.load(path)
-    for key, val in metadata.items():
-        meta = onnx_model.metadata_props.add()
-        meta.key = key
-        meta.value = json.dumps(val)
-    onnx.save(onnx_model, path)
+# ========== Metadata Definitions ==========
 
 
-def main():
-    # Define dummy inputs
-    joint_pos = torch.rand((1, 3), dtype=torch.float32)
-    joint_vel = torch.rand((1, 3), dtype=torch.float32)
-
-    base_pos = torch.rand((1, 3), dtype=torch.float32)
-    base_orientation = torch.rand((1, 4), dtype=torch.float32)
-    base_lin_vel = torch.rand((1, 3), dtype=torch.float32)
-    base_ang_vel = torch.rand((1, 3), dtype=torch.float32)
-
-    se2_velocity_command = torch.rand((1, 3), dtype=torch.float32)
-    se3_pose_command = torch.rand((1, 7), dtype=torch.float32)
-    boolean_command = torch.tensor([[True]], dtype=torch.bool)
-    float_command = torch.tensor([[3.14]], dtype=torch.float32)
-
-    imu_data_quat = torch.rand((1, 4), dtype=torch.float32)
-    imu_data_ang_vel = torch.rand((1, 3), dtype=torch.float32)
-
-    heightscan = torch.rand((1, 4), dtype=torch.float32)
-    range_image = torch.rand((1, 4), dtype=torch.float32)
-    depth_image = torch.rand((1, 4), dtype=torch.float32)
-    trail_scan = torch.rand((1, 8), dtype=torch.float32)
-
-    body_pos = torch.rand((1, 3), dtype=torch.float32)
-    body_quat = torch.rand((1, 4), dtype=torch.float32)
-
-    memory = torch.rand((1, 2), dtype=torch.float32)
-    step_count = torch.tensor([[42]], dtype=torch.int32)
-
-    data_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Store model
-    output_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(data_dir, "test.onnx")
-    model = TestModel()
-    torch.onnx.export(
-        model,
-        (
-            # joints
-            joint_pos,
-            joint_vel,
-            # base
-            base_pos,
-            base_orientation,
-            base_lin_vel,
-            base_ang_vel,
-            # commands
-            se2_velocity_command,
-            se2_velocity_command,
-            se3_pose_command,
-            boolean_command,
-            float_command,
-            # IMU
-            imu_data_quat,
-            imu_data_ang_vel,
-            # sensors
-            heightscan,
-            heightscan,
-            range_image,
-            trail_scan,  # height
-            trail_scan,  # r
-            trail_scan,  # g
-            trail_scan,  # b
-            depth_image,
-            # body
-            body_pos,
-            body_quat,
-            # memory
-            memory,
-            # step count
-            step_count,
-        ),
-        output_path,
-        input_names=[
-            # joints
-            "obj.robot1.joint.pos",
-            "obj.robot1.joint.vel",
-            # base
-            "obj.robot1.base.body_pos_in_w",
-            "obj.robot1.base.world_Q_body",
-            "obj.robot1.base.lin_vel_body_in_body",
-            "obj.robot1.base.ang_vel_body_in_body",
-            # commands
-            "cmd.se2_velocity.vel",
-            "cmd.se2_velocity.vel_with_range",
-            "cmd.se3_pose.pose",
-            "cmd.boolean.selector",
-            "cmd.float.value",
-            # IMU
-            "sensor.imu.torso.world_Q_body",
-            "sensor.imu.pelvis.ang_vel_body",
-            # sensors
-            "sensor.height_scanner.one.height",
-            "sensor.height_scanner.two.height",
-            "sensor.range_image.one",
-            "sensor.height_scanner.trail.height",
-            "sensor.height_scanner.trail.r",
-            "sensor.height_scanner.trail.g",
-            "sensor.height_scanner.trail.b",
-            "sensor.depth_image.one",
-            # body
-            "obj.box1.bodies.box.pos_body_in_w",
-            "obj.box1.bodies.box.world_Q_body",
-            # memory
-            "memory.output.joint_targets.pos.in",
-            # step count
-            "ctx.step_count",
-        ],
-        output_names=[
-            "output.joint_targets.pos",
-            "output.joint_targets.vel",
-            "output.joint_targets.effort",
-            "output.se2_velocity",
-            "actions",
-            "memory.output.joint_targets.pos.out",
-        ],
-    )
-
-    output_metadata = {
+def get_output_metadata() -> dict:
+    """Returns metadata for model outputs."""
+    return {
         "output.joint_targets": {
             "names": ["j1", "j2"],
             "stiffness": [1.0, 2.0],
@@ -201,7 +131,10 @@ def main():
         },
     }
 
-    sensor_metadata = {
+
+def get_sensor_metadata() -> dict:
+    """Returns metadata for sensor inputs."""
+    return {
         "sensor.height_scanner.one": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
@@ -243,7 +176,10 @@ def main():
         },
     }
 
-    command_metadata = {
+
+def get_command_metadata() -> dict:
+    """Returns metadata for command inputs."""
+    return {
         "cmd.se2_velocity.vel": {},
         "cmd.se2_velocity.vel_with_range": {
             "ranges": {
@@ -254,11 +190,10 @@ def main():
         },
     }
 
-    env_metadata = {
-        "update_rate": 10.0,
-    }
 
-    articulation_metadata = {
+def get_articulation_metadata() -> dict:
+    """Returns metadata for articulation inputs."""
+    return {
         "obj.robot1.joint.pos": {
             "names": ["j1", "j2", "j3"],
         },
@@ -267,10 +202,137 @@ def main():
         },
     }
 
-    add_metadata(
-        output_path,
-        env_metadata | output_metadata | command_metadata | sensor_metadata | articulation_metadata,
+
+def get_env_metadata() -> dict:
+    """Returns metadata for environment configuration."""
+    return {
+        "update_rate": 10.0,
+    }
+
+
+# ========== Helper Functions ==========
+
+
+def create_dummy_inputs() -> tuple:
+    """Creates dummy input tensors for ONNX export."""
+    # Joint inputs
+    joint_pos = torch.rand((1, 3), dtype=torch.float32)
+    joint_vel = torch.rand((1, 3), dtype=torch.float32)
+
+    # Base state inputs
+    base_pos = torch.rand((1, 3), dtype=torch.float32)
+    base_orientation = torch.rand((1, 4), dtype=torch.float32)
+    base_lin_vel = torch.rand((1, 3), dtype=torch.float32)
+    base_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+
+    # Command inputs
+    se2_velocity_command = torch.rand((1, 3), dtype=torch.float32)
+    se3_pose_command = torch.rand((1, 7), dtype=torch.float32)
+    boolean_command = torch.tensor([[True]], dtype=torch.bool)
+    float_command = torch.tensor([[3.14]], dtype=torch.float32)
+
+    # IMU inputs
+    imu_data_quat = torch.rand((1, 4), dtype=torch.float32)
+    imu_data_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+
+    # Sensor inputs
+    heightscan = torch.rand((1, 4), dtype=torch.float32)
+    range_image = torch.rand((1, 4), dtype=torch.float32)
+    depth_image = torch.rand((1, 4), dtype=torch.float32)
+    trail_scan = torch.rand((1, 8), dtype=torch.float32)
+
+    # Body inputs
+    body_pos = torch.rand((1, 3), dtype=torch.float32)
+    body_quat = torch.rand((1, 4), dtype=torch.float32)
+
+    # Memory and state
+    memory = torch.rand((1, 2), dtype=torch.float32)
+    step_count = torch.tensor([[42]], dtype=torch.int32)
+
+    return (
+        # joints
+        joint_pos,
+        joint_vel,
+        # base
+        base_pos,
+        base_orientation,
+        base_lin_vel,
+        base_ang_vel,
+        # commands
+        se2_velocity_command,
+        se2_velocity_command,
+        se3_pose_command,
+        boolean_command,
+        float_command,
+        # IMU
+        imu_data_quat,
+        imu_data_ang_vel,
+        # sensors
+        heightscan,
+        heightscan,
+        range_image,
+        trail_scan,  # height
+        trail_scan,  # r
+        trail_scan,  # g
+        trail_scan,  # b
+        depth_image,
+        # body
+        body_pos,
+        body_quat,
+        # memory
+        memory,
+        # step count
+        step_count,
     )
+
+
+def add_metadata(path: str, metadata: dict):
+    """Adds metadata properties to an ONNX model."""
+    onnx_model = onnx.load(path)
+    for key, val in metadata.items():
+        meta = onnx_model.metadata_props.add()
+        meta.key = key
+        meta.value = json.dumps(val)
+    onnx.save(onnx_model, path)
+
+
+def export_model(output_path: str):
+    """Exports the test model to ONNX format with metadata."""
+    model = TestModel()
+    model.eval()  # Set to evaluation mode before export
+    dummy_inputs = create_dummy_inputs()
+
+    torch.onnx.export(
+        model,
+        dummy_inputs,
+        output_path,
+        input_names=INPUT_NAMES,
+        output_names=OUTPUT_NAMES,
+    )
+
+    # Combine all metadata
+    all_metadata = (
+        get_env_metadata()
+        | get_output_metadata()
+        | get_command_metadata()
+        | get_sensor_metadata()
+        | get_articulation_metadata()
+    )
+
+    add_metadata(output_path, all_metadata)
+
+
+# ========== Main ==========
+
+
+def main():
+    """Main entry point for generating test ONNX model."""
+    data_dir = os.path.dirname(os.path.abspath(__file__))
+    output_path = (
+        sys.argv[1] if len(sys.argv) > 1 else os.path.join(data_dir, "test.onnx")
+    )
+
+    export_model(output_path)
 
 
 if __name__ == "__main__":
