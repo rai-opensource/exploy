@@ -10,15 +10,16 @@ namespace rai::cs::control::common::onnx {
 namespace {
 
 template <typename T>
-void copyToBuffer(const std::span<T>& from, std::span<T> to) {
+void copyToBuffer(std::span<const T> from, std::span<T> to) {
   assert(to.size() == from.size() && "Buffer size must match input size.");
   std::copy(from.begin(), from.end(), to.begin());
 }
 
-void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
+template <typename T, typename U>
+void copyToBuffer(std::span<const T> from, std::span<U> to) {
   assert(to.size() == from.size() && "Buffer size must match input size.");
-  std::transform(from.begin(), from.end(), to.begin(), [](double val) {
-    return static_cast<float>(val);
+  std::transform(from.begin(), from.end(), to.begin(), [](T val) {
+    return static_cast<U>(val);
   });
 }
 
@@ -48,6 +49,25 @@ void copyToBuffer(const Quaternion& from, std::span<float> to) {
   to[2] = static_cast<float>(from.y());
   to[3] = static_cast<float>(from.z());
 }
+
+void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
+  assert(to.size() == from.size() && "Buffer size must match input size.");
+  std::transform(from.begin(), from.end(), to.begin(), [](double val) {
+    return static_cast<float>(val);
+  });
+}
+
+// void copyToBuffer(std::span<double> from, std::span<float> to) {
+//   assert(to.size() == from.size() && "Buffer size must match input size.");
+//   std::transform(from.begin(), from.end(), to.begin(), [](double val) {
+//     return static_cast<float>(val);
+//   });
+// }
+
+// void copyToBuffer(std::span<float> from, std::span<float> to) {
+//   assert(to.size() == from.size() && "Buffer size must match input size.");
+//   std::copy(from.begin(), from.end(), to.begin());
+// }
 
 }  // namespace
 
@@ -366,7 +386,7 @@ bool RangeImageInput::read(OnnxRuntime& runtime, const RobotStateInterface& stat
   if (!maybe_buffer.has_value()) return false;
   auto maybe_image = state.rangeImage();
   if (!maybe_image.has_value()) return false;
-  copyToBuffer(*maybe_image.value(), maybe_buffer.value());
+  copyToBuffer(maybe_image.value(), maybe_buffer.value());
   return true;
 }
 
@@ -392,7 +412,7 @@ bool DepthImageInput::read(OnnxRuntime& runtime, const RobotStateInterface& stat
   if (!maybe_buffer.has_value()) return false;
   auto maybe_image = state.depthImage();
   if (!maybe_image.has_value()) return false;
-  copyToBuffer(*maybe_image.value(), maybe_buffer.value());
+  copyToBuffer(maybe_image.value(), maybe_buffer.value());
   return true;
 }
 

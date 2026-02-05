@@ -480,7 +480,7 @@ class RobotStateInterface {
    *
    * @return The flattened range image.
    */
-  virtual std::optional<std::vector<double>*> rangeImage() const {
+  virtual std::optional<std::span<const float>> rangeImage() const {
     GENERIC_LOG_STREAM(ERROR, "rangeImage() not implemented");
     return std::nullopt;
   }
@@ -502,7 +502,7 @@ class RobotStateInterface {
    *
    * @return The flattened depth image.
    */
-  virtual std::optional<std::vector<double>*> depthImage() const {
+  virtual std::optional<std::span<const float>> depthImage() const {
     GENERIC_LOG_STREAM(ERROR, "depthImage() not implemented");
     return std::nullopt;
   }

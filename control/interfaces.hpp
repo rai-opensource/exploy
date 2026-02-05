@@ -5,6 +5,7 @@
 #include <Eigen/Geometry>
 
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -44,29 +45,7 @@ struct SE2VelocityRanges {
  * array.
  */
 struct HeightScan {
-  std::unordered_map<std::string, std::vector<double>> layers;
+  std::unordered_map<std::string, std::span<const double>> layers;
 };
-
-namespace References {
-namespace SE2Velocity {
-inline constexpr std::string_view lin_vel_x = "twist_linear_velocity_x";
-inline constexpr std::string_view lin_vel_y = "twist_linear_velocity_y";
-inline constexpr std::string_view ang_vel_z = "twist_angular_velocity_z";
-}  // namespace SE2Velocity
-
-namespace SE3Pose {
-inline constexpr std::string_view x = "pose_position_x";
-inline constexpr std::string_view y = "pose_position_y";
-inline constexpr std::string_view z = "pose_position_z";
-inline constexpr std::string_view qw = "pose_orientation_w";
-inline constexpr std::string_view qx = "pose_orientation_x";
-inline constexpr std::string_view qy = "pose_orientation_y";
-inline constexpr std::string_view qz = "pose_orientation_z";
-}  // namespace SE3Pose
-
-namespace BooleanSelector {
-inline constexpr std::string_view selector = "boolean_selector";
-}
-}  // namespace References
 
 }  // namespace rai::cs::control::common::onnx

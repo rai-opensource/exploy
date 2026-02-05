@@ -24,21 +24,25 @@ class DataCollectionInterface {
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, std::span<const double> data) = 0;
+  virtual bool registerDataSource(const std::string& prefix, std::span<const double> data) {
+    return false;
+  };
   /**
    * @brief Register a span data source for data collection.
    *
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, std::span<const float> data) = 0;
+  virtual bool registerDataSource(const std::string& prefix, std::span<const float> data) {
+    return false;
+  };
   /**
    * @brief Register a scalar data source for data collection.
    *
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, const double& data) = 0;
+  virtual bool registerDataSource(const std::string& prefix, const double& data) { return false; };
   /**
    * @brief Collect registered data.
    *

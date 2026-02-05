@@ -56,21 +56,20 @@ MATCHER_P(HasRanges, expected_ranges, "") {
 
 const std::string model_path = (std::filesystem::path(TEST_DATA_DIR) / "test_export.onnx").string();
 
-HeightScan createTestHeightScan(int size) {
-  return HeightScan{
-      .layers =
-          std::unordered_map<std::string, std::vector<double>>{
-              {"height", std::vector<double>(size)},
-              {"r", std::vector<double>(size)},
-              {"g", std::vector<double>(size)},
-              {"b", std::vector<double>(size)},
-          },
-  };
+std::unique_ptr<HeightScan> createTestHeightScan(int size) {
+  const std::vector<double> data(size, 0.0);
+  auto scan = std::make_unique<HeightScan>();
+  scan->layers["height"] = std::span<const double>(data);
+  scan->layers["r"] = std::span<const double>(data);
+  scan->layers["g"] = std::span<const double>(data);
+  scan->layers["b"] = std::span<const double>(data);
+  return scan;
 };
+
 auto kHeightScanData = createTestHeightScan(4);
 auto kTrailScanData = createTestHeightScan(8);
-auto kRangeImageData = std::vector<double>{0, 0, 0, 0};
-auto kDepthImageData = std::vector<double>{0, 0, 0, 0};
+auto kRangeImageData = std::vector<float>{0, 0, 0, 0};
+auto kDepthImageData = std::vector<float>{0, 0, 0, 0};
 const auto kPositionData = std::make_optional(Position{0, 0, 0});
 const auto kQuaternionData = std::make_optional(Quaternion{1, 0, 0, 0});  // w x y z
 const auto kLinearVelocityData = std::make_optional(LinearVelocity{0, 0, 0});
@@ -247,19 +246,19 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, bodyPositionW("box")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, heightScan("trail", _, _, _))
-        .WillRepeatedly(Return(std::make_optional(&kTrailScanData)));
+        .WillRepeatedly(Return(std::make_optional(kTrailScanData.get())));
     EXPECT_CALL(state_mock_, heightScan("one", _, _, _))
-        .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
+        .WillRepeatedly(Return(std::make_optional(kHeightScanData.get())));
     EXPECT_CALL(state_mock_, heightScan("two", _, _, _))
-        .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
+        .WillRepeatedly(Return(std::make_optional(kHeightScanData.get())));
     EXPECT_CALL(state_mock_, basePosW()).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, baseQuatW()).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, baseLinVelB()).WillRepeatedly(Return(kLinearVelocityData));
     EXPECT_CALL(state_mock_, baseAngVelB()).WillRepeatedly(Return(kAngularVelocityData));
     EXPECT_CALL(state_mock_, rangeImage())
-        .WillRepeatedly(Return(std::make_optional(&kRangeImageData)));
+        .WillRepeatedly(Return(std::make_optional(std::span<float>(kRangeImageData))));
     EXPECT_CALL(state_mock_, depthImage())
-        .WillRepeatedly(Return(std::make_optional(&kDepthImageData)));
+        .WillRepeatedly(Return(std::make_optional(std::span<float>(kDepthImageData))));
   }
 
   void ExpectReadCommands() {

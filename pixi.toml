@@ -112,7 +112,6 @@ python = ["python"] # Python-only development
 cpp = ["cpp"] # C++-only development
 exporter = ["python", "isaaclab"] # Exporter environment: Python + Isaac Lab
 controller = ["python", "cpp"] # Controller environment: Python + C++
-full = ["python", "cpp", "isaaclab"] # Full environment: All features
 
 # CORE TASKS - Available across all environments
 [tasks]
@@ -121,7 +120,6 @@ help = '''echo "Available environments:
   pixi run -e cpp <task>        - C++ development only
   pixi run -e exporter <task>   - Python + Isaac Lab (model export)
   pixi run -e controller <task> - Python + C++ (controller dev)
-  pixi run -e full <task>       - Everything (full development)
 
 Feature-specific tasks:
   Python: test, lint, format, check
