@@ -1,0 +1,13 @@
+[project]
+name = "exporter"
+version = "0.1.0"
+description = "Framework-agnostic ONNX environment exporter core"
+authors = [{ name = "Robotics and AI Institute LLC dba RAI Institute" }]
+requires-python = ">=3.11"
+dependencies = ["torch", "onnx", "onnxruntime", "numpy"]
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["exporter*"]
+exclude = ["exporter.tests*"]
+namespaces = false

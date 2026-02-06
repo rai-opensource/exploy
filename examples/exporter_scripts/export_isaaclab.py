@@ -4,7 +4,6 @@ from __future__ import annotations
 """Launch Isaac Sim Simulator first."""
 import argparse
 import pathlib
-import tempfile
 from typing import TYPE_CHECKING
 
 import gymnasium as gym
@@ -43,9 +42,9 @@ from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
 from isaaclab_tasks.utils import parse_env_cfg
 from rsl_rl.runners import OnPolicyRunner
 
-from exporter import core as exporter_core
-from exporter.core.evaluator import evaluate
-from exporter.isaaclab.env import IsaacLabExportableEnvironment
+import exporter
+from exporter.evaluator import evaluate
+from exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
 from isaaclab.sim import SimulationContext
 
 
@@ -77,7 +76,7 @@ def main(task_name: str = None):
 
     exportable_env = IsaacLabExportableEnvironment(env.unwrapped, env_id=env_id)
 
-    exporter_core.export_environment_as_onnx(
+    exporter.export_environment_as_onnx(
         env=exportable_env,
         actor=policy,
         normalizer=normalizer,
@@ -90,7 +89,7 @@ def main(task_name: str = None):
     exportable_env.cleanup()
 
     # Make a session wrapper.
-    session_wrapper = exporter_core.SessionWrapper(
+    session_wrapper = exporter.SessionWrapper(
         onnx_folder=onnx_export_dir,
         onnx_file_name=onnx_export_file,
         policy=policy,

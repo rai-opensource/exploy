@@ -1,0 +1,18 @@
+[project]
+name = "exporter_frameworks_isaaclab"
+version = "0.1.0"
+description = "IsaacLab-specific ONNX environment exporter implementation"
+authors = [{ name = "Robotics and AI Institute LLC dba RAI Institute" }]
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "numpy",
+    # "gymnasium==1.2.0",
+    # "tqdm",
+    "isaaclab>=2.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["../../"]
+include = ["exporter_frameworks.isaaclab*"]
+namespaces = false

@@ -1,0 +1,11 @@
+/* Increase the maximum width of the content area */
+.wy-nav-content {
+    max-width: 1200px !important;
+}
+
+/* Alternative: Use percentage-based width for more flexibility */
+/* Uncomment to use this instead:
+.wy-nav-content {
+    max-width: 90% !important;
+}
+*/

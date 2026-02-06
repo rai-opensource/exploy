@@ -28,7 +28,7 @@ pybind11 = ">=2.10"
 ruff = "*"
 
 [feature.python.pypi-dependencies]
-exporter-core = { path = "./exporter/core", editable = true }
+exporter = { path = "./exporter/exporter", editable = true }
 build = "*"
 
 [feature.python.tasks]
@@ -84,34 +84,58 @@ pytest = "*"
 extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
-exporter-isaaclab = { path = "./exporter/frameworks/isaaclab", editable = true }
+exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
+isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
 pytest-gitignore = "*"
 
 [feature.isaaclab.tasks]
 # Isaac Lab setup and verification
-clone-isaaclab = "git clone https://github.com/isaac-sim/IsaacLab.git"
-install-isaaclab = { cmd = "cd IsaacLab && chmod +x isaaclab.sh && ./isaaclab.sh --install", depends-on = ["clone-isaaclab"] }
+clone-isaaclab = "git clone --depth=1 https://github.com/isaac-sim/IsaacLab.git"
+install-isaaclab = { cmd = "cd IsaacLab && chmod +x isaaclab.sh && ./isaaclab.sh --install", depends-on = [
+  "clone-isaaclab",
+] }
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 verify = { depends-on = ["test-import", "test-torch"] }
-install-exporter = "pip install -e ."
-setup = { depends-on = ["install-isaaclab", "install-exporter"] }
+setup = { depends-on = ["install-isaaclab"] }
 export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
 isaac-sim = { cmd = "isaacsim --disable-extensions isaacsim.ros2.bridge" }
 # Python testing
 test-python = "pytest -s ."
 test = { depends-on = ["test-python"] }
 # Build wheel packages
-build-wheel-core = "python -m build --wheel exporter/core"
-build-wheel-isaaclab = "python -m build --wheel exporter/frameworks/isaaclab"
+build-wheel-core = "python -m build --wheel exporter/exporter"
+build-wheel-isaaclab = "python -m build --wheel exporter/exporter_frameworks/isaaclab"
 build-wheels = { depends-on = ["build-wheel-core", "build-wheel-isaaclab"] }
+
+# FEATURE: Documentation - Sphinx documentation building
+[feature.docs.dependencies]
+python = "3.11.*"
+sphinx = "*"
+sphinx_rtd_theme = "*"
+sphinx-autodoc-typehints = "*"
+doxygen = "*"
+breathe = "*"
+
+[feature.docs.pypi-dependencies]
+exporter = { path = "./exporter/exporter", editable = true }
+exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
+
+[feature.docs.tasks]
+doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"
+build = { cmd = "sphinx-build -b html docs docs/_build/html", depends-on = [
+  "doxygen",
+] }
+clean = "rm -rf docs/_build"
+open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html"
 
 # ENVIRONMENTS
 [environments]
-python = ["python"] # Python-only development
-cpp = ["cpp"] # C++-only development
+python = ["python"]               # Python-only development
+cpp = ["cpp"]                     # C++-only development
 exporter = ["python", "isaaclab"] # Exporter environment: Python + Isaac Lab
-controller = ["python", "cpp"] # Controller environment: Python + C++
+controller = ["python", "cpp"]    # Controller environment: Python + C++
+docs = ["docs"]                   # Documentation building
 
 # CORE TASKS - Available across all environments
 [tasks]
@@ -120,13 +144,16 @@ help = '''echo "Available environments:
   pixi run -e cpp <task>        - C++ development only
   pixi run -e exporter <task>   - Python + Isaac Lab (model export)
   pixi run -e controller <task> - Python + C++ (controller dev)
+  pixi run -e docs <task>       - Documentation building
 
 Feature-specific tasks:
-  Python: test, lint, format, check
+  Python: test, lint, format, check, docs
   C++: build, test, format, check
   Isaac Lab: isaac-sim, export-isaaclab, lab-*
 
 Common workflows:
+  pixi run -e docs build        - Build documentation
+  pixi run -e docs open         - Open documentation
   pixi install -e controller    - Install controller environment
   pixi run -e controller setup  - Setup controller development
   pixi run -e controller build  - Build C++ code

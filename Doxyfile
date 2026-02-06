@@ -1,0 +1,69 @@
+# Doxyfile for Exporter C++ API Documentation
+
+# Project information
+PROJECT_NAME           = "Exporter C++ API"
+PROJECT_BRIEF          = "ONNX-based controller implementation"
+PROJECT_NUMBER         = "0.1.0"
+OUTPUT_DIRECTORY       = docs/_build/doxygen
+
+# Input configuration
+INPUT                  = control
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.cpp
+EXCLUDE_PATTERNS       = */test/* */build/*
+
+# Output configuration
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+
+# Extraction configuration
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+# Preprocessing
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+PREDEFINED             =
+
+# Warnings
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+
+# Source browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+# Documentation style
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = NO
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+
+# Class documentation
+SHOW_INCLUDE_FILES     = NO
+SHOW_GROUPED_MEMB_INC  = YES
+INLINE_GROUPED_CLASSES = YES
+INLINE_SIMPLE_STRUCTS  = YES
+
+# Skip external symbols from onnxruntime
+EXCLUDE_SYMBOLS        = Ort::* \
+                         ONNX* \
+                         OrtApi* \
+                         ORT_*
+
+# Collaboration diagrams
+HAVE_DOT               = NO
+
+# Allow linking to external documentation
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = YES
+EXTERNAL_PAGES         = YES

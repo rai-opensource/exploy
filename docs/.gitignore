@@ -1,0 +1,10 @@
+# Sphinx build output
+_build/
+_autosummary/
+
+# Doxygen output
+doxygen/
+
+# Python cache
+__pycache__/
+*.py[cod]
