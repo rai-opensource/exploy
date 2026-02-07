@@ -32,7 +32,7 @@ def construct_decimation_wrapper(
     Returns:
         An ONNX ModelProto with fixed periodic conditional branching.
     """
-    time_input = onnx.helper.make_tensor_value_info("step_count", onnx.TensorProto.INT32, [])
+    time_input = onnx.helper.make_tensor_value_info("ctx.step_count", onnx.TensorProto.INT32, [])
 
     # Combine inputs and outputs from both models
     inputs = list(
@@ -46,7 +46,7 @@ def construct_decimation_wrapper(
         "decimation", onnx.TensorProto.INT32, (), [decimation]
     )
     zero_const = onnx.helper.make_tensor("zero", onnx.TensorProto.INT32, (), [0])
-    mod_node = onnx.helper.make_node("Mod", ["step_count", "decimation"], ["is_event"])
+    mod_node = onnx.helper.make_node("Mod", ["ctx.step_count", "decimation"], ["is_event"])
     eq_node = onnx.helper.make_node("Equal", ["is_event", "zero"], ["cond"])
 
     # Remove submodel inputs (will be passed by parent graph)

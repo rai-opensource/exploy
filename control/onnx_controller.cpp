@@ -17,8 +17,6 @@ OnnxRLController::OnnxRLController(
     operation::common::data_collection_public::DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {
   // Register all matchers
-  context_.registerMatcher(std::make_unique<JointPositionMatcher>());
-  context_.registerMatcher(std::make_unique<JointVelocityMatcher>());
   context_.registerMatcher(std::make_unique<BasePositionMatcher>());
   context_.registerMatcher(std::make_unique<BaseOrientationMatcher>());
   context_.registerMatcher(std::make_unique<BaseLinearVelocityMatcher>());
@@ -36,6 +34,7 @@ OnnxRLController::OnnxRLController(
   context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
   context_.registerMatcher(std::make_unique<StepCountMatcher>());
   // Register all group matchers
+  context_.registerGroupMatcher(std::make_unique<JointMatcher>());
   context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());
   context_.registerGroupMatcher(std::make_unique<HeightScanMatcher>());
   context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());

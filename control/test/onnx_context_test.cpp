@@ -128,21 +128,12 @@ TEST_F(OnnxContextTest, CreateContext_CreatesInputsFromGroupMatchers) {
 // ========== Integration Tests ==========
 
 TEST_F(OnnxContextTest, Integration_RealMatchersWithTestModel) {
-  context_.registerMatcher(std::make_unique<JointPositionMatcher>());
-  context_.registerMatcher(std::make_unique<JointVelocityMatcher>());
+  context_.registerGroupMatcher(std::make_unique<JointMatcher>());
   context_.registerMatcher(std::make_unique<BasePositionMatcher>());
   context_.registerMatcher(std::make_unique<BaseOrientationMatcher>());
   EXPECT_TRUE(context_.createContext(runtime_, false));
   EXPECT_GT(context_.getInputs().size(), 0);
   EXPECT_EQ(context_.updateRate(), 10);
-}
-
-TEST_F(OnnxContextTest, Integration_MixedMatchersAndGroupMatchers) {
-  context_.registerMatcher(std::make_unique<JointPositionMatcher>());
-  auto mock_group_matcher = std::make_unique<NiceMock<MockGroupMatcher>>();
-  ON_CALL(*mock_group_matcher, matches(_)).WillByDefault(Return(false));
-  context_.registerGroupMatcher(std::move(mock_group_matcher));
-  EXPECT_TRUE(context_.createContext(runtime_, false));
 }
 
 }  // namespace rai::cs::control::common::onnx

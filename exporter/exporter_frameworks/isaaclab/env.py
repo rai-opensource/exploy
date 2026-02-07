@@ -54,7 +54,7 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
             context_manager=self._context_manager,
         )
         inputs.add_articulation_data(
-            articulation=self._env.scene[self._articulation_name],
+            articulations=self._env.scene.articulations,
             context_manager=self._context_manager,
         )
         inputs.add_sensor_inputs(
@@ -152,36 +152,19 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
     def metadata(self) -> dict[str, str]:
         metadata = {}
 
-        # Joint names in order expected by ONNX file.
-        metadata["joint_names"] = ",".join(
-            self._env.scene[self._articulation_name].data.joint_names
-        )
-
-        # Body names.
-        metadata["body_names"] = ",".join(self._env.scene[self._articulation_name].data.body_names)
-
-        # Command info.
-        # metadata["commands"] = json.dumps(self._data_handler.command_dh.metadata)
-
-        # # Sensor info.
-        # metadata["sensors"] = json.dumps(self._data_handler.sensor_dh.metadata)
-
-        # # Joint target info.
-        # metadata["outputs"] = json.dumps(self._data_handler.action_dh.metadata())
-
         # Observation names.
         metadata["obs_term_names"] = json.dumps(
             self._env.observation_manager._group_obs_term_names[self._policy_obs_group_name]
         )
-
-        # Policy update period in seconds.
-        metadata["policy_dt"] = str(self._env.cfg.sim.dt * self._env.cfg.decimation)
 
         # Decimation info.
         metadata["decimation"] = str(self._env.cfg.decimation)
 
         # Sim_dt info.
         metadata["sim_dt"] = str(self._env.cfg.sim.dt)
+
+        # Update rate.
+        metadata["update_rate"] = str(1.0 / (self._env.cfg.sim.dt))
 
         return metadata
 

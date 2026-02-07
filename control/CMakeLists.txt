@@ -41,7 +41,7 @@ set(GEN_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/test/testdata/test.onnx")
 
 add_custom_command(
     OUTPUT "${GEN_OUTPUT}"
-    COMMAND python3 "${GEN_SCRIPT}" "${GEN_OUTPUT}"
+    COMMAND ${CMAKE_COMMAND} -E env PYTHONWARNINGS="ignore" python3 "${GEN_SCRIPT}" "${GEN_OUTPUT}"
     DEPENDS "${GEN_SCRIPT}"
     COMMENT "Generating test ONNX model..."
 )

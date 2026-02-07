@@ -70,7 +70,7 @@ def evaluate(
         memory_components = context_manager.get_memory_components()
         for memory in memory_components:
             onnx_inputs[memory.input_name] = session_wrapper.get_output_value(memory.output_name)
-        onnx_inputs["step_count"] = np.array([step_ctr], dtype=np.int32)
+        onnx_inputs["ctx.step_count"] = np.array([step_ctr], dtype=np.int32)
         session_wrapper(**onnx_inputs)
 
     def update():
@@ -119,7 +119,7 @@ def evaluate(
 
         # Get onnx inputs.
         onnx_inputs = context_manager.get_inputs(to_numpy=True)
-        onnx_inputs["step_count"] = np.array([0], dtype=np.int32)
+        onnx_inputs["ctx.step_count"] = np.array([0], dtype=np.int32)
 
         # Adapt memory inputs.
         if reset_memory_from_env:

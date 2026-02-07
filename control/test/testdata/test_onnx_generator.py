@@ -1,22 +1,25 @@
 # Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 import json
+import logging
 import os
-import sys
 
 import onnx
 import torch
+
+# Suppress torch logging warnings
+logging.getLogger("torch.onnx").setLevel(logging.ERROR)
 
 # ========== Constants ==========
 
 INPUT_NAMES = [
     # joints
-    "obj.robot1.joint.pos",
-    "obj.robot1.joint.vel",
+    "obj.robot1.joints.pos",
+    "obj.robot1.joints.vel",
     # base
-    "obj.robot1.base.body_pos_in_w",
-    "obj.robot1.base.world_Q_body",
-    "obj.robot1.base.lin_vel_body_in_body",
-    "obj.robot1.base.ang_vel_body_in_body",
+    "obj.robot1.base.pos_b_rt_w_in_w",
+    "obj.robot1.base.w_Q_b",
+    "obj.robot1.base.lin_vel_b_rt_w_in_b",
+    "obj.robot1.base.ang_vel_b_rt_w_in_b",
     # commands
     "cmd.se2_velocity.vel",
     "cmd.se2_velocity.vel_with_range",
@@ -24,8 +27,8 @@ INPUT_NAMES = [
     "cmd.boolean.selector",
     "cmd.float.value",
     # IMU
-    "sensor.imu.torso.world_Q_body",
-    "sensor.imu.pelvis.ang_vel_body",
+    "sensor.imu.torso.w_Q_b",
+    "sensor.imu.pelvis.ang_vel_b_rt_w_in_b",
     # sensors
     "sensor.height_scanner.one.height",
     "sensor.height_scanner.two.height",
@@ -36,10 +39,10 @@ INPUT_NAMES = [
     "sensor.height_scanner.trail.b",
     "sensor.depth_image.one",
     # body
-    "obj.box1.bodies.box.pos_body_in_w",
-    "obj.box1.bodies.box.world_Q_body",
+    "obj.box1.bodies.box.pos_b_rt_w_in_w",
+    "obj.box1.bodies.box.w_Q_b",
     # memory
-    "memory.output.joint_targets.pos.in",
+    "memory.output.joint_targets.jt1.pos.in",
     # step count
     "ctx.step_count",
     # custom extensible data for testing
@@ -47,12 +50,12 @@ INPUT_NAMES = [
 ]
 
 OUTPUT_NAMES = [
-    "output.joint_targets.pos",
-    "output.joint_targets.vel",
-    "output.joint_targets.effort",
-    "output.se2_velocity",
+    "output.joint_targets.jt1.pos",
+    "output.joint_targets.jt1.vel",
+    "output.joint_targets.jt1.effort",
+    "output.se2_velocity.vel",
     "actions",
-    "memory.output.joint_targets.pos.out",
+    "memory.output.joint_targets.jt1.pos.out",
 ]
 
 
@@ -123,12 +126,12 @@ class FullTestModel(torch.nn.Module):
 def get_output_metadata() -> dict:
     """Returns metadata for model outputs."""
     return {
-        "output.joint_targets": {
+        "output.joint_targets.jt1": {
             "names": ["j1", "j2"],
             "stiffness": [1.0, 2.0],
             "damping": [0.1, 0.2],
         },
-        "output.se2_velocity": {
+        "output.se2_velocity.vel": {
             "target_frame": "base_frame",
         },
     }
@@ -201,11 +204,8 @@ def get_command_metadata() -> dict:
 def get_articulation_metadata() -> dict:
     """Returns metadata for articulation inputs."""
     return {
-        "obj.robot1.joint.pos": {
-            "names": ["j1", "j2", "j3"],
-        },
-        "obj.robot1.joint.vel": {
-            "names": ["j1", "j2", "j3"],
+        "obj.robot1.joints": {
+            "joint_names": ["j1", "j2", "j3"],
         },
     }
 
@@ -353,6 +353,7 @@ def export_simple_model(data_dir: str):
     """Export the simple test model to ONNX format with metadata."""
     output_path_simple = os.path.join(data_dir, "test_simple.onnx")
     simple_model = SimpleTestModel()
+    simple_model.eval()  # Set to evaluation mode before export
 
     # Create test inputs with different types
     float_input = torch.tensor([[1.5, 2.5, 3.5]], dtype=torch.float32)

@@ -60,9 +60,9 @@ class MockRobotStateInterface : public RobotStateInterface {
                const Position& base_pos_w, const Quaternion& base_quat_w),
               (override));
   MOCK_METHOD(bool, initRangeImage, (const RangeImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::span<float>>, rangeImage, (), (override));
+  MOCK_METHOD(std::optional<std::span<const float>>, rangeImage, (), (override));
   MOCK_METHOD(bool, initDepthImage, (const DepthImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::span<float>>, depthImage, (), (override));
+  MOCK_METHOD(std::optional<std::span<const float>>, depthImage, (), (override));
 };
 
 }  // namespace rai::cs::control::common::onnx

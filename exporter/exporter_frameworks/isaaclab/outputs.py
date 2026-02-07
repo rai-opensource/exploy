@@ -15,7 +15,6 @@ def add_outputs(
 ):
     for active_term_name in action_manager.active_terms:
         action_term = action_manager.get_term(active_term_name)
-        data_key = f"output.{active_term_name}"
 
         if isinstance(action_term, JointAction):
             cfg: JointActionCfg = action_term.cfg
@@ -34,10 +33,9 @@ def add_outputs(
 
             # Update metadata.
             actuator_gains = get_articulation_actuator_gains(articulation=articulation)
-            actuator_gains = {name: {"stiffness": 0.0, "damping": 0.0} for name in joint_names}
 
             onnx_joint_outputs = Group(
-                name=data_key,
+                name=f"output.joint_targets.{active_term_name}",
                 metadata={
                     "type": "joint_targets",
                     "names": joint_names,

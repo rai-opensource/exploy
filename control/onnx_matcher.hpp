@@ -54,16 +54,14 @@ class GroupMatcher {
 };
 
 // ---------------  Joint matchers --------------------------------
-class JointPositionMatcher : public Matcher {
+class JointMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
-};
 
-class JointVelocityMatcher : public Matcher {
- public:
-  bool matches(const Match& maybe_match) override;
-  std::vector<std::unique_ptr<Input>> createInputs() const override;
+ private:
+  const std::regex pattern_ =
+      std::regex(fmt::format("(obj\\.{}\\.joints)\\.(pos|vel)", alphanumeric));
 };
 // ---------------------------------------------------------------
 

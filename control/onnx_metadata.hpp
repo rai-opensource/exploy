@@ -137,7 +137,7 @@ struct JointMetadata {
 };
 
 inline void from_json(const json& j, JointMetadata& jm) {
-  j.at("names").get_to(jm.names);
+  j.at("joint_names").get_to(jm.names);
 }
 
 }  // namespace rai::cs::control::common::onnx::metadata

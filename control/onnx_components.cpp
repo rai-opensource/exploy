@@ -62,18 +62,6 @@ void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
   });
 }
 
-// void copyToBuffer(std::span<double> from, std::span<float> to) {
-//   assert(to.size() == from.size() && "Buffer size must match input size.");
-//   std::transform(from.begin(), from.end(), to.begin(), [](double val) {
-//     return static_cast<float>(val);
-//   });
-// }
-
-// void copyToBuffer(std::span<float> from, std::span<float> to) {
-//   assert(to.size() == from.size() && "Buffer size must match input size.");
-//   std::copy(from.begin(), from.end(), to.begin());
-// }
-
 }  // namespace
 
 // Implementation of IMUAngularVelocityInput methods
@@ -126,6 +114,7 @@ bool JointPositionInput::init(RobotStateInterface& state, CommandInterface&) {
 
 bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   std::vector<double> positions;
+  if (joint_names_.empty()) return false;
   for (const auto& joint_name : joint_names_) {
     auto maybe_pos = state.jointPosition(joint_name);
     if (!maybe_pos.has_value()) return false;
