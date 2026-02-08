@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-isaaclab = []
+isaaclab = ["isaaclab"]
 
 [tool.setuptools.packages.find]
 where = ["../../"]

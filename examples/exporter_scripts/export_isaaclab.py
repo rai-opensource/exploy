@@ -38,7 +38,6 @@ simulation_app = make_simulation_app()
 import isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c  # noqa: F401
 import isaaclab_tasks.manager_based.locomotion.velocity.config.g1  # noqa: F401
 import torch
-from exporter.evaluator import evaluate
 from exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
 from isaaclab.sim import SimulationContext
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
@@ -99,7 +98,7 @@ def main(task_name: str = None):
     # Evaluate.
     evaluate_steps = 50
     with torch.inference_mode():
-        evaluate(
+        exporter.evaluate(
             env=exportable_env,
             context_manager=exportable_env.context_manager(),
             session_wrapper=session_wrapper,

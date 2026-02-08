@@ -85,29 +85,25 @@ pytest-gitignore = "*"
 test-python = "pytest -s ."
 test = { depends-on = ["test-python"] }
 
-# FEATURE: Isaac Lab - GPU simulation and robotics
 [feature.isaaclab.dependencies]
-tensorboard = "*"
-pytest = "*"
+python = "3.11.*"
+# Pinning due to isaacsim/isaaclab requirements
+typing-extensions = "4.12.2.*"
+pillow = "11.3.*"
+packaging = "23.0.*"
 
 [feature.isaaclab.pypi-options]
 extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
 exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
-# isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
-pytest-gitignore = "*"
+isaaclab = { version = ">=2,<3", extras = ["all"] }
+isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 
 [feature.isaaclab.tasks]
-# Isaac Lab setup and verification
-clone-isaaclab = "git clone --depth=1 https://github.com/isaac-sim/IsaacLab.git"
-install-isaaclab = { cmd = "cd IsaacLab && chmod +x isaaclab.sh && ./isaaclab.sh --install", depends-on = [
-  "clone-isaaclab",
-] }
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 verify = { depends-on = ["test-import", "test-torch"] }
-setup = { depends-on = ["install-isaaclab"] }
 export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
 
 # FEATURE: Documentation - Sphinx documentation building
@@ -136,11 +132,11 @@ open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html
 python = ["python"]               # Python-only development
 cpp = ["cpp"]                     # C++-only development
 core = ["python", "core"]         # Exporter environment: Python + core functionality
-isaaclab = ["isaaclab"]           # Isaac Lab only
+isaaclab = ["isaaclab", "core"]   # Isaac Lab + core exporter functionality
 controller = ["python", "cpp"]    # Controller environment: Python + C++
 docs = ["docs"]                   # Documentation building
 
-# CORE TASKS - Available across all environments
+# Available across all environments
 [tasks]
 help = '''echo "Available environments:
   pixi run -e python <task>     - Python development only
@@ -163,4 +159,4 @@ Common workflows:
   pixi run -e controller test   - Test both Python and C++
   pixi run -e exporter setup    - Setup exporter with Isaac Lab"'''
 
-clean = "rm -rf IsaacLab build .pixi pixi.lock"
+clean = "rm -rf build .pixi pixi.lock"
