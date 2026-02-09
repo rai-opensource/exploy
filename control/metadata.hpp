@@ -11,7 +11,7 @@
 
 #include "interfaces.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 using json = nlohmann::json;
 
@@ -26,9 +26,9 @@ inline void from_json(const json& j, SE2VelocityRanges& ranges) {
   j.at("ang_vel_z").get_to(ranges.ang_vel_z);
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control
 
-namespace rai::cs::control::common::onnx::metadata {
+namespace exploy::control::metadata {
 
 using json = nlohmann::json;
 
@@ -140,4 +140,4 @@ inline void from_json(const json& j, JointMetadata& jm) {
   j.at("joint_names").get_to(jm.names);
 }
 
-}  // namespace rai::cs::control::common::onnx::metadata
+}  // namespace exploy::control::metadata

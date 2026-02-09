@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "onnx_context.hpp"
+#include "context.hpp"
 #include "logging_utils.hpp"
-#include "onnx_metadata.hpp"
+#include "metadata.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -13,7 +13,7 @@
 #include <string_view>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 namespace {
 
@@ -126,4 +126,4 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   return true;
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

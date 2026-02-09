@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(my_robot_project LANGUAGES CXX)
+project(exploy LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,17 +18,17 @@ find_package(onnxruntime REQUIRED)
 find_package(GTest REQUIRED)
 
 # C++ Shared Library
-add_library(onnx_controller SHARED
-    onnx_controller.cpp
-    onnx_context.cpp
+add_library(exploy SHARED
+    controller.cpp
+    context.cpp
     onnx_runtime.cpp
-    onnx_components.cpp
-    onnx_matcher.cpp
+    components.cpp
+    matcher.cpp
 )
 
-target_include_directories(onnx_controller PUBLIC .)
+target_include_directories(exploy PUBLIC .)
 
-target_link_libraries(onnx_controller PUBLIC
+target_link_libraries(exploy PUBLIC
     Eigen3::Eigen
     nlohmann_json::nlohmann_json
     fmt::fmt
@@ -46,20 +46,20 @@ add_custom_command(
     COMMENT "Generating test ONNX model..."
 )
 
-add_executable(control_test
-    test/onnx_controller_test.cpp
-    test/onnx_components_test.cpp
-    test/onnx_context_test.cpp
+add_executable(exploy_test
+    test/controller_test.cpp
+    test/components_test.cpp
+    test/context_test.cpp
     test/onnx_runtime_test.cpp
     "${GEN_OUTPUT}"
 )
-target_compile_definitions(control_test PRIVATE
+target_compile_definitions(exploy_test PRIVATE
     TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/testdata"
 )
-target_link_libraries(control_test PRIVATE
-    onnx_controller
+target_link_libraries(exploy_test PRIVATE
+    exploy
     GTest::gtest_main
     GTest::gmock
     fmt::fmt
 )
-add_test(NAME control_test COMMAND control_test)
+add_test(NAME exploy_test COMMAND exploy_test)

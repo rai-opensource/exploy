@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
-#include "onnx_controller.hpp"
+#include "controller.hpp"
 #include "logging_utils.hpp"
 
 #include <fmt/format.h>
@@ -10,11 +10,10 @@
 #include <span>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
-OnnxRLController::OnnxRLController(
-    RobotStateInterface& state, CommandInterface& command,
-    operation::common::data_collection_public::DataCollectionInterface& data_collection)
+OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface& command,
+                                   DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {
   // Register all matchers
   context_.registerMatcher(std::make_unique<BasePositionMatcher>());
@@ -135,4 +134,4 @@ bool OnnxRLController::update(uint64_t time_us) {
   return true;
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

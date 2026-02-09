@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "onnx_components.hpp"
+#include "components.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 constexpr std::string_view alphanumeric = "[a-zA-Z0-9_]+";
 
@@ -195,4 +195,4 @@ class StepCountMatcher : public Matcher {
 };
 // ---------------------------------------------------------------
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

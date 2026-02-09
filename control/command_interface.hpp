@@ -8,7 +8,7 @@
 #include "interfaces.hpp"
 #include "logging_utils.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 /**
  * @brief Configuration for SE2 velocity commands.
@@ -115,4 +115,4 @@ class CommandInterface {
   }
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

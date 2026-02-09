@@ -11,7 +11,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 namespace {
 
@@ -201,4 +201,4 @@ bool OnnxRuntime::copyOutputToInput(const std::string& output_name, const std::s
   return true;
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

@@ -3,9 +3,9 @@
 #pragma once
 
 #include "command_interface.hpp"
+#include "context.hpp"
 #include "data_collection_interface.hpp"
 #include "interfaces.hpp"
-#include "onnx_context.hpp"
 #include "onnx_runtime.hpp"
 #include "state_interface.hpp"
 
@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 /**
  * @class OnnxRLController
@@ -32,9 +32,8 @@ class OnnxRLController {
    * @param command A CommandInterface to send commands to the controller.
    * @param data_collection A DataCollection interface for data collection.
    */
-  explicit OnnxRLController(
-      RobotStateInterface& state, CommandInterface& command,
-      operation::common::data_collection_public::DataCollectionInterface& data_collection);
+  explicit OnnxRLController(RobotStateInterface& state, CommandInterface& command,
+                            DataCollectionInterface& data_collection);
   /**
    * @brief Create the ONNX model and context.
    *
@@ -90,8 +89,8 @@ class OnnxRLController {
   CommandInterface& command_;
 
   // Data collection.
-  operation::common::data_collection_public::DataCollectionInterface& data_collection_;
+  DataCollectionInterface& data_collection_;
   double inference_duration_s_{};
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

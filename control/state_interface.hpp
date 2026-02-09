@@ -11,7 +11,7 @@
 #include "interfaces.hpp"
 #include "logging_utils.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 struct HeightScanConfig {
   struct Pattern {
@@ -508,4 +508,4 @@ class RobotStateInterface {
   }
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

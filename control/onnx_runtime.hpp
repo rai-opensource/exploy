@@ -13,7 +13,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 template <typename T>
 struct onnx_type {
@@ -190,4 +190,4 @@ class OnnxRuntime {
   std::unordered_map<std::string, int> output_names_to_index_{};
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

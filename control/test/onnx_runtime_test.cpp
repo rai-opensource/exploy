@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <span>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 class OnnxRuntimeTest : public ::testing::Test {
  protected:
@@ -400,4 +400,4 @@ TEST_F(OnnxRuntimeTest, CopyOutputToInputTypeMismatch) {
   EXPECT_FALSE(runtime.copyOutputToInput("float_output", "bool_input"));
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

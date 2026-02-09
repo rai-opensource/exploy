@@ -6,10 +6,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "onnx_components.hpp"
-#include "onnx_matcher.hpp"
+#include "components.hpp"
+#include "matcher.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 // ---------------  Joint matchers --------------------------------
 bool JointMatcher::matches(const Match& maybe_match) {
@@ -445,4 +445,4 @@ std::vector<std::unique_ptr<Input>> StepCountMatcher::createInputs() const {
 }
 // ---------------------------------------------------------------
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

@@ -1,12 +1,12 @@
 // Copyright (c) 2024-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "onnx_controller.hpp"
+#include "controller.hpp"
+#include "components.hpp"
+#include "context.hpp"
+#include "matcher.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_data_collection_interface.hpp"
 #include "mock_state_interface.hpp"
-#include "onnx_components.hpp"
-#include "onnx_context.hpp"
-#include "onnx_matcher.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 using ::testing::_;
 using ::testing::AllOf;
@@ -25,8 +25,6 @@ using ::testing::Field;
 using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::StrictMock;
-
-using operation::common::data_collection_public::MockDataCollectionInterface;
 
 MATCHER_P2(DoubleRangeIs, min_val, max_val, "") {
   return arg.min == min_val && arg.max == max_val;
@@ -373,4 +371,4 @@ TEST_F(OnnxControllerTest, WriteJointFailure) {
   EXPECT_FALSE(oc_.update(0));
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

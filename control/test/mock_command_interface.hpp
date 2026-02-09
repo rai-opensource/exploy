@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 #include "command_interface.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 class MockCommandInterface : public CommandInterface {
  public:
@@ -23,4 +23,4 @@ class MockCommandInterface : public CommandInterface {
               (const override));
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

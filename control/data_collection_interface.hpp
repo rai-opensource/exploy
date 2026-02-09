@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace rai::cs::operation::common::data_collection_public {
+namespace exploy::control {
 
 /**
  * @class DataCollectionInterface
@@ -54,4 +54,4 @@ class DataCollectionInterface {
   virtual bool collectData(uint64_t time_us) = 0;
 };
 
-}  // namespace rai::cs::operation::common::data_collection_public
+}  // namespace exploy::control

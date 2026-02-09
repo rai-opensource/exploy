@@ -2,9 +2,9 @@
 #include <regex>
 #include <string>
 
-#include "onnx_components.hpp"
+#include "components.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 namespace {
 
@@ -530,4 +530,4 @@ bool MemoryOutput::write(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                                    fmt::format("memory.{}.in", key_));
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

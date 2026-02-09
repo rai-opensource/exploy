@@ -1,6 +1,6 @@
 // Copyright (c) 2024-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "onnx_components.hpp"
+#include "components.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_state_interface.hpp"
 #include "onnx_runtime.hpp"
@@ -11,7 +11,7 @@
 #include <span>
 #include <vector>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 using ::testing::_;
 using ::testing::NiceMock;
@@ -211,4 +211,4 @@ TEST_F(OnnxComponentsTest, MemoryOutput_WithRealRuntime) {
   EXPECT_TRUE(memory_was_overwritten) << "Memory should be overwritten with new output data";
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

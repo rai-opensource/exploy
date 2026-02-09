@@ -5,11 +5,11 @@
 #include <string>
 
 #include "command_interface.hpp"
-#include "onnx_metadata.hpp"
+#include "metadata.hpp"
 #include "onnx_runtime.hpp"
 #include "state_interface.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 struct Input {
   virtual ~Input() = default;
@@ -258,4 +258,4 @@ class MemoryOutput : public Output {
   std::string key_;
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

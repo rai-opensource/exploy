@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include "state_interface.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 class MockRobotStateInterface : public RobotStateInterface {
  public:
@@ -65,4 +65,4 @@ class MockRobotStateInterface : public RobotStateInterface {
   MOCK_METHOD(std::optional<std::span<const float>>, depthImage, (), (override));
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "onnx_context.hpp"
+#include "context.hpp"
 
+#include "matcher.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_state_interface.hpp"
-#include "onnx_matcher.hpp"
 #include "onnx_runtime.hpp"
 
 #include <gmock/gmock.h>
@@ -13,7 +13,7 @@
 #include <filesystem>
 #include <memory>
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 using ::testing::_;
 using ::testing::NiceMock;
@@ -136,4 +136,4 @@ TEST_F(OnnxContextTest, Integration_RealMatchersWithTestModel) {
   EXPECT_EQ(context_.updateRate(), 10);
 }
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

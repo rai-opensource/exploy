@@ -8,11 +8,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "onnx_components.hpp"
-#include "onnx_matcher.hpp"
+#include "components.hpp"
+#include "matcher.hpp"
 #include "onnx_runtime.hpp"
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 class OnnxContext {
  public:
@@ -35,4 +35,4 @@ class OnnxContext {
   int update_rate_{0};
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control

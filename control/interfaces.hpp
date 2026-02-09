@@ -18,7 +18,7 @@
  * types, and sensor data structures.
  */
 
-namespace rai::cs::control::common::onnx {
+namespace exploy::control {
 
 /**
  * @brief 3D position vector.
@@ -109,4 +109,4 @@ struct HeightScan {
   std::unordered_map<std::string, std::vector<double>> layers;
 };
 
-}  // namespace rai::cs::control::common::onnx
+}  // namespace exploy::control
