@@ -13,44 +13,50 @@
 
 namespace exploy::control {
 
+/**
+ * @brief Configuration for height scan sensors.
+ *
+ * Specifies the grid pattern and layers for terrain height scanning.
+ */
 struct HeightScanConfig {
+  /**
+   * @brief Grid pattern configuration for height scanning.
+   */
   struct Pattern {
-    Eigen::Vector2d size{};
-    double resolution{};
-    Eigen::Vector2d offset{};
+    Eigen::Vector2d size{};    ///< Grid size (x, y) in meters.
+    double resolution{};       ///< Grid resolution (spacing between points) in meters.
+    Eigen::Vector2d offset{};  ///< Grid offset (x, y) from base frame in meters.
   };
-  Pattern pattern{};
-  std::unordered_set<std::string> layer_names{};
+  Pattern pattern{};  ///< Grid pattern specification.
+  std::unordered_set<std::string>
+      layer_names{};  ///< Set of layer names to include (e.g., "height", "r", "g", "b").
 };
 
-// Configuration for range image.
+/**
+ * @brief Configuration for range image (LiDAR) sensors.
+ *
+ * Specifies resolution, field of view, and unobserved value sentinel for range images.
+ */
 struct RangeImageConfig {
-  // The number of pixels in vertical direction.
-  int v_res{};
-  // The number of pixels in horizontal direction.
-  int h_res{};
-  // The minimum angle of the vertical field of view (in degrees).
-  double v_fov_min_deg{};
-  // The maximum angle of the vertical field of view (in degrees).
-  double v_fov_max_deg{};
-  // Sentinel for pixels with no observed LiDAR return.
-  double unobserved_value{};
+  int v_res{};                ///< Number of pixels in vertical direction.
+  int h_res{};                ///< Number of pixels in horizontal direction.
+  double v_fov_min_deg{};     ///< Minimum vertical field of view angle in degrees.
+  double v_fov_max_deg{};     ///< Maximum vertical field of view angle in degrees.
+  double unobserved_value{};  ///< Sentinel value for pixels with no LiDAR return.
 };
 
-// Configuration for depth image.
+/**
+ * @brief Configuration for depth image (camera) sensors.
+ *
+ * Specifies image dimensions and camera intrinsic parameters.
+ */
 struct DepthImageConfig {
-  // The number of pixels in horizontal direction.
-  int width{};
-  // The number of pixels in vertical direction.
-  int height{};
-  // The focal length in x direction.
-  double fx{};
-  // The focal length in y direction.
-  double fy{};
-  // The x-coordinate of the optical center.
-  double cx{};
-  // The y-coordinate of the optical center.
-  double cy{};
+  int width{};   ///< Image width in pixels.
+  int height{};  ///< Image height in pixels.
+  double fx{};   ///< Focal length in x direction (pixels).
+  double fy{};   ///< Focal length in y direction (pixels).
+  double cx{};   ///< Principal point x-coordinate (pixels).
+  double cy{};   ///< Principal point y-coordinate (pixels).
 };
 
 /**
