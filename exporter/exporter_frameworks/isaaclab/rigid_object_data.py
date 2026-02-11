@@ -18,7 +18,6 @@ class RigidObjectDataSource:
     def __init__(self, rigid_object: RigidObject):
         rigid_object_data: RigidObjectData = rigid_object.data
         self._data = rigid_object_data
-        self.device = rigid_object_data.device
 
         # Pose of the com of each body wrt the actor frame of the body.
         self._coms_pos_b = rigid_object_data._coms_pos_b.clone()
@@ -551,14 +550,13 @@ def rigid_object_data_to_dict(
     object_name: str,
     source: RigidObjectDataSource,
     env_id: int,
-    device: str,
 ) -> dict[str, torch.Tensor]:
     assert isinstance(source, RigidObjectDataSource)
     return {
-        f"body.{object_name}.pos": source.root_pos_w[env_id].to(device),
-        f"body.{object_name}.quat": source.root_quat_w[env_id].to(device),
-        f"body.{object_name}.lin_vel": source.root_lin_vel_b[env_id].to(device),
-        f"body.{object_name}.ang_vel": source.root_ang_vel_b[env_id].to(device),
+        f"body.{object_name}.pos": source.root_pos_w[env_id],
+        f"body.{object_name}.quat": source.root_quat_w[env_id],
+        f"body.{object_name}.lin_vel": source.root_lin_vel_b[env_id],
+        f"body.{object_name}.ang_vel": source.root_ang_vel_b[env_id],
     }
 
 

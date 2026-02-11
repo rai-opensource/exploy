@@ -22,7 +22,6 @@ def export_environment_as_onnx(
     filename: str = "policy.onnx",
     model_source: dict | None = None,
     verbose: bool = False,
-    export_device: str = "cpu",
 ):
     """Export policy into a Torch ONNX file.
 
@@ -50,33 +49,7 @@ def export_environment_as_onnx(
         onnx_path=path,
         onnx_file_name=filename,
         model_source=model_source,
-        export_device=export_device,
     )
-
-
-def are_values_on_device(
-    names: list[str],
-    values: tuple,
-    expected_device: str = "cpu",
-    verbose: bool = True,
-) -> bool:
-    """Check that all input values are on the expected device."""
-    correct_device = True
-    input_values_debug = []
-    for v in values:
-        if isinstance(v, torch.Tensor):
-            input_values_debug.append(v)
-        elif isinstance(v, dict):
-            for val in v.values():
-                input_values_debug.append(val)
-    for name, val in zip(names, input_values_debug, strict=False):
-        if val.device.type != expected_device:
-            if verbose:
-                print(
-                    f"Input named {name} is not on {expected_device}. Got device: {val.device.type}"
-                )
-            correct_device = False
-    return correct_device
 
 
 # The export modes supported by the ONNX exporter.
@@ -174,7 +147,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                     #     command_term._update_command()
 
                     # Compute observations.
-                    observations = self._env.compute_observations(device=self._export_device)
+                    observations = self._env.compute_observations()
 
                     # Compute actions.
                     actions = self.actor(self.normalizer(observations))
@@ -200,7 +173,6 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         onnx_path: str,
         onnx_file_name: str,
         model_source: dict,
-        export_device: str = "cpu",
     ):
         """Export to ONNX.
 
@@ -209,7 +181,6 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             filename: The name (including the `ONNX` extension) of the exported file.
             model_source: Information about the policy's origin (e.g., wandb, local file, etc.), added to the ONNX metadata.
         """
-        self.to(device=export_device)
         self.eval()
 
         # convert_pretrained_networks_in_observation(exporter=self)
@@ -230,21 +201,12 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         output_names = ["actions", "obs"]
         output_names += self._env.context_manager().get_output_names()
 
-        assert are_values_on_device(
-            names=input_names,
-            values=input_values,
-            expected_device=export_device,
-            verbose=True,
-        )
-
         # Prepare all export paths
         export_paths = prepare_onnx_paths(
             output_dir=onnx_path,
             filename=onnx_file_name,
             debug_suffixes=["default", "process_actions"],
         )
-
-        self._export_device = export_device
 
         for mode, file_path in (
             (ExportMode.ProcessActions, export_paths.get_debug_path("process_actions")),

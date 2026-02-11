@@ -16,7 +16,7 @@ class ExportableEnvironment(abc.ABC):
         return self._context_manager
 
     @abc.abstractmethod
-    def compute_observations(self, device: str) -> torch.Tensor:
+    def compute_observations(self) -> torch.Tensor:
         """Compute and return the observations of the environment."""
         raise NotImplementedError
 

@@ -91,18 +91,12 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
             rigid_object._data = self._rigid_object_list[i_rigid_object]
 
-    def compute_observations(self, device: str) -> torch.Tensor:
+    def compute_observations(self) -> torch.Tensor:
         """Compute and return the observations of the environment."""
         obs_dict = self._env.observation_manager.compute()
-        observations = (
-            obs_dict[self._policy_obs_group_name]
-            .to(device=device)
-            .view(
-                1,
-                self._env.observation_manager.group_obs_dim[self._policy_obs_group_name][
-                    self._env_id
-                ],
-            )
+        observations = obs_dict[self._policy_obs_group_name].view(
+            1,
+            self._env.observation_manager.group_obs_dim[self._policy_obs_group_name][self._env_id],
         )
         return observations
 

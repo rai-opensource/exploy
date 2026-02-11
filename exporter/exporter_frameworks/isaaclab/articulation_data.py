@@ -20,7 +20,6 @@ class ArticulationDataSource:
     def __init__(self, articulation: Articulation):
         articulation_data: ArticulationData = articulation.data
         self._data = articulation_data
-        self.device = articulation_data.device
 
         # Pose of the com of each body wrt the actor frame of the body.
         # TODO: port fix back

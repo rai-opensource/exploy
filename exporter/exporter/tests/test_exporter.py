@@ -2,44 +2,15 @@
 
 """Tests for ONNX exporter functionality."""
 
-import pathlib
-import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
-import onnx
 import pytest
 import torch
 
 from exporter.exporter import (
     ExportMode,
     OnnxEnvironmentExporter,
-    are_values_on_device,
-    export_environment_as_onnx,
 )
-
-
-class TestAreValuesOnDevice:
-    """Test device validation utility."""
-
-    def test_all_values_on_cpu(self):
-        """Test when all tensors are on CPU."""
-        tensors = (torch.tensor([1.0]), torch.tensor([2.0]))
-        names = ["tensor1", "tensor2"]
-        assert are_values_on_device(names, tensors, expected_device="cpu", verbose=False)
-
-    def test_wrong_device_check(self):
-        """Test when checking for wrong device returns False."""
-        tensors = (torch.tensor([1.0]), torch.tensor([2.0]))
-        names = ["tensor1", "tensor2"]
-        # Tensors are on CPU, but we're checking for cuda - should return False
-        assert not are_values_on_device(names, tensors, expected_device="cuda", verbose=False)
-
-    def test_with_dict_values(self):
-        """Test when values contain dictionaries."""
-        dict_val = {"a": torch.tensor([1.0]), "b": torch.tensor([2.0])}
-        tensors = (dict_val,)
-        names = ["dict"]
-        assert are_values_on_device(names, tensors, expected_device="cpu", verbose=False)
 
 
 class TestOnnxEnvironmentExporter:
@@ -85,7 +56,6 @@ class TestOnnxEnvironmentExporter:
             normalizer=None,
             verbose=False,
         )
-        exporter._export_device = "cpu"
         exporter.export_mode = ExportMode.Default
 
         input_data = {"input1": torch.tensor([1.0])}
@@ -110,7 +80,6 @@ class TestOnnxEnvironmentExporter:
             normalizer=None,
             verbose=False,
         )
-        exporter._export_device = "cpu"
         exporter.export_mode = ExportMode.ProcessActions
 
         input_data = {"input1": torch.tensor([1.0])}

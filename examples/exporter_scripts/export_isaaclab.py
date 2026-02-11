@@ -71,7 +71,6 @@ def main(task_name: str = None):
     onnx_export_dir = test_dir
     onnx_export_file = "test_export.onnx"
     env_id = 0
-    export_device = "cpu"
 
     exportable_env = IsaacLabExportableEnvironment(env.unwrapped, env_id=env_id)
 
@@ -82,7 +81,6 @@ def main(task_name: str = None):
         path=onnx_export_dir,
         filename=onnx_export_file,
         verbose=False,
-        export_device=export_device,
     )
 
     exportable_env.cleanup()
