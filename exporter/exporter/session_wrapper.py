@@ -67,17 +67,42 @@ class SessionWrapper:
         return self._onnx_file_path
 
     def __call__(self, **kwargs):
+        """Run ONNX inference with the given inputs.
+
+        Args:
+            **kwargs: Keyword arguments where keys are input names and values are input data.
+
+        Returns:
+            List of output arrays from the ONNX model inference.
+        """
         in_kwargs = {name: kwargs[name] for name in self.input_names}
         self._results = self.session.run(self.output_names, in_kwargs)
         return self._results
 
     def get_torch_model(self) -> torch.nn.Module:
+        """Get the original torch policy model.
+
+        Returns:
+            The torch.nn.Module representing the policy, or None if not provided.
+        """
         return self._policy
 
     def get_output_value(self, output_name: str):
-        assert output_name in self.output_names, (
-            f"Output '{output_name}' not found in expected outputs: {self.output_names}"
-        )
+        """Get a specific output value from the last inference run.
+
+        Args:
+            output_name: The name of the output to retrieve.
+
+        Returns:
+            The numpy array corresponding to the requested output.
+
+        Raises:
+            KeyError: If the output_name is not in the model's outputs.
+        """
+        if output_name not in self.output_names:
+            raise KeyError(
+                f"Output '{output_name}' not found in expected outputs: {self.output_names}"
+            )
         return self._results[self.output_names.index(output_name)]
 
     def reset(self):
