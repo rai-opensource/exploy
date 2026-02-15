@@ -46,8 +46,8 @@ def _print_progress_bar(
     extra_str = " | ".join(extra_info)
 
     print(
-        f"\r{status_emoji} {bar} {step_ctr + 1}/{num_steps} | Failed: {failed_steps} | {extra_str} \n",
-        end="",
+        f"\r{status_emoji} {bar} {step_ctr + 1}/{num_steps} | Failed: {failed_steps} | {extra_str}",
+        end="\n" if not step_export_ok else "",
         flush=True,
     )
 
@@ -61,10 +61,9 @@ def _compare_step_outputs(
     env_outputs: dict[str, torch.Tensor],
     ort_outputs: dict[str, torch.Tensor] | None,
     output_names: list[str],
-    verbose: bool,
     atol: float,
     rtol: float,
-) -> bool:
+) -> tuple[bool, str]:
     """Compare outputs from environment and ONNX model.
 
     Args:
@@ -76,60 +75,64 @@ def _compare_step_outputs(
         env_outputs: Environment outputs.
         ort_outputs: ONNX model outputs (None if session not run yet).
         output_names: Names of output components.
-        verbose: Whether to print comparison results.
         atol: Absolute tolerance.
         rtol: Relative tolerance.
 
     Returns:
-        True if all comparisons passed, False otherwise.
+        A tuple of (is_step_export_ok, message), where `is_step_export_ok` is a boolean indicating whether the step's outputs are close within the specified tolerances, and `message` is a string describing the comparison results, including details of any mismatches and troubleshooting checklists.
     """
     step_export_ok = True
+    msg = ""
 
-    if verbose:
-        print("\n")
-
-    obs_ok = compare_tensors(
-        vec_a=env_obs.view(1, -1),
-        vec_b=ort_obs.to(env_obs.device).view(1, -1),
+    # Check observation comparison
+    obs_env = env_obs.view(1, -1)
+    obs_ort = ort_obs.to(env_obs.device).view(1, -1)
+    obs_ok, obs_message = compare_tensors(
+        vec_a=obs_env,
+        vec_b=obs_ort,
         name_a="env",
         name_b="ort",
         vec_name="observation",
         index_names=observation_names,
-        verbose=verbose,
         atol=atol,
         rtol=rtol,
     )
 
-    if not obs_ok and verbose:
-        print("\n📋 Observation Troubleshooting Checklist:")
-        print("  • Verify all observation data sources have corresponding input components")
-        print(
-            "  • Ensure input components reference the same data sources as observation computation"
+    if not obs_ok:
+        msg += "\n\n📋 Observation comparison failed!"
+        msg += f"\n{obs_message}"
+        msg += "\n📋 Observation Troubleshooting Checklist:"
+        msg += "\n  • Verify all observation data sources have corresponding input components"
+        msg += "\n  • Ensure input components reference the same data sources as observation computation"
+        msg += (
+            "\n  • For memory-based observations, confirm memory components are properly registered"
         )
-        print(
-            "  • For memory-based observations, confirm memory components are properly registered"
-        )
-        print("  • Review compute_observation() implementation for data flow correctness")
-        return False
+        msg += "\n  • Review compute_observation() implementation for data flow correctness"
+        return False, msg
 
     step_export_ok = step_export_ok and obs_ok
 
-    actions_ok = compare_tensors(
-        vec_a=env_actions.view(1, -1),
-        vec_b=ort_actions.to(env_actions.device).view(1, -1),
+    # Check actions comparison
+    actions_env = env_actions.view(1, -1)
+    actions_ort = ort_actions.to(env_actions.device).view(1, -1)
+    actions_ok, actions_message = compare_tensors(
+        vec_a=actions_env,
+        vec_b=actions_ort,
         name_a="env",
         name_b="ort",
         vec_name="actions",
-        verbose=verbose,
+        index_names=None,
         atol=atol,
         rtol=rtol,
     )
 
-    if not actions_ok and verbose:
-        print("\n📋 Actions Troubleshooting Checklist:")
-        print("  • Verify actor network matches between env and ONNX")
-        print("  • Ensure action normalizer parameters are correctly exported")
-        return False
+    if not actions_ok:
+        msg += "\n\n🎯 Actions comparison failed!"
+        msg += f"\n{actions_message}"
+        msg += "\n📋 Actions Troubleshooting Checklist:"
+        msg += "\n  • Verify actor network matches between env and ONNX"
+        msg += "\n  • Ensure action normalizer parameters are correctly exported"
+        return False, msg
 
     step_export_ok = step_export_ok and actions_ok
 
@@ -148,28 +151,32 @@ def _compare_step_outputs(
             output_size = env_outputs[name].view(1, -1).shape[1]
             expanded_index_names.extend([f"{name}[{i}]" for i in range(output_size)])
 
-        outputs_ok = compare_tensors(
+        # Check outputs comparison
+        outputs_ok, outputs_message = compare_tensors(
             vec_a=env_outputs_cat,
             vec_b=ort_outputs_cat,
             name_a="env",
             name_b="ort",
             vec_name="outputs",
             index_names=expanded_index_names,
-            verbose=verbose,
             atol=atol,
             rtol=rtol,
         )
 
-        if not outputs_ok and verbose:
-            print("\n📋 Outputs Troubleshooting Checklist:")
-            print("  • Verify output components are registered for all expected outputs")
-            print("  • Ensure the correct processed actions are included in memory")
-            print("  • Review process_action() and apply_action() implementations for consistency")
-            return False
+        if not outputs_ok:
+            msg += "\n\n📊 Outputs comparison failed!"
+            msg += f"\n{outputs_message}"
+            msg += "\n📋 Outputs Troubleshooting Checklist:"
+            msg += "\n  • Verify output components are registered for all expected outputs"
+            msg += "\n  • Ensure the correct processed actions are included in memory"
+            msg += (
+                "\n  • Review process_action() and apply_action() implementations for consistency"
+            )
+            return False, msg
 
         step_export_ok = step_export_ok and outputs_ok
 
-    return step_export_ok
+    return step_export_ok, msg
 
 
 def evaluate(
@@ -214,6 +221,10 @@ def evaluate(
     """
 
     obs = observations.clone() if observations is not None else env.observations_reset()
+
+    # Print ONNX graph structure if verbose
+    if verbose:
+        session_wrapper.print_graph()
 
     step_ctr = 0
     export_ok = True
@@ -313,7 +324,7 @@ def evaluate(
         }
 
         # Compare outputs from environment and ONNX model.
-        step_export_ok = _compare_step_outputs(
+        step_export_ok, msg = _compare_step_outputs(
             env_obs=obs,
             ort_obs=ort_observations,
             env_actions=env_actions,
@@ -322,7 +333,6 @@ def evaluate(
             ort_outputs=ort_outputs,
             observation_names=env.get_observation_names(),
             output_names=context_manager.get_output_names(),
-            verbose=verbose,
             atol=atol,
             rtol=rtol,
         )
@@ -333,6 +343,10 @@ def evaluate(
 
         # Display progress bar.
         if verbose:
+            if step_ctr == 0:
+                print("\n\nStarting evaluation...")
+            if not step_export_ok:
+                print(msg)
             _print_progress_bar(
                 step_ctr=step_ctr,
                 num_steps=num_steps,
@@ -347,5 +361,6 @@ def evaluate(
             input()
 
         step_ctr += 1
-
+    if verbose:
+        print("\nEvaluation complete.")
     return export_ok, next_obs

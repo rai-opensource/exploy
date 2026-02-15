@@ -13,8 +13,7 @@ def compare_tensors(
     name_b: str = None,
     atol: float = 1.0e-5,
     rtol: float = 1.0e-5,
-    verbose: bool = False,
-) -> bool:
+) -> tuple[bool, str]:
     """Compare two tensors, and print a message showing the differences.
 
     Args:
@@ -23,18 +22,19 @@ def compare_tensors(
         vec_name: A name identifying the compared tensors.
         index_names: A list of names, one for each element of the input tensors.
         name_a: A name identifying the source of the first input tensor.
-        name_a: A name identifying the source of the second input tensor.
+        name_b: A name identifying the source of the second input tensor.
         atol : Absolute tolerance.
         rtol : Relative tolerance.
-        verbose: If true, print information about the tensor difference to console.
+
+    Returns:
+        A tuple of (is_close, message), where `is_close` is a boolean indicating whether the tensors are close within the specified tolerances, and `message` is a string describing the comparison results, including details of any mismatches.
     """
     is_close = torch.isclose(vec_a, vec_b, atol=atol, rtol=rtol)
 
     msg = f"Comparing {vec_name}: "
     if torch.all(is_close):
         msg += "\033[92mall elements are close.\033[0m"
-        print(msg)
-        return True
+        return True, msg
 
     mismatched_indices = (torch.logical_not(is_close)).nonzero(as_tuple=False)
 
@@ -52,7 +52,4 @@ def compare_tensors(
             f"{name_b}={val_b:+.5f}\t"
             f"Δ={np.abs(val_a - val_b):.5f}"
         )
-
-    if verbose:
-        print(msg)
-    return False
+    return False, msg
