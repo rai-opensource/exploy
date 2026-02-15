@@ -22,6 +22,8 @@ def export_environment_as_onnx(
     filename: str = "policy.onnx",
     model_source: dict | None = None,
     verbose: bool = False,
+    opset_version: int = 20,
+    ir_version: int = 11,
 ):
     """Export policy into a Torch ONNX file.
 
@@ -33,6 +35,8 @@ def export_environment_as_onnx(
         filename: The name of exported ONNX file. Defaults to "policy.onnx".
         model_source: Information about the policy's origin (e.g., wandb, local file, etc.), added to the ONNX metadata.
         verbose: Whether to print the model summary. Defaults to False.
+        opset_version: Version of the operator specification referenced by the ONNX graph. Needs to be compatible with ONNX Runtime in deployment environment, check https://onnxruntime.ai/docs/reference/compatibility.html
+        ir_version: Version of the intermediate representation specifications. Needs to be compatible with ONNX Runtime in deployment environment, check https://onnxruntime.ai/docs/reference/compatibility.html
     """
     if model_source is None:
         model_source = {}
@@ -43,6 +47,8 @@ def export_environment_as_onnx(
         actor=actor,
         normalizer=normalizer,
         verbose=verbose,
+        opset_version=opset_version,
+        ir_version=ir_version,
     )
 
     policy_exporter.export(
@@ -69,6 +75,8 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         self,
         env: ExportableEnvironment,
         actor: torch.nn.Module,
+        opset_version: int,
+        ir_version: int,
         normalizer: torch.nn.Module | None = None,
         verbose: bool = False,
     ):
@@ -86,10 +94,8 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         else:
             self.normalizer = torch.nn.Identity()
 
-        # Compatible versions with onnxruntime used in control (1.17)
-        # See https://onnxruntime.ai/docs/reference/compatibility.html
-        self._opset_version = 20
-        self._ir_version = 9
+        self._opset_version = opset_version
+        self._ir_version = ir_version
 
     def forward(
         self,
@@ -98,28 +104,15 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         """Use the robot's state to compute policy actions, joint position targets, and policy observations, and outputs
         that support history.
 
-        This method sets the environment's data sources (e.g., the articulation data and the IMU sensor data) such that
-        computing this method's outputs results in embedding the task's observation and action managers to be part of
-        the computational graph. This implementation's design is discussed in this design doc:
-        https://docs.google.com/document/d/1mOz2VPSpYvOUTK6sjLT_JNLZAldyzEnNievXJTpQvPs/
+        Args:
+            input_data: A dictionary containing all input tensors required for the forward pass. The expected keys and
+            shapes of the tensors depend on the environment's context manager and the policy's computational graph.
 
         Notes:
             - Dictionary inputs are flattened by the torch ONNX exporter implementation.
-            - As discussed in the design doc above, only inputs that are part of the computational graph will be
-              required when using the resulting ONNX file for inference.
+            - Only inputs that are part of the computational graph will be required when using the resulting ONNX file for inference.
               For example, if `pos_base_in_w` is not used by any of the observation functions, it will not be a required
               input. This can be verified by querying the ONNX input names when using the ONNX runtime framework.
-
-        Assumptions:
-            - Processed actions are joint targets, and all joints are actuated.
-
-        Args:
-            imu_data: A dictionary of IMU poses and angular velocities, for each available IMU.
-            sensor_data: A dictionary of sensor values. IMU data is handled separately.
-            command_data: A dictionary of command values.
-            art_data: A dictionary of articulation data values.
-            rigid_object_data: A dictionary of rigid-body objects in the scene.
-            memory_data: A dictionary of inputs used to support history.
 
         Returns:
             joint_targets, actions, output_memory:

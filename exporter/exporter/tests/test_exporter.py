@@ -55,6 +55,8 @@ class TestOnnxEnvironmentExporter:
             actor=mock_actor,
             normalizer=None,
             verbose=False,
+            opset_version=20,
+            ir_version=11,
         )
         exporter.export_mode = ExportMode.Default
 
@@ -79,6 +81,8 @@ class TestOnnxEnvironmentExporter:
             actor=mock_actor,
             normalizer=None,
             verbose=False,
+            opset_version=20,
+            ir_version=11,
         )
         exporter.export_mode = ExportMode.ProcessActions
 
