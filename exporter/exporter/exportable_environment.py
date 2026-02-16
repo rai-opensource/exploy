@@ -11,6 +11,7 @@ from exporter.context_manager import ContextManager
 class ExportableEnvironment(abc.ABC):
     def __init__(self):
         self._context_manager = ContextManager()
+        self._command_updates: list[Callable[[], None]] = []
 
     def context_manager(self) -> ContextManager:
         return self._context_manager
@@ -28,6 +29,11 @@ class ExportableEnvironment(abc.ABC):
     @abc.abstractmethod
     def apply_actions(self):
         """Apply processed actions (e.g., joint targets) to the environment"""
+        pass
+
+    @abc.abstractmethod
+    def prepare_export(self):
+        """Prepare the environment for export. Called before each export."""
         pass
 
     @abc.abstractmethod
@@ -73,3 +79,16 @@ class ExportableEnvironment(abc.ABC):
     def observations_reset(self) -> torch.Tensor:
         """Get the observations after an environment reset."""
         raise NotImplementedError
+
+    def register_command_update(self, command_update: Callable[[], None]):
+        """Register callable to update the commands in the environment before observations are computed.
+
+        Args:
+            command_update: A callable that updates the commands.
+        """
+        self._command_updates.append(command_update)
+
+    @property
+    def command_updates(self) -> list[Callable[[], None]]:
+        """Get the registered command updates."""
+        return self._command_updates

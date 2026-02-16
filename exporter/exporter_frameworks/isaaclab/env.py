@@ -85,6 +85,11 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
     def __del__(self):
         self.cleanup()
 
+    def prepare_export(self):
+        # We need to call compute on the commands to populate the command buffers if sensors are used.
+        # This is not required for other terms, as this is already done in IsaacLab.
+        self._env.command_manager.compute(dt=0.0)
+
     def cleanup(self):
         self._env.scene.articulations[self._articulation_name]._data = self._orig_art_data
 

@@ -35,6 +35,7 @@ class TestOnnxEnvironmentExporter:
         env.empty_actor_observations.return_value = torch.tensor([0.5])
         env.empty_actions.return_value = torch.tensor([0.1])
         env.compute_observations.return_value = torch.tensor([0.5])
+        env.command_updates = []
         env.process_actions.return_value = None
         env.apply_actions.return_value = None
         env.metadata.return_value = {"env_key": "env_value"}

@@ -130,14 +130,9 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             # Inference: compute actions.
             match self.export_mode:
                 case ExportMode.Default:
-                    # TODO: Fix updating commands.
-                    # Update required commands.
-                    # Note: we explicitly only call the `_update_command` method
-                    #       to enable the computational graph associated with commands.
-                    #       Calling the `compute` method instead would trigger an error
-                    #       due to aten::uniform not being supported by onnx.
-                    # for command_term in self._data_handler.command_dh.command_terms_to_update:
-                    #     command_term._update_command()
+                    # Update commands.
+                    for command_update in self._env.command_updates:
+                        command_update()
 
                     # Compute observations.
                     observations = self._env.compute_observations()
@@ -206,6 +201,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             (ExportMode.Default, export_paths.get_debug_path("default")),
         ):
             self.export_mode = mode
+            self._env.prepare_export()
             torch.onnx.export(
                 self,
                 input_values,
