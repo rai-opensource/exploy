@@ -1,10 +1,6 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import torch
-from exporter_frameworks.isaaclab.utils import (
-    make_getter_body_pos_w,
-    make_getter_body_quat_w,
-)
 from isaaclab.assets import Articulation
 from isaaclab.envs.mdp.commands.velocity_command import UniformVelocityCommand
 from isaaclab.managers import CommandManager
@@ -58,11 +54,11 @@ def add_articulation_data(
         onnx_inputs = [
             Input(
                 name=f"{input_name_prefix}.base.pos_b_rt_w_in_w",
-                get_from_env_cb=make_getter_body_pos_w(i_body=0, articulation=articulation),
+                get_from_env_cb=lambda art=articulation: art.data.body_pos_w[:, 0],
             ),
             Input(
                 name=f"{input_name_prefix}.base.w_Q_b",
-                get_from_env_cb=make_getter_body_quat_w(i_body=0, articulation=articulation),
+                get_from_env_cb=lambda art=articulation: art.data.body_quat_w[:, 0],
             ),
             Input(
                 name=f"{input_name_prefix}.base.lin_vel_b_rt_w_in_b",
@@ -139,7 +135,7 @@ def add_sensor_inputs(
             context_manager.add_component(
                 Connection(
                     name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}.sensor_pos",
-                    getter=make_getter_body_pos_w(i_body=0, articulation=articulation),
+                    getter=lambda art=articulation: art.data.body_pos_w[:, 0],
                     setter=setter,
                 )
             )

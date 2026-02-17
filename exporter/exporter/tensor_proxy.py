@@ -8,71 +8,93 @@ import torch
 class TensorProxy:
     """Manage a list of tensors and expose them to the user as a stacked tensor.
 
-    This class manages a `list[torch.Tensor]` and exposes it as a single tensor. For example, this class allows the user
-    to implement the following:
+    This class takes a tensor, splits it along a specified dimension, and exposes it as if it were the original tensor.
+    For example, this class allows the user to implement the following:
 
         # Make a tensor of all body positions.
         body_pos = torch.rand((batch_dim, num_bodies, 3))
 
-        # Split all body positions and store into a list of tensors.
-        all_body_pos_list = [body_pos[:, id, :].clone() for id in range(num_bodies)]
+        # Wrap the tensor in a `TensorProxy` object, splitting along dimension 1 (num_bodies).
+        body_pos_proxy = TensorProxy(body_pos, split_dim=1)
 
-        # Wrap the list in a `TensorProxy` object.
-        body_pos_proxy = TensorProxy(tensors=all_body_pos_list, split_dim=1,)
+    Now, the user can index into `body_pos_proxy` as if it was the original `body_pos`. Indexing
+    will index into one of the split tensors created from unbinding along the split dimension.
 
-    Now, the user can index into `body_pos_proxy` as it if was the original `body_pos`. Indexing will index into
-    one of the split tensors in `all_body_pos_list`.
-
-    The original use case for this implementation was to split the `body_state_w` tensor from `ArticulationData` into separate body tensors
+    One use case for this implementation is to split the `body_state_w` tensor from `ArticulationData` into separate body tensors
     to improve exporting.
-
-    Note:   The tensors in the `tensors` parameter to this class do not need to have a shape set as `(batch_dim, num_bodies, 3)`.
-            The tensors passed stored in that list can have any number of dimensions.
     """
 
-    def __init__(self, tensors: list[torch.Tensor], split_dim: int):
-        self._tensors = tensors
-
-        # todo assert all tensors same shape
-        self._total_dim = len(tensors[0].shape) + 1
-
+    def __init__(self, tensor: torch.Tensor, split_dim: int):
+        # Split the tensor into a list of tensors along the split_dim
+        # We use unbind to remove the dimension entirely for each element in the list
+        self._tensors = list(torch.unbind(tensor, dim=split_dim))
         self._split_dim = split_dim
-        assert self._split_dim < self._total_dim and self._split_dim >= 0
+        self._total_dim = tensor.dim()
+        if split_dim < 0:
+            raise IndexError(f"split_dim must be non-negative, got {split_dim}")
 
     def __getitem__(self, idx):
         """Index into a `TensorProxy` as if the user was indexing into the un-split list of tensors."""
         if not isinstance(idx, tuple):
             idx = (idx,)
 
-        # Single-element shortcut (like proxy[batch_idx])
-        if len(idx) == 1:
-            batch_idx = idx[0]
-            selected = [t[batch_idx] for t in self._tensors]
-            return torch.stack(selected, dim=0)
+        # Expand Ellipsis (...) to appropriate number of slice(None) objects
+        if Ellipsis in idx:
+            ellipsis_idx = idx.index(Ellipsis)
+            # Calculate how many dimensions the ellipsis represents
+            num_remaining = self._total_dim - len(idx) + 1  # +1 because Ellipsis counts as 1
+            expanded_slices = (slice(None),) * num_remaining
+            idx = idx[:ellipsis_idx] + expanded_slices + idx[ellipsis_idx + 1 :]
 
         # Ensure total dimensions
         while len(idx) < self._total_dim:
             idx = idx + (slice(None),)
 
+        # If any integer index appears before split_dim, the effective split_dim is reduced
+        # This is covered in test_integer_and_slice_indexing_patterns
+        effective_split_dim = self._split_dim
+        for i in range(self._split_dim):
+            if isinstance(idx[i], int):
+                effective_split_dim -= 1
         split_slice = idx[self._split_dim]
         full_index = idx[: self._split_dim] + idx[self._split_dim + 1 :]
 
+        def _gather_and_cat(indices, full_index):
+            """Helper to stack/concatenate sliced tensors along the split dimension, matching PyTorch indexing semantics."""
+            selected = [self._tensors[i][full_index] for i in indices]
+            # Stack along axis 0, then move axis 0 to effective_split_dim position
+            stacked = torch.stack(selected, dim=0)
+            if effective_split_dim != 0:
+                # Move axis 0 to effective_split_dim
+                stacked = stacked.movedim(0, effective_split_dim)
+            return stacked
+
+        def _is_cached(indices):
+            """Return cached tensor if single element with full slices, else None."""
+            if len(indices) == 1 and all(
+                isinstance(i, slice) and i == slice(None) for i in full_index
+            ):
+                return self._tensors[indices[0]]
+            return None
+
         # Handle different split indexing cases
         if isinstance(split_slice, int):
+            if (cached := _is_cached([split_slice])) is not None:
+                return cached
             return self._tensors[split_slice][full_index]
 
         elif isinstance(split_slice, slice):
             indices = range(*split_slice.indices(len(self._tensors)))
-            selected = [self._tensors[i][full_index].unsqueeze(self._split_dim) for i in indices]
-            return torch.cat(selected, dim=self._split_dim)
+            if (cached := _is_cached(list(indices))) is not None:
+                return cached
+            return _gather_and_cat(indices, full_index)
 
         elif isinstance(split_slice, list | tuple | torch.Tensor):
             if isinstance(split_slice, torch.Tensor):
                 split_slice = split_slice.tolist()
-            selected = [
-                self._tensors[i][full_index].unsqueeze(self._split_dim) for i in split_slice
-            ]
-            return torch.cat(selected, dim=self._split_dim)
+            if (cached := _is_cached(split_slice)) is not None:
+                return cached
+            return _gather_and_cat(split_slice, full_index)
 
         else:
             raise TypeError(f"Unsupported index type: {type(split_slice)}")

@@ -48,24 +48,11 @@ class ArticulationDataSource:
         # Note: we use a `TensorProxy` class that allows us to split the original
         #       body tensors into one tensor per body.
         self._root_body_id = 0
-        num_bodies = articulation.num_bodies
 
-        self._body_pos_w = TensorProxy(
-            tensors=[articulation_data.body_pos_w[:, id].clone() for id in range(num_bodies)],
-            split_dim=1,
-        )
-        self._body_quat_w = TensorProxy(
-            tensors=[articulation_data.body_quat_w[:, id].clone() for id in range(num_bodies)],
-            split_dim=1,
-        )
-        self._body_lin_vel_w = TensorProxy(
-            tensors=[articulation_data.body_lin_vel_w[:, id].clone() for id in range(num_bodies)],
-            split_dim=1,
-        )
-        self._body_ang_vel_w = TensorProxy(
-            tensors=[articulation_data.body_ang_vel_w[:, id].clone() for id in range(num_bodies)],
-            split_dim=1,
-        )
+        self._body_pos_w = TensorProxy(articulation_data.body_pos_w.clone(), split_dim=1)
+        self._body_quat_w = TensorProxy(articulation_data.body_quat_w.clone(), split_dim=1)
+        self._body_lin_vel_w = TensorProxy(articulation_data.body_lin_vel_w.clone(), split_dim=1)
+        self._body_ang_vel_w = TensorProxy(articulation_data.body_ang_vel_w.clone(), split_dim=1)
 
         self._body_acc_w = articulation_data.body_acc_w.clone()
 
@@ -303,6 +290,14 @@ class ArticulationDataSource:
     ##
     # Derived Root Link Frame Properties
     ##
+
+    @property
+    def root_link_pose_w(self) -> torch.Tensor:
+        """Root link pose in simulation world frame. Shape is (num_instances, 7).
+
+        This quantity is the pose (position and orientation) of the actor frame of the root rigid body relative to the world.
+        """
+        return torch.cat([self.root_pos_w, self.root_quat_w], dim=-1)
 
     @property
     def root_link_pos_w(self) -> torch.Tensor:

@@ -61,31 +61,3 @@ def get_observation_names(
         for i in range(dim):
             names.append(f"{name}_{i:02}")
     return names
-
-
-def get_body_pos_w(i_body: int, articulation: Articulation) -> torch.Tensor:
-    if isinstance(articulation.data.body_pos_w, TensorProxy):
-        return articulation.data.body_pos_w.tensors[i_body]
-    else:
-        return articulation.data.body_pos_w[:, i_body]
-
-
-def get_body_quat_w(i_body: int, articulation: Articulation) -> torch.Tensor:
-    if isinstance(articulation.data.body_quat_w, TensorProxy):
-        return articulation.data.body_quat_w.tensors[i_body]
-    else:
-        return articulation.data.body_quat_w[:, i_body]
-
-
-def make_getter_body_pos_w(i_body: int, articulation: Articulation):
-    def getter() -> torch.Tensor:
-        return get_body_pos_w(i_body, articulation)
-
-    return getter
-
-
-def make_getter_body_quat_w(i_body: int, articulation: Articulation):
-    def getter() -> torch.Tensor:
-        return get_body_quat_w(i_body, articulation)
-
-    return getter
