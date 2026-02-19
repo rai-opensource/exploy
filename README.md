@@ -2,8 +2,16 @@
 
 EXport and dePLOY Reinforcement Learning policies.
 
-The core idea lies in a "self-contained" export approach: rather than exporting only the neural network policy, this tool captures the entire environment logic—including observation generation and action processing—into a single ONNX file. By tracing Torch operations from the simulation environment, the exporter embeds the computational layers required to transform raw robot state interfaces into policy inputs and policy outputs into executable commands.
-By encapsulating the environment's "intelligence" within the model file itself, this library minimizes operational effort and maximizes confidence that a policy will behave identically in simulation and on physical hardware
+The core idea lies in a "self-contained" export approach:
+Rather than exporting only the neural network policy, this tool captures the entire environment
+logic—including observation generation and action processing—into a single ONNX file.
+By tracing Torch operations from the simulation environment, the exporter embeds the computational
+layers required to transform raw robot state interfaces into policy inputs and policy outputs into
+executable commands.
+
+By encapsulating the environment's computation graph within the model file itself,
+this library minimizes operational effort and maximizes confidence that a policy will behave
+identically in simulation and on physical hardware.
 
 ## Features
 
@@ -70,7 +78,6 @@ Run the example export
 ```bash
 pixi run export-isaaclab
 ```
-
 
 ```python
 from exploy import exporter

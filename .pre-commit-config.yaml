@@ -52,3 +52,22 @@ repos:
     hooks:
       - id: markdownlint
         args: [--fix]  # apply simple fixes (and report as failure)
+
+  # custom hook to run python linter/formatter
+  - repo: local
+    hooks:
+      - id: lint-python-fix
+        name: Run Python linter
+        entry: pixi run -e python lint-python-fix
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: format-python
+        name: Run Python formatter
+        entry: pixi run -e python format-python
+        language: system
+        types: [python]
+        pass_filenames: false
