@@ -6,9 +6,11 @@ from collections.abc import Callable, Sequence
 import torch
 from exporter_frameworks.isaaclab import inputs, memory, outputs
 from exporter_frameworks.isaaclab.articulation_data import ArticulationDataSource
+from exporter_frameworks.isaaclab.raycaster_data import RayCasterDataSource
 from exporter_frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
 from exporter_frameworks.isaaclab.utils import get_observation_names
 from isaaclab.envs import ManagerBasedRLEnv
+from isaaclab.sensors import RayCaster
 
 from exporter.exportable_environment import ExportableEnvironment
 
@@ -48,6 +50,15 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
             self._rigid_object_list.append(rigid_object._data)
             rigid_object._data = RigidObjectDataSource(rigid_object)
 
+        # Replace raycaster sensor data.
+        self._raycaster_data_list = []
+        for sensor_name, sensor in self._env.scene.sensors.items():
+            if isinstance(sensor, RayCaster):
+                self._raycaster_data_list.append((sensor_name, sensor._data))
+                sensor._data = RayCasterDataSource(
+                    sensor, self._env.scene.articulations[self._articulation_name]
+                )
+
         assert self.validate()
 
         # Add inputs, outputs, and memory to manager.
@@ -60,7 +71,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
             context_manager=self._context_manager,
         )
         inputs.add_sensor_inputs(
-            articulation=self._env.scene[self._articulation_name],
             sensors=self._env.scene.sensors,
             context_manager=self._context_manager,
         )
@@ -95,6 +105,9 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
 
         for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
             rigid_object._data = self._rigid_object_list[i_rigid_object]
+
+        for sensor_name, original_data in self._raycaster_data_list:
+            self._env.scene.sensors[sensor_name]._data = original_data
 
     def compute_observations(self) -> torch.Tensor:
         """Compute and return the observations of the environment."""

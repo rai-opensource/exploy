@@ -51,27 +51,30 @@ def add_articulation_data(
     for obj_name, articulation in articulations.items():
         input_name_prefix = f"{obj_prefix}.{obj_name}"
 
-        onnx_inputs = [
-            Input(
-                name=f"{input_name_prefix}.base.pos_b_rt_w_in_w",
-                get_from_env_cb=lambda art=articulation: art.data.body_pos_w[:, 0],
-            ),
-            Input(
-                name=f"{input_name_prefix}.base.w_Q_b",
-                get_from_env_cb=lambda art=articulation: art.data.body_quat_w[:, 0],
-            ),
-            Input(
-                name=f"{input_name_prefix}.base.lin_vel_b_rt_w_in_b",
-                get_from_env_cb=lambda art=articulation: art.data.root_lin_vel_b,
-            ),
-            Input(
-                name=f"{input_name_prefix}.base.ang_vel_b_rt_w_in_b",
-                get_from_env_cb=lambda art=articulation: art.data.root_ang_vel_b,
-            ),
-        ]
+        # Add inputs for all body positions and quaternions in world frame
+        for i, body_name in enumerate(articulation.data.body_names):
+            pos_b_rt_w_in_w = Input(
+                name=f"{input_name_prefix}.{body_name}.pos_b_rt_w_in_w",
+                get_from_env_cb=lambda art=articulation, idx=i: art.data.body_pos_w[:, idx],
+            )
+            w_Q_b = Input(
+                name=f"{input_name_prefix}.{body_name}.w_Q_b",
+                get_from_env_cb=lambda art=articulation, idx=i: art.data.body_quat_w[:, idx],
+            )
+            context_manager.add_component(pos_b_rt_w_in_w)
+            context_manager.add_component(w_Q_b)
 
-        for onnx_input in onnx_inputs:
-            context_manager.add_component(onnx_input)
+        # Add base orientation and velocities
+        base_lin_vel_b_rt_w_in_b = Input(
+            name=f"{input_name_prefix}.base.lin_vel_b_rt_w_in_b",
+            get_from_env_cb=lambda art=articulation: art.data.root_lin_vel_b,
+        )
+        base_ang_vel_b_rt_w_in_b = Input(
+            name=f"{input_name_prefix}.base.ang_vel_b_rt_w_in_b",
+            get_from_env_cb=lambda art=articulation: art.data.root_ang_vel_b,
+        )
+        context_manager.add_component(base_lin_vel_b_rt_w_in_b)
+        context_manager.add_component(base_ang_vel_b_rt_w_in_b)
 
         joint_group = Group(
             name=f"{input_name_prefix}.joints",
@@ -94,7 +97,6 @@ def add_articulation_data(
 
 
 def add_sensor_inputs(
-    articulation: Articulation,
     sensors: dict[str, SensorBase],
     context_manager: ContextManager,
 ):
@@ -103,20 +105,13 @@ def add_sensor_inputs(
         sensor: SensorBase = sensors[sensor_name_in_source]
 
         if isinstance(sensor, RayCaster):
-            # TODO: add support for all ray caster sensors.
-            assert isinstance(sensor, RayCaster), "Currently only RayCaster sensors are supported."
-
-            # TODO: add support for all pattern types.
             pattern_cfg: GridPatternCfg = sensor.cfg.pattern_cfg
             assert isinstance(pattern_cfg, GridPatternCfg), (
-                "Currently only PatternBaseCfg is supported for ray caster sensors."
+                "Currently only GridPatternCfg is supported for ray caster sensors."
             )
-
-            # Prepare an empty metadata dict.
-            context_manager.add_component(
-                Input(
-                    name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}.height",
-                    get_from_env_cb=lambda s=sensor: s._data.ray_hits_w,
+            context_manager.add_group(
+                Group(
+                    name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}",
                     metadata={
                         "pattern_type": "grid_pattern",
                         "offset_x": sensor.cfg.offset.pos[0],
@@ -125,19 +120,11 @@ def add_sensor_inputs(
                         "size_x": pattern_cfg.size[0],
                         "size_y": pattern_cfg.size[1],
                     },
+                    items=[
+                        Input(
+                            name="height",
+                            get_from_env_cb=lambda s=sensor: s._data.ray_hits_w[..., 2],
+                        ),
+                    ],
                 )
             )
-
-            def setter(val: torch.Tensor, sensor_name: str = sensor_name_in_source):
-                sensor: RayCaster = sensors[sensor_name]
-                sensor._data.pos_w[:] = val
-
-            context_manager.add_component(
-                Connection(
-                    name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}.sensor_pos",
-                    getter=lambda art=articulation: art.data.body_pos_w[:, 0],
-                    setter=setter,
-                )
-            )
-        else:
-            continue
