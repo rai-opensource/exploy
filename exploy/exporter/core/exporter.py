@@ -28,7 +28,7 @@ def export_environment_as_onnx(
 
     Args:
         env: The environment to be exported.
-        actor_critic: The actor-critic torch module.
+        actor: The actor torch module.
         path: The path to the saving directory.
         filename: The name of exported ONNX file. Defaults to "policy.onnx".
         model_source: Information about the policy's origin (e.g., wandb, local file, etc.), added to the ONNX metadata.
