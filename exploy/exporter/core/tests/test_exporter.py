@@ -11,8 +11,6 @@ from exploy.exporter.core.exporter import ExportMode, OnnxEnvironmentExporter
 
 
 class TestOnnxEnvironmentExporter:
-    """Test OnnxEnvironmentExporter class."""
-
     @pytest.fixture
     def mock_env(self):
         """Create a mock ExportableEnvironment."""
@@ -27,6 +25,7 @@ class TestOnnxEnvironmentExporter:
         context_mgr.get_output_names.return_value = ["output1"]
         context_mgr.write_connections.return_value = None
         context_mgr.metadata = {"test": "metadata"}
+        context_mgr.modules = []
 
         env.context_manager.return_value = context_mgr
         env.empty_actor_observations.return_value = torch.tensor([0.5])
@@ -51,7 +50,6 @@ class TestOnnxEnvironmentExporter:
         exporter = OnnxEnvironmentExporter(
             env=mock_env,
             actor=mock_actor,
-            normalizer=None,
             verbose=False,
             opset_version=20,
             ir_version=11,
@@ -77,7 +75,6 @@ class TestOnnxEnvironmentExporter:
         exporter = OnnxEnvironmentExporter(
             env=mock_env,
             actor=mock_actor,
-            normalizer=None,
             verbose=False,
             opset_version=20,
             ir_version=11,

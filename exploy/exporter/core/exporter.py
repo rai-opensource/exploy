@@ -18,7 +18,6 @@ def export_environment_as_onnx(
     env: ExportableEnvironment,
     actor: torch.nn.Module,
     path: str,
-    normalizer: torch.nn.Module | None = None,
     filename: str = "policy.onnx",
     model_source: dict | None = None,
     verbose: bool = False,
@@ -31,7 +30,6 @@ def export_environment_as_onnx(
         env: The environment to be exported.
         actor_critic: The actor-critic torch module.
         path: The path to the saving directory.
-        normalizer: The empirical normalizer module. If None, Identity is used.
         filename: The name of exported ONNX file. Defaults to "policy.onnx".
         model_source: Information about the policy's origin (e.g., wandb, local file, etc.), added to the ONNX metadata.
         verbose: Whether to print the model summary. Defaults to False.
@@ -45,7 +43,6 @@ def export_environment_as_onnx(
     policy_exporter = OnnxEnvironmentExporter(
         env=env,
         actor=actor,
-        normalizer=normalizer,
         verbose=verbose,
         opset_version=opset_version,
         ir_version=ir_version,
@@ -77,7 +74,6 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         actor: torch.nn.Module,
         opset_version: int,
         ir_version: int,
-        normalizer: torch.nn.Module | None = None,
         verbose: bool = False,
     ):
         super().__init__()
@@ -88,19 +84,17 @@ class OnnxEnvironmentExporter(torch.nn.Module):
 
         self.export_mode = ExportMode.Default
 
-        # copy normalizer if exists
-        if normalizer:
-            self.normalizer = copy.deepcopy(normalizer)
-        else:
-            self.normalizer = torch.nn.Identity()
-
         self._opset_version = opset_version
         self._ir_version = ir_version
+
+        # Track registered modules to ensure idempotent behavior
+        self._registered_modules: set[int] = set()
+        self._module_registration_counter: int = 0
 
     def forward(
         self,
         input_data: dict[str, torch.Tensor],
-    ):
+    ) -> tuple[torch.Tensor, ...]:
         """Use the robot's state to compute policy actions, joint position targets, and policy observations, and outputs
         that support history.
 
@@ -138,7 +132,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                     observations = self._env.compute_observations()
 
                     # Compute actions.
-                    actions = self.actor(self.normalizer(observations))
+                    actions = self.actor(observations)
 
                     # Process the actions.
                     self._env.process_actions(actions)
@@ -156,6 +150,31 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             *output_data,
         )
 
+    def register_modules(self):
+        """Register all modules from the environment's context manager.
+
+        This method iterates over all modules in the environment's context manager
+        and registers them using sequential names. This ensures that all relevant modules are
+        included in the ONNX export, allowing the exported model to function correctly when loaded
+        in an ONNX runtime environment.
+
+        Calling this method multiple times will not re-register already registered modules. The
+        modules' names are based on insertion order.
+        """
+        for module in self._env.context_manager().modules:
+            module_id = id(module)
+            # Skip if this module is already registered.
+            if module_id in self._registered_modules:
+                continue
+
+            # Register this module.
+            module_name = f"exporter_registered_module_{self._module_registration_counter}"
+            self.register_module(module_name, module)
+
+            # Track the registered module.
+            self._registered_modules.add(module_id)
+            self._module_registration_counter += 1
+
     def export(
         self,
         onnx_path: str,
@@ -171,7 +190,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         """
         self.eval()
 
-        # convert_pretrained_networks_in_observation(exporter=self)
+        self.register_modules()
 
         # Get input values and names.
         input_values = [self._env.context_manager().get_inputs()]
@@ -215,6 +234,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                 # are on cpu, we disable it to allow exporting of models on cuda. constant folding
                 # optimization will be done in the ONNX runtime when we load the model for deployment.
                 do_constant_folding=False,
+                dynamo=False,
             )
 
         wrapper_model = construct_decimation_wrapper(

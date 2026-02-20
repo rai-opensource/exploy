@@ -10,8 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/examples/exporter_scripts/export_isaaclab.py",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/.pixi/envs/default/bin/python",  // Adjust path if needed
-            "justMyCode": false,
-        }
+            "python": "${workspaceFolder}/.pixi/envs/isaaclab/bin/python",
+            "justMyCode": false
+        },
     ]
 }

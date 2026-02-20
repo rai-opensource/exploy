@@ -90,7 +90,6 @@ exportable_env = IsaacLabExportableEnvironment(env)
 exporter.export_environment_as_onnx(
     env=exportable_env,
     actor=actor,
-    normalizer=normalizer,
     path=onnx_export_dir,
     filename=onnx_export_file,
     verbose=False,

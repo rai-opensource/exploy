@@ -137,7 +137,7 @@ def _compare_step_outputs(
     step_export_ok = step_export_ok and actions_ok
 
     # Skip output comparison if we didn't run the session (first step).
-    if ort_outputs is not None:
+    if ort_outputs is not None and len(output_names) > 0:
         # Concatenate all outputs for comparison
         env_outputs_cat = torch.cat([env_outputs[name].view(1, -1) for name in output_names], dim=1)
         ort_outputs_cat = torch.cat(

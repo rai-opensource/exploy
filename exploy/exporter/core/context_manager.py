@@ -16,6 +16,7 @@ class ContextManager:
     ):
         self._components: list[Input | Output | Connection] = []
         self._groups: list[Group] = []
+        self._modules: list[torch.nn.Module] = []
 
     def add_component(self, component: Input | Output | Connection) -> None:
         """Add a component (Input, Output, or Connection) to the context manager.
@@ -26,12 +27,27 @@ class ContextManager:
         Raises:
             AssertionError: If a component with the same name already exists.
         """
+        assert isinstance(component, (Input, Output, Connection)), (
+            "Component must be an Input, Output, or Connection."
+        )
         if isinstance(component, Input):
             self.assert_unique_name(component.input_name)
         elif isinstance(component, Output):
             self.assert_unique_name(component.output_name)
 
         self._components.append(component)
+
+    def add_components(self, components: list[Input | Output | Connection]) -> None:
+        """Add multiple components to the context manager.
+
+        Args:
+            components: A list of components to add. Each can be an Input, Output, or Connection.
+
+        Raises:
+            AssertionError: If any component has a name that already exists.
+        """
+        for component in components:
+            self.add_component(component)
 
     def add_group(self, group: Group) -> None:
         """Add a group of components to the context manager.
@@ -197,3 +213,28 @@ class ContextManager:
             raise KeyError(f"Name '{name}' already exists as an input name.")
         if name in [comp.output_name for comp in self.get_output_components()]:
             raise KeyError(f"Name '{name}' already exists as an output name.")
+
+    def add_module(self, module: torch.nn.Module) -> None:
+        """Register a PyTorch module with this context manager.
+
+        This helper allows adding pretrained models as components of the context manager
+        so they can be treated as submodules of the exporter and properly included when
+        exporting to ONNX.
+
+        Args:
+            module: The PyTorch module to register.
+        """
+        for added_module in self._modules:
+            if module is added_module:
+                # Module is already registered, do nothing.
+                return
+        self._modules.append(module)
+
+    @property
+    def modules(self) -> tuple[torch.nn.Module, ...]:
+        """Get all registered modules.
+
+        Returns:
+            A tuple of all registered torch modules.
+        """
+        return tuple(self._modules)

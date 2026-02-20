@@ -1,7 +1,7 @@
 {
 	"folders": [
 		{
-			"name": "Export",
+			"name": "Exploy",
 			"path": "."
 		},
 		{
@@ -19,13 +19,13 @@
 	],
 	"settings": {
 		"python.analysis.extraPaths": [
-			"${workspaceFolder:Export}",
+			"${workspaceFolder:Exploy}",
 			"${workspaceFolder:IsaacLab}",
 			"${workspaceFolder:IsaacLab Tasks}",
 			"${workspaceFolder:IsaacLab RL}"
 		],
 		"python.autoComplete.extraPaths": [
-			"${workspaceFolder:Export}",
+			"${workspaceFolder:Exploy}",
 			"${workspaceFolder:IsaacLab}",
 			"${workspaceFolder:IsaacLab Tasks}",
 			"${workspaceFolder:IsaacLab RL}"
