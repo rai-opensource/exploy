@@ -3,13 +3,13 @@
 
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
-#include <tl/expected.hpp>
 
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "interfaces.hpp"
+#include "logging_utils.hpp"
 
 namespace exploy::control {
 
@@ -57,15 +57,16 @@ using json = nlohmann::json;
  *
  * @tparam T Target type to deserialize.
  * @param str JSON string to parse.
- * @return Expected containing parsed object on success, error message on failure.
+ * @return std::optional<T> containing the parsed object on success, or std::nullopt on failure.
  */
 template <typename T>
-tl::expected<T, std::string> safe_json_get(const std::string& str) {
+std::optional<T> safe_json_get(const std::string& str) {
   try {
     nlohmann::json j = nlohmann::json::parse(str);
     return j.get<T>();
   } catch (const std::exception& e) {
-    return tl::unexpected{fmt::format("Failed to get JSON value: {}", e.what())};
+    GENERIC_LOG_STREAM(ERROR, "Failed to parse JSON: " << e.what());
+    return std::nullopt;
   }
 }
 
