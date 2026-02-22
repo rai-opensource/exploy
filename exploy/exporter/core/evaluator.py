@@ -275,8 +275,13 @@ def evaluate(
 
         # Check if the environment was reset.
         if is_reset_step:
+            # Re-read the ONNX inputs from the environment after a reset to avoid mismatch between
+            # ONNX inputs and environment state after reset.
+            env.context_manager().read_inputs()
+
             # We need to reset the memory inputs from the environment after a reset.
             reset_memory_from_env = True
+
             # Reset the session wrapper results to avoid using stale outputs.
             session_wrapper._results = None
 

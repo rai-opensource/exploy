@@ -5,9 +5,8 @@ from isaaclab.assets import Articulation
 from isaaclab.envs.mdp.commands.velocity_command import UniformVelocityCommand
 from isaaclab.managers import CommandManager
 from isaaclab.sensors import RayCaster, SensorBase
-from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg
+from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg, PatternBaseCfg
 
-from exploy.exporter.core.components import Connection
 from exploy.exporter.core.context_manager import ContextManager, Group, Input
 
 
@@ -105,27 +104,25 @@ def add_sensor_inputs(
     for sensor_name_in_source in sensors:
         sensor: SensorBase = sensors[sensor_name_in_source]
 
-        if isinstance(sensor, RayCaster):
-            pattern_cfg: GridPatternCfg = sensor.cfg.pattern_cfg
-            assert isinstance(pattern_cfg, GridPatternCfg), (
-                "Currently only GridPatternCfg is supported for ray caster sensors."
-            )
-            context_manager.add_group(
-                Group(
-                    name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}",
-                    metadata={
-                        "pattern_type": "grid_pattern",
-                        "offset_x": sensor.cfg.offset.pos[0],
-                        "offset_y": sensor.cfg.offset.pos[1],
-                        "resolution": pattern_cfg.resolution,
-                        "size_x": pattern_cfg.size[0],
-                        "size_y": pattern_cfg.size[1],
-                    },
-                    items=[
-                        Input(
-                            name="height",
-                            get_from_env_cb=lambda s=sensor: s._data.ray_hits_w[..., 2],
-                        ),
-                    ],
+        if type(sensor) is RayCaster:
+            pattern_cfg: PatternBaseCfg = sensor.cfg.pattern_cfg
+            if isinstance(pattern_cfg, GridPatternCfg):
+                context_manager.add_group(
+                    Group(
+                        name=f"{sensor_prefix}.ray_caster.{sensor_name_in_source}",
+                        metadata={
+                            "pattern_type": "grid_pattern",
+                            "offset_x": sensor.cfg.offset.pos[0],
+                            "offset_y": sensor.cfg.offset.pos[1],
+                            "resolution": pattern_cfg.resolution,
+                            "size_x": pattern_cfg.size[0],
+                            "size_y": pattern_cfg.size[1],
+                        },
+                        items=[
+                            Input(
+                                name="height",
+                                get_from_env_cb=lambda s=sensor: s._data.ray_hits_w[..., 2],
+                            ),
+                        ],
+                    )
                 )
-            )

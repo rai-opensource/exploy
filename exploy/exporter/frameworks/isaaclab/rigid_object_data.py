@@ -20,14 +20,14 @@ class RigidObjectDataSource:
         self._data = rigid_object_data
 
         # Pose of the com of each body wrt the actor frame of the body.
-        self._coms_pos_b = rigid_object_data._coms_pos_b.clone()
-        self._coms_quat_b = rigid_object_data._coms_quat_b.clone()
+        self._coms_pos_b = rigid_object_data.body_com_pose_b[..., :3].clone()
+        self._coms_quat_b = rigid_object_data.body_com_pose_b[..., 3:7].clone()
 
         self._com_root_pos_b = self._coms_pos_b[:, 0]
         self._com_root_quat_b = self._coms_quat_b[:, 0]
 
         # Initialize constants.
-        self.GRAVITY_VEC_W = rigid_object_data.GRAVITY_VEC_W.clone()
+        self.GRAVITY_VEC_W: torch.Tensor = rigid_object_data.GRAVITY_VEC_W.clone()
         self.FORWARD_VEC_B = rigid_object_data.FORWARD_VEC_B.clone()
 
         # The tensors below serve as a single source of truth from which states in different frames can be calculated.
@@ -89,7 +89,7 @@ class RigidObjectDataSource:
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
             twist[:, 3:],
-            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            math_utils.quat_apply(self.root_quat_w, -self.com_pos_b[:, 0, :]),
             dim=-1,
         )
         return torch.cat([pose, twist], dim=-1)
@@ -150,7 +150,7 @@ class RigidObjectDataSource:
     @property
     def projected_gravity_b(self) -> torch.Tensor:
         """Projection of the gravity direction on base frame. Shape is (num_instances, 3)."""
-        return math_utils.quat_rotate_inverse(self.root_link_quat_w, self.GRAVITY_VEC_W)
+        return math_utils.quat_apply_inverse(self.root_link_quat_w, self.GRAVITY_VEC_W)
 
     @property
     def heading_w(self) -> torch.Tensor:
@@ -444,7 +444,7 @@ class RigidObjectDataSource:
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
             twist[:, 3:],
-            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            math_utils.quat_apply(self.root_quat_w, -self.com_pos_b[:, 0, :]),
             dim=-1,
         )
         return twist.view(-1, 1, 6)
@@ -458,7 +458,7 @@ class RigidObjectDataSource:
         twist = self.root_vel_w.clone()
         twist[:, :3] += torch.linalg.cross(
             twist[:, 3:],
-            math_utils.quat_rotate(self.root_quat_w, -self.com_pos_b[:, 0, :]),
+            math_utils.quat_apply(self.root_quat_w, -self.com_pos_b[:, 0, :]),
             dim=-1,
         )
         return twist[:, :3].view(-1, 1, 3)

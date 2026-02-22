@@ -51,7 +51,7 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         # Replace raycaster sensor data.
         self._raycaster_data_list = []
         for sensor_name, sensor in self._env.scene.sensors.items():
-            if isinstance(sensor, RayCaster):
+            if type(sensor) is RayCaster:
                 self._raycaster_data_list.append((sensor_name, sensor._data))
                 sensor._data = RayCasterDataSource(
                     sensor, self._env.scene.articulations[self._articulation_name]

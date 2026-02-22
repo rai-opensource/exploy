@@ -117,7 +117,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         self._env.context_manager().write_connections()
 
         # Compute.
-        with torch.no_grad():
+        with torch.inference_mode():
             observations = self._env.empty_actor_observations()
             actions = self._env.empty_actions()
 
@@ -214,7 +214,6 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             filename=onnx_file_name,
             debug_suffixes=["default", "process_actions"],
         )
-
         for mode, file_path in (
             (ExportMode.ProcessActions, export_paths.get_debug_path("process_actions")),
             (ExportMode.Default, export_paths.get_debug_path("default")),

@@ -84,7 +84,7 @@ def export_isaaclab(
     # Get the policy and its normalizer.
     policy = runner.alg.policy.actor.to(env.device)
     normalizer = runner.alg.policy.actor_obs_normalizer.to(env.device)
-    actor = torch.nn.Sequential(normalizer, policy)
+    actor = torch.nn.Sequential(normalizer, policy).eval()
 
     # Export to ONNX.
     onnx_export_dir = test_dir

@@ -3,32 +3,14 @@
 		{
 			"name": "Exploy",
 			"path": "."
-		},
-		{
-			"name": "IsaacLab",
-			"path": "IsaacLab/source/isaaclab"
-		},
-		{
-			"name": "IsaacLab Tasks",
-			"path": "IsaacLab/source/isaaclab_tasks"
-		},
-		{
-			"name": "IsaacLab RL",
-			"path": "IsaacLab/source/isaaclab_rl"
 		}
 	],
 	"settings": {
 		"python.analysis.extraPaths": [
-			"${workspaceFolder:Exploy}",
-			"${workspaceFolder:IsaacLab}",
-			"${workspaceFolder:IsaacLab Tasks}",
-			"${workspaceFolder:IsaacLab RL}"
-		],
-		"python.autoComplete.extraPaths": [
-			"${workspaceFolder:Exploy}",
-			"${workspaceFolder:IsaacLab}",
-			"${workspaceFolder:IsaacLab Tasks}",
-			"${workspaceFolder:IsaacLab RL}"
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab",
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab_rl",
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab_tasks",
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaacsim/exts/isaacsim.core.utils"
 		]
 	}
 }
