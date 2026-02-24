@@ -113,7 +113,7 @@ export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
 export-isaaclab-ci = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
-test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH python $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/isaaclab/tests/run_all_tests.py"
+test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/isaaclab/tests"
 test = { depends-on = ["test-python", "verify"] }
 verify = { depends-on = ["test-import", "test-torch"] }
 

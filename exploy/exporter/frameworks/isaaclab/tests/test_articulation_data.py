@@ -4,29 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import gymnasium as gym
-import pytest
-from isaaclab.app import AppLauncher
 
-# launch omniverse app
-simulation_app = AppLauncher(headless=True).app
-
-import inspect
-
-import torch
-from isaaclab.assets import Articulation
-from isaaclab_tasks.utils import parse_env_cfg
-
-from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
-
-if TYPE_CHECKING:
-    from isaaclab.envs import ManagerBasedRLEnv, ManagerBasedRLEnvCfg
-
-
-def test_articulation_data_interface():
+def test_articulation_data_interface(sim_setup):
     """Test the implementation of the `ArticulationDataSource` class by comparing it against each
     property of an `ArticulationData` instance.
     """
+    # Import after AppLauncher is initialized
+    import inspect
+
+    import gymnasium as gym
+    import torch
+    from isaaclab.assets import Articulation
+    from isaaclab_tasks.utils import parse_env_cfg
+
+    from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
+
+    if TYPE_CHECKING:
+        from isaaclab.envs import ManagerBasedRLEnv, ManagerBasedRLEnvCfg
     import isaaclab_tasks.manager_based.locomotion.velocity.config.g1  # noqa: F401
 
     task_name = "Isaac-Velocity-Rough-G1-Play-v0"
@@ -62,7 +56,3 @@ def test_articulation_data_interface():
         assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5)
 
     env.close()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--maxfail=1"])

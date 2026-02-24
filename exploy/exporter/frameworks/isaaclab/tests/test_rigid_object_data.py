@@ -2,60 +2,54 @@
 
 from __future__ import annotations
 
-import pytest
-from isaaclab.app import AppLauncher
 
-# launch omniverse app
-simulation_app = AppLauncher(headless=True).app
-
-import inspect
-
-import isaaclab.sim as sim_utils
-import isaacsim.core.utils.prims as prim_utils
-import torch
-from isaaclab.assets import RigidObject, RigidObjectCfg
-from isaaclab.sim import build_simulation_context
-
-from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
-
-
-def generate_cubes_scene(num_cubes: int, device: str) -> tuple[RigidObject, torch.Tensor]:
-    """Generate a scene with the provided number of cubes.
-
-    Args:
-        num_cubes: Number of cubes to generate.
-        device: Device to use for the simulation.
-
-    Returns:
-        A tuple containing the rigid object representing the cubes and the origins of the cubes.
-    """
-    height = 1.0
-    origins = torch.tensor([(i * 2.0, 0, height) for i in range(num_cubes)]).to(device)
-    # Create Top-level Xforms, one for each cube
-    for i, origin in enumerate(origins):
-        prim_utils.create_prim(f"/World/Table_{i}", "Xform", translation=origin)
-
-    # Create spawn configuration using primitive cubes instead of USD files
-    spawn_cfg = sim_utils.CuboidCfg(
-        size=(0.2, 0.2, 0.2),
-        rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=False),
-        mass_props=sim_utils.MassPropertiesCfg(mass=1.0),
-        collision_props=sim_utils.CollisionPropertiesCfg(),
-    )
-
-    # Create rigid object
-    cube_object_cfg = RigidObjectCfg(
-        prim_path="/World/Table_.*/Object",
-        spawn=spawn_cfg,
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-    )
-    cube_object = RigidObject(cfg=cube_object_cfg)
-
-    return cube_object, origins
-
-
-def test_rigid_object_data_interface():
+def test_rigid_object_data_interface(sim_setup):
     """Test the implementation of the `RigidObjectDataSource` class by comparing it against each property of a `RigidObjectData` instance."""
+    # Import after AppLauncher is initialized
+    import inspect
+
+    import isaaclab.sim as sim_utils
+    import isaacsim.core.utils.prims as prim_utils
+    import torch
+    from isaaclab.assets import RigidObject, RigidObjectCfg
+    from isaaclab.sim import build_simulation_context
+
+    from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
+
+    def generate_cubes_scene(num_cubes: int, device: str) -> tuple[RigidObject, torch.Tensor]:
+        """Generate a scene with the provided number of cubes.
+
+        Args:
+            num_cubes: Number of cubes to generate.
+            device: Device to use for the simulation.
+
+        Returns:
+            A tuple containing the rigid object representing the cubes and the origins of the cubes.
+        """
+        height = 1.0
+        origins = torch.tensor([(i * 2.0, 0, height) for i in range(num_cubes)]).to(device)
+        # Create Top-level Xforms, one for each cube
+        for i, origin in enumerate(origins):
+            prim_utils.create_prim(f"/World/Table_{i}", "Xform", translation=origin)
+
+        # Create spawn configuration using primitive cubes instead of USD files
+        spawn_cfg = sim_utils.CuboidCfg(
+            size=(0.2, 0.2, 0.2),
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=False),
+            mass_props=sim_utils.MassPropertiesCfg(mass=1.0),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+        )
+
+        # Create rigid object
+        cube_object_cfg = RigidObjectCfg(
+            prim_path="/World/Table_.*/Object",
+            spawn=spawn_cfg,
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
+        )
+        cube_object = RigidObject(cfg=cube_object_cfg)
+
+        return cube_object, origins
+
     device = "cpu"
     num_cubes = 3
     torch.manual_seed(42)
@@ -108,7 +102,3 @@ def test_rigid_object_data_interface():
             # For a discussion on how to set tolerances, see:
             #   https://docs.pytorch.org/docs/stable/testing.html
             assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--maxfail=1"])
