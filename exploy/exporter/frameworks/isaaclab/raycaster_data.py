@@ -5,6 +5,7 @@ from isaaclab.assets import Articulation
 from isaaclab.sensors import RayCaster, RayCasterData
 
 from exploy.exporter.core.tensor_proxy import TensorProxy
+from exploy.exporter.frameworks.isaaclab import utils
 
 
 class RayCasterDataSource:
@@ -14,12 +15,14 @@ class RayCasterDataSource:
     it computes pos_w dynamically from the articulation's base position.
     """
 
-    def __init__(self, sensor: RayCaster, articulation: Articulation):
+    def __init__(self, sensor: RayCaster, articulations: dict[str, Articulation]):
         sensor_data: RayCasterData = sensor.data
         self._data = sensor_data
-        self._articulation = articulation
-        body_expr = sensor.cfg.prim_path.split("/")[-1]
-        self._body_id = articulation.find_bodies(body_expr)[0][0]
+        self._articulation, body_ids = utils.prim_path_to_articulation_and_body_ids(
+            sensor.cfg.prim_path, articulations
+        )
+        assert len(body_ids) == 1, "RayCaster must be attached to exactly one body."
+        self._body_id = body_ids[0]
 
         # Split ray_hits_w by last dimension (XYZ) using TensorProxy
         ray_hits = sensor_data.ray_hits_w

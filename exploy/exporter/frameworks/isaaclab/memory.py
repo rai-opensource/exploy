@@ -13,11 +13,13 @@ def add_memory(
 ):
     """Parse the managers of an environment and keep track of all elements that require memory.
 
-    This functions parses a the managers of a `ManagerBasedRLEnv` and keeps track of all elements
-    that require memory handling.
+    This function parses the managers of a `ManagerBasedRLEnv` and keeps track of all elements
+    that require memory handling. For example, we frequently pass the latest actions back as
+    previous action inputs to a trained policy.
 
-    For example, we frequently pass the latest actions back as previous action inputs to a
-    trained policy.
+    Args:
+        env: The IsaacLab ManagerBasedRLEnv to extract memory components from.
+        context_manager: The context manager to add memory components to.
     """
 
     # Keep track of previous actions.

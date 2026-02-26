@@ -60,6 +60,7 @@ from rsl_rl.runners import OnPolicyRunner
 from exploy.exporter.core.evaluator import evaluate
 from exploy.exporter.core.exporter import export_environment_as_onnx
 from exploy.exporter.core.session_wrapper import SessionWrapper
+from exploy.exporter.frameworks.isaaclab import inputs, memory, outputs
 from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
 
 
@@ -91,6 +92,44 @@ def export_isaaclab(
     onnx_export_file = "test_export.onnx"
 
     exportable_env = IsaacLabExportableEnvironment(env.unwrapped)
+
+    articulations = env.unwrapped.scene.articulations
+    context_manager = exportable_env.context_manager()
+
+    inputs.add_base_vel(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
+    inputs.add_body_pos_and_quat(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
+    inputs.add_commands(
+        command_manager=env.unwrapped.command_manager,
+        context_manager=context_manager,
+    )
+
+    inputs.add_joint_pos_and_vel(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
+    inputs.add_sensor_inputs(
+        sensors=env.unwrapped.scene.sensors,
+        context_manager=context_manager,
+    )
+
+    memory.add_memory(
+        env=env.unwrapped,
+        context_manager=context_manager,
+    )
+
+    outputs.add_outputs(
+        action_manager=env.unwrapped.action_manager,
+        context_manager=context_manager,
+    )
 
     export_environment_as_onnx(
         env=exportable_env,

@@ -8,7 +8,6 @@ from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.sensors import RayCaster
 
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
-from exploy.exporter.frameworks.isaaclab import inputs, memory, outputs
 from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
 from exploy.exporter.frameworks.isaaclab.raycaster_data import RayCasterDataSource
 from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
@@ -30,17 +29,14 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         # The group name of the policy observations in the environment's observation manager.
         self._policy_obs_group_name = "policy"
 
-        # The name of the articulation in the environment's scene.
-        self._articulation_name = "robot"
-
         self._empty_actor_observations = self._env.obs_buf[self._policy_obs_group_name].clone()
         self._empty_actions = self._env.action_manager._action.clone()
 
         # Replace articulation data.
-        self._orig_art_data = self._env.scene.articulations[self._articulation_name]._data
-        self._env.scene.articulations[self._articulation_name]._data = ArticulationDataSource(
-            articulation=self._env.scene.articulations[self._articulation_name]
-        )
+        self._art_data_list = []
+        for articulation in self._env.scene.articulations.values():
+            self._art_data_list.append(articulation._data)
+            articulation._data = ArticulationDataSource(articulation=articulation)
 
         # Replace rigid object data.
         self._rigid_object_list = []
@@ -53,34 +49,9 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         for sensor_name, sensor in self._env.scene.sensors.items():
             if type(sensor) is RayCaster:
                 self._raycaster_data_list.append((sensor_name, sensor._data))
-                sensor._data = RayCasterDataSource(
-                    sensor, self._env.scene.articulations[self._articulation_name]
-                )
+                sensor._data = RayCasterDataSource(sensor, self._env.scene.articulations)
 
         assert self.validate()
-
-        # Add inputs, outputs, and memory to manager.
-        inputs.add_commands(
-            source=self._env.command_manager,
-            context_manager=self._context_manager,
-        )
-        inputs.add_articulation_data(
-            articulations=self._env.scene.articulations,
-            context_manager=self._context_manager,
-        )
-        inputs.add_sensor_inputs(
-            sensors=self._env.scene.sensors,
-            context_manager=self._context_manager,
-        )
-        memory.add_memory(
-            env=self._env,
-            context_manager=self._context_manager,
-        )
-        outputs.add_outputs(
-            action_manager=self._env.action_manager,
-            articulation=self._env.scene[self._articulation_name],
-            context_manager=self._context_manager,
-        )
 
     @property
     def env(self) -> ManagerBasedRLEnv:
@@ -99,7 +70,8 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         self._env.command_manager.compute(dt=0.0)
 
     def cleanup(self):
-        self._env.scene.articulations[self._articulation_name]._data = self._orig_art_data
+        for i_articulation, articulation in enumerate(self._env.scene.articulations.values()):
+            articulation._data = self._art_data_list[i_articulation]
 
         for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
             rigid_object._data = self._rigid_object_list[i_rigid_object]
@@ -123,9 +95,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
 
     def validate(self) -> bool:
         """Validate that the environment conforms to the ExportableEnvironment interface."""
-
-        # Check that the expected articulation exists.
-        assert self._articulation_name in self._env.scene.articulations
 
         # Check that the observation manager has a policy group.
         if self._policy_obs_group_name not in self._env.observation_manager.active_terms:

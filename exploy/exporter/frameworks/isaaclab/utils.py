@@ -58,3 +58,52 @@ def get_observation_names(
         for i in range(dim):
             names.append(f"{name}_{i:02}")
     return names
+
+
+def prim_path_to_body_expr(
+    prim_path: str,
+) -> str:
+    """Convert a primitive path to a body expression.
+
+    Args:
+        prim_path (str): The primitive path to convert.
+
+    Returns:
+        A body expression corresponding to the primitive path.
+    """
+    body_expr = prim_path.split("/")[-1]
+    return body_expr
+
+
+def prim_path_to_articulation_and_body_ids(
+    prim_path: str,
+    articulations: dict[str, Articulation],
+) -> tuple[Articulation, list[int]]:
+    """Convert a primitive path to an articulation and body ids.
+
+    Args:
+        prim_path (str): The primitive path to convert.
+        articulations (dict[str, Articulation]): A dictionary of articulations in the scene, keyed by their primitive paths.
+    Returns:
+        A tuple containing the articulation and a list of body ids corresponding to the primitive path.
+    """
+    # Split the primitive path into articulation primitive path and body expression.
+    body_expr = prim_path_to_body_expr(prim_path=prim_path)
+    articulation_prim_path = "/".join(prim_path.split("/")[:-1])
+
+    # Find the articulation associated with the primitive path. Raise if no articulation is found.
+    articulation_dict = {
+        articulation.cfg.prim_path: articulation for articulation in articulations.values()
+    }
+    try:
+        articulation = articulation_dict[articulation_prim_path]
+    except KeyError as e:
+        raise KeyError(
+            f"Could not find articulation with primitive path `{articulation_prim_path}` in any of the articulation in the scene. "
+            f"Available primitive paths are: {articulation_dict.keys()}. "
+            f"Raised exception: {e}"
+        ) from e
+
+    # The the body ids related to the body expression.
+    body_ids, _ = articulation.find_bodies(body_expr)
+    return articulation, body_ids
