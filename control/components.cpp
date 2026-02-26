@@ -436,8 +436,13 @@ bool CommandSE2VelocityInput::init(RobotStateInterface& /*state*/, CommandInterf
   return command.initSe2Velocity(command_name_, config);
 }
 
-bool CommandSE2VelocityInput::read(OnnxRuntime& /*runtime*/, RobotStateInterface& /*state*/,
-                                   CommandInterface& /*command*/) {
+bool CommandSE2VelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
+                                   CommandInterface& command) {
+  auto maybe_pose = command.se2Velocity(command_name_);
+  if (!maybe_pose.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_pose.value(), maybe_buffer.value());
   return true;
 }
 
