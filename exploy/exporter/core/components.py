@@ -33,6 +33,7 @@ class Input:
         self._get_from_env_cb = get_from_env_cb
         self._metadata: Any = metadata
         self._data: torch.Tensor = self._get_from_env_cb()
+        self._id = id(self._data)
 
     @property
     def input_data(self) -> torch.Tensor:
@@ -53,6 +54,11 @@ class Input:
     def input_name(self) -> str:
         """Return the name of this input."""
         return self._name
+
+    @property
+    def id(self) -> int:
+        """Return the unique identifier of this input."""
+        return self._id
 
     def read(self) -> None:
         """Get the latest data from the environment by calling the callback."""

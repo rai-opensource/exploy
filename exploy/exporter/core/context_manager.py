@@ -32,6 +32,7 @@ class ContextManager:
         )
         if isinstance(component, Input):
             self.assert_unique_name(component.input_name)
+            self.assert_unique_id(component.id, component.input_name)
         elif isinstance(component, Output):
             self.assert_unique_name(component.output_name)
 
@@ -213,6 +214,21 @@ class ContextManager:
             raise KeyError(f"Name '{name}' already exists as an input name.")
         if name in [comp.output_name for comp in self.get_output_components()]:
             raise KeyError(f"Name '{name}' already exists as an output name.")
+
+    def assert_unique_id(self, id: int, name: str = None):
+        """Assert that the given id is unique across all components.
+
+        Args:
+            id: The id to check for uniqueness.
+
+        Raises:
+            KeyError: If the id already exists in any component.
+        """
+        for comp in self._components:
+            if isinstance(comp, Input) and comp.id == id:
+                raise KeyError(
+                    f"ID '{id}' of {name} already exists in component {comp.input_name}."
+                )
 
     def add_module(self, module: torch.nn.Module) -> None:
         """Register a PyTorch module with this context manager.
