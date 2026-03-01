@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+import sys
 
 import onnx
 import torch
@@ -382,7 +383,13 @@ def export_simple_model(data_dir: str):
 
 def main():
     """Main entry point for generating test ONNX model."""
-    data_dir = os.path.dirname(os.path.abspath(__file__))
+    if len(sys.argv) > 1:
+        arg_path = os.path.abspath(sys.argv[1])
+        data_dir = arg_path if os.path.isdir(arg_path) else os.path.dirname(arg_path)
+    else:
+        data_dir = os.path.dirname(os.path.abspath(__file__))
+
+    os.makedirs(data_dir, exist_ok=True)
 
     export_simple_model(data_dir)
     export_model(data_dir)
