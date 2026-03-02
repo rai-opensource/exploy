@@ -11,7 +11,7 @@ import torch
 
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
 from exploy.exporter.core.utils.onnx import construct_decimation_wrapper
-from exploy.exporter.core.utils.paths import prepare_onnx_paths
+from exploy.exporter.core.utils.paths import get_exploy_version, prepare_onnx_paths
 
 
 def export_environment_as_onnx(
@@ -239,6 +239,8 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         wrapper_model = construct_decimation_wrapper(
             model_a=onnx.load(str(export_paths.get_debug_path("default"))),
             model_b=onnx.load(str(export_paths.get_debug_path("process_actions"))),
+            name_a="default",
+            name_b="process_actions",
             decimation=self._env.decimation,
             opset_version=self._opset_version,
             ir_version=self._ir_version,
@@ -257,6 +259,11 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         meta = onnx_model.metadata_props.add()
         meta.key = "date_exported (YYMMDD.HHMMSS)"
         meta.value = str(datetime.datetime.now().strftime("%y%m%d.%H%M%S"))
+
+        # Exploy version.
+        meta = onnx_model.metadata_props.add()
+        meta.key = "exploy_version"
+        meta.value = json.dumps(get_exploy_version())
 
         # Environment metadata.
         for key, value in self._env.metadata().items():

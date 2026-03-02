@@ -50,6 +50,8 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
     return false;
   }
 
+  if (!metadata::checkExployVersion(onnx_model.getCustomMetadata("exploy_version"))) return false;
+
   std::optional<int> maybe_update_rate = parseUpdateRate(onnx_model);
   if (!maybe_update_rate.has_value()) return false;
   update_rate_ = maybe_update_rate.value();

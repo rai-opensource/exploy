@@ -21,6 +21,8 @@ def _copy_value_info(value_info: onnx.ValueInfoProto) -> onnx.ValueInfoProto:
 def construct_decimation_wrapper(
     model_a: onnx.ModelProto,
     model_b: onnx.ModelProto,
+    name_a: str,
+    name_b: str,
     decimation: int,
     opset_version: int,
     ir_version: int,
@@ -30,7 +32,11 @@ def construct_decimation_wrapper(
     Args:
         model_a: ONNX submodel for decimation event.
         model_b: ONNX submodel for other steps.
+        name_a: Name for model_a graph.
+        name_b: Name for model_b graph.
         decimation: Decimation factor.
+        opset_version: ONNX opset version to use.
+        ir_version: ONNX IR version to use.
     Returns:
         An ONNX ModelProto with fixed periodic conditional branching.
     """
@@ -50,6 +56,9 @@ def construct_decimation_wrapper(
     zero_const = onnx.helper.make_tensor("zero", onnx.TensorProto.INT32, (), [0])
     mod_node = onnx.helper.make_node("Mod", ["ctx.step_count", "decimation"], ["is_event"])
     eq_node = onnx.helper.make_node("Equal", ["is_event", "zero"], ["cond"])
+
+    model_a.graph.name = name_a
+    model_b.graph.name = name_b
 
     # Remove submodel inputs (will be passed by parent graph)
     for g in (model_a.graph, model_b.graph):

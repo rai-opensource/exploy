@@ -214,6 +214,7 @@ def get_articulation_metadata() -> dict:
 def get_env_metadata() -> dict:
     """Returns metadata for environment configuration."""
     return {
+        "exploy_version": "0.1.0",
         "update_rate": 10.0,
     }
 

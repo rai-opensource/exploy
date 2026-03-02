@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <optional>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -247,6 +248,80 @@ struct JointMetadata {
  */
 inline void from_json(const json& j, JointMetadata& jm) {
   j.at("joint_names").get_to(jm.names);
+}
+
+/**
+ * @brief Parsed semantic version (MAJOR.MINOR.PATCH).
+ */
+struct Version {
+  int major{0};
+  int minor{0};
+  int patch{0};
+
+  std::string toString() const { return fmt::format("{}.{}.{}", major, minor, patch); }
+
+  bool operator<=(const Version& other) const {
+    if (major != other.major) return major < other.major;
+    if (minor != other.minor) return minor < other.minor;
+    return patch <= other.patch;
+  }
+};
+
+constexpr Version kMinSupportedExployVersion{0, 1, 0};
+constexpr Version kMaxSupportedExployVersion{0, 1, 0};
+
+/**
+ * @brief Parse a "MAJOR.MINOR.PATCH" version string.
+ *
+ * @param s Version string to parse.
+ * @return Parsed Version, or std::nullopt if the string is not a valid semver.
+ */
+inline std::optional<Version> parseVersion(const std::string& s) {
+  static const std::regex kVersionRegex(R"(^(\d+)\.(\d+)\.(\d+)$)");
+  std::smatch match;
+  if (!std::regex_match(s, match, kVersionRegex)) return std::nullopt;
+  return Version{std::stoi(match[1]), std::stoi(match[2]), std::stoi(match[3])};
+}
+
+/**
+ * @brief Check that the ONNX model's exploy_version metadata is present and within the supported
+ * range [kMinSupportedExployVersion, kMaxSupportedExployVersion]. Logs an error if not.
+ *
+ * @param maybe_version_str The value of the "exploy_version" metadata key, or std::nullopt if
+ * absent.
+ * @return true if the version is present and within the supported range, false otherwise.
+ */
+inline bool checkExployVersion(const std::optional<std::string>& maybe_version_str) {
+  if (!maybe_version_str.has_value()) {
+    LOG(ERROR,
+        "ONNX model does not contain 'exploy_version' metadata. The ONNX file is not "
+        "compatible with this controller.");
+    return false;
+  }
+
+  std::string version_str;
+  try {
+    version_str = json::parse(maybe_version_str.value()).get<std::string>();
+  } catch (const json::exception&) {
+    LOG_STREAM(ERROR, "Failed to parse exploy_version: '" << maybe_version_str.value() << "'.");
+    return false;
+  }
+
+  auto maybe_version = parseVersion(version_str);
+  if (!maybe_version.has_value()) {
+    LOG_STREAM(ERROR, "Failed to parse exploy_version: '" << version_str << "'.");
+    return false;
+  }
+
+  const auto& v = maybe_version.value();
+  const bool in_range = kMinSupportedExployVersion <= v && v <= kMaxSupportedExployVersion;
+  if (!in_range) {
+    LOG_STREAM(ERROR, "exploy_version '" << version_str << "' is outside the supported range ["
+                                         << kMinSupportedExployVersion.toString() << ", "
+                                         << kMaxSupportedExployVersion.toString() << "].");
+    return false;
+  }
+  return true;
 }
 
 }  // namespace exploy::control::metadata

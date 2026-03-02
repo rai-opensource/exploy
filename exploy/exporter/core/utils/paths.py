@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+import importlib.metadata
 import pathlib
 from dataclasses import dataclass
 
@@ -14,6 +15,18 @@ EXPORTER_TESTS_DIR = EXPORTER_ROOT_DIR / "tests"
 
 # ONNX file extension
 ONNX_EXTENSION = ".onnx"
+
+
+def get_exploy_version() -> str:
+    """Get the installed exploy-exporter-core package version.
+
+    Returns:
+        Version string, or "unknown" if the package metadata is not available.
+    """
+    try:
+        return importlib.metadata.version("exploy-exporter-core")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def _ensure_onnx_extension(filename: str) -> pathlib.Path:
