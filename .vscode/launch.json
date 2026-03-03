@@ -8,10 +8,19 @@
             "name": "[Examples] Export IsaacLab task.",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/exporter_scripts/export_isaaclab.py",
+            "program": "${workspaceFolder}/examples/exporter_scripts/isaaclab/export.py",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/.pixi/envs/isaaclab/bin/python",
             "justMyCode": false
+        },
+        {
+            "name": "[Examples] Export mjlab task.",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/exporter_scripts/mjlab/export.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.pixi/envs/mjlab/bin/python",
+            "justMyCode": false,
         },
         {
             "name": "[Core] Tests.",
@@ -27,6 +36,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
-        },
+        }
     ]
 }

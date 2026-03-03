@@ -1,5 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+import re
+
 import onnx
 
 
@@ -89,3 +91,8 @@ def construct_decimation_wrapper(
     )
     onnx.checker.check_model(model)
     return model
+
+
+def make_alphanumeric(s):
+    """Replace non-alphanumeric characters with underscores for ONNX input and output names."""
+    return re.sub(r"[^a-zA-Z0-9]", "_", s)

@@ -1,10 +1,10 @@
-Isaac Lab Framework
+IsaacLab Framework
 ===================
 
-Isaac Lab integration for RL policy export.
+IsaacLab integration for RL policy export.
 
 This module provides the ``IsaacLabExportableEnvironment`` class and utilities
-for exporting policies trained in NVIDIA Isaac Lab to ONNX format.
+for exporting policies trained in NVIDIA IsaacLab to ONNX format.
 
 .. automodule:: exploy.exporter.frameworks.isaaclab
    :members:

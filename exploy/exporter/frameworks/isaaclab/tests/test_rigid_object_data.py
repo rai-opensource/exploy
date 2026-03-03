@@ -11,7 +11,7 @@ def test_rigid_object_data_interface(sim_setup):
     import isaaclab.sim as sim_utils
     import isaacsim.core.utils.prims as prim_utils
     import torch
-    from isaaclab.assets import RigidObject, RigidObjectCfg
+    from isaaclab.assets import RigidObject, RigidObjectCfg, RigidObjectData
     from isaaclab.sim import build_simulation_context
 
     from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
@@ -57,7 +57,7 @@ def test_rigid_object_data_interface(sim_setup):
     with build_simulation_context(
         sim_utils.SimulationCfg(), device=device, auto_add_lighting=True
     ) as sim:
-        # Disable app control callback (from Isaac Lab test pattern)
+        # Disable app control callback (from IsaacLab test pattern)
         sim._app_control_on_stop_handle = None
 
         # Generate scene with cubes
@@ -92,13 +92,15 @@ def test_rigid_object_data_interface(sim_setup):
         # Create the data source
         rigid_object_data_source = RigidObjectDataSource(rigid_object=rigid_object)
 
-        # Cycle through every property available in `RigidObjectDataSource` and compare it with the same property
-        # from `RigidObjectData`.
+        # Cycle through every property available in `RigidObjectData` and compare it with the same property
+        # from `RigidObjectDataSource`.
         for name, _ in inspect.getmembers(
-            RigidObjectDataSource, predicate=lambda o: isinstance(o, property)
+            RigidObjectData, predicate=lambda o: isinstance(o, property)
         ):
             expected_val = getattr(rigid_object.data, name)
             source_val = getattr(rigid_object_data_source, name)
             # For a discussion on how to set tolerances, see:
             #   https://docs.pytorch.org/docs/stable/testing.html
-            assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5)
+            assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5), (
+                f"Mismatch found in property '{name}'"
+            )

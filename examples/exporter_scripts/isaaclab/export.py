@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 
 def make_simulation_app() -> tuple[SimulationApp, argparse.Namespace]:
     # Create argument parser for headless mode
-    parser = argparse.ArgumentParser(description="Export Isaac Lab environment to ONNX")
+    parser = argparse.ArgumentParser(description="Export IsaacLab environment to ONNX")
 
     # Add custom arguments
     parser.add_argument(
         "--task",
         type=str,
-        default="Isaac-Velocity-Rough-G1-Play-v0",
-        help="Name of the Isaac Lab task to export (default: Isaac-Velocity-Rough-G1-Play-v0)",
+        default="IsaacLab-Velocity-Rough-G1-Play-v0",
+        help="Name of the IsaacLab task to export (default: IsaacLab-Velocity-Rough-G1-Play-v0)",
     )
     parser.add_argument(
         "--pause-on-failure",
@@ -61,20 +61,14 @@ from rsl_rl.runners import OnPolicyRunner
 from exploy.exporter.core.evaluator import evaluate
 from exploy.exporter.core.exporter import export_environment_as_onnx
 from exploy.exporter.core.session_wrapper import SessionWrapper
-from exploy.exporter.frameworks.isaaclab import (
-    environments,  # noqa: F401
-    inputs,
-    memory,
-    outputs,
-)
-from exploy.exporter.frameworks.isaaclab.actor import make_exportable_actor
+from exploy.exporter.frameworks.isaaclab import environments  # noqa: F401
 from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
+from exploy.exporter.frameworks.manager_based import inputs, memory, outputs
+from exploy.exporter.frameworks.manager_based.actor import make_exportable_actor
 
 
-def export_isaaclab(
-    task_name: str = "Isaac-Velocity-Rough-G1-Play-v0", pause_on_failure: bool = False
-):
-    """Test Isaac Lab ONNX export and evaluation pipeline."""
+def export(task_name: str = "Isaac-Velocity-Rough-G1-Play-v0", pause_on_failure: bool = False):
+    """Test IsaacLab ONNX export and evaluation pipeline."""
     test_dir = pathlib.Path(__file__).parent / "exporter_tests"
 
     task_device = "cpu"
@@ -93,50 +87,42 @@ def export_isaaclab(
     onnx_export_dir = test_dir
     onnx_export_file = "test_export.onnx"
 
-    exportable_env = IsaacLabExportableEnvironment(env.unwrapped)
+    unwrapped_env = env.unwrapped
+    exportable_env = IsaacLabExportableEnvironment(unwrapped_env)
 
     # Get the policy and its normalizer.
     alg: PPO = runner.alg
     assert isinstance(alg, PPO), f"Expected PPO algorithm, got: {type(alg).__name__}"
     actor = make_exportable_actor(exportable_env, alg.policy, device=task_device)
 
-    articulations = env.unwrapped.scene.articulations
+    articulations = unwrapped_env.unwrapped.scene.articulations
     context_manager = exportable_env.context_manager()
 
-    inputs.add_base_vel(
-        articulations=articulations,
-        context_manager=context_manager,
+    inputs.add_base_vel(articulations, context_manager)
+
+    inputs.add_body_pos_and_quat(articulations, context_manager)
+
+    inputs.add_command(
+        unwrapped_env,
+        context_manager,
+        command_name="base_velocity",
+        command_type="se2_velocity",
     )
 
-    inputs.add_body_pos_and_quat(
-        articulations=articulations,
-        context_manager=context_manager,
-    )
+    inputs.add_joint_pos_and_vel(articulations, context_manager)
 
-    inputs.add_commands(
-        command_manager=env.unwrapped.command_manager,
-        context_manager=context_manager,
-    )
+    for sensor_name, sensor in unwrapped_env.scene.sensors.items():
+        inputs.add_sensor_input(sensor_name, sensor, context_manager)
 
-    inputs.add_joint_pos_and_vel(
-        articulations=articulations,
-        context_manager=context_manager,
-    )
-
-    inputs.add_sensor_inputs(
-        sensors=env.unwrapped.scene.sensors,
-        context_manager=context_manager,
-    )
-
-    memory.add_memory(
-        env=env.unwrapped,
-        context_manager=context_manager,
-    )
-
-    outputs.add_outputs(
-        action_manager=env.unwrapped.action_manager,
-        context_manager=context_manager,
-    )
+    memory.add_memory(unwrapped_env, context_manager, attr_name="action")
+    for action_term_name in unwrapped_env.action_manager.active_terms:
+        memory.add_memory(
+            unwrapped_env,
+            context_manager,
+            attr_name="processed_actions",
+            action_term_name=action_term_name,
+        )
+        outputs.add_output(unwrapped_env, context_manager, action_term_name=action_term_name)
 
     export_environment_as_onnx(
         env=exportable_env,
@@ -181,7 +167,7 @@ if __name__ == "__main__":
     import sys
 
     try:
-        export_isaaclab(task_name=args.task, pause_on_failure=args.pause_on_failure)
+        export(task_name=args.task, pause_on_failure=args.pause_on_failure)
     except Exception as e:
         print(f"❌ Test ERROR: {e}")
         import traceback
