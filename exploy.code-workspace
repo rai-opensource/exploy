@@ -10,7 +10,8 @@
 			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab",
 			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab_rl",
 			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaaclab/source/isaaclab_tasks",
-			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaacsim/exts/isaacsim.core.utils"
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages/isaacsim/exts/isaacsim.core.utils",
+			"${workspaceFolder}/.pixi/envs/isaaclab/lib/python3.11/site-packages",
 		]
 	}
 }

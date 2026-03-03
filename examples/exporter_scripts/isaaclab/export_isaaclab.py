@@ -55,12 +55,19 @@ import torch
 from isaaclab.sim import SimulationContext
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
 from isaaclab_tasks.utils import parse_env_cfg
+from rsl_rl.algorithms.ppo import PPO
 from rsl_rl.runners import OnPolicyRunner
 
 from exploy.exporter.core.evaluator import evaluate
 from exploy.exporter.core.exporter import export_environment_as_onnx
 from exploy.exporter.core.session_wrapper import SessionWrapper
-from exploy.exporter.frameworks.isaaclab import inputs, memory, outputs
+from exploy.exporter.frameworks.isaaclab import (
+    environments,  # noqa: F401
+    inputs,
+    memory,
+    outputs,
+)
+from exploy.exporter.frameworks.isaaclab.actor import make_exportable_actor
 from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
 
 
@@ -82,16 +89,16 @@ def export_isaaclab(
     env = RslRlVecEnvWrapper(gym.make(task_name, cfg=env_cfg, render_mode=None))
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=test_dir, device=agent_cfg.device)
 
-    # Get the policy and its normalizer.
-    policy = runner.alg.policy.actor.to(env.device)
-    normalizer = runner.alg.policy.actor_obs_normalizer.to(env.device)
-    actor = torch.nn.Sequential(normalizer, policy).eval()
-
     # Export to ONNX.
     onnx_export_dir = test_dir
     onnx_export_file = "test_export.onnx"
 
     exportable_env = IsaacLabExportableEnvironment(env.unwrapped)
+
+    # Get the policy and its normalizer.
+    alg: PPO = runner.alg
+    assert isinstance(alg, PPO), f"Expected PPO algorithm, got: {type(alg).__name__}"
+    actor = make_exportable_actor(exportable_env, alg.policy, device=task_device)
 
     articulations = env.unwrapped.scene.articulations
     context_manager = exportable_env.context_manager()
@@ -145,7 +152,7 @@ def export_isaaclab(
     session_wrapper = SessionWrapper(
         onnx_folder=onnx_export_dir,
         onnx_file_name=onnx_export_file,
-        policy=actor,
+        actor=actor,
         optimize=True,
     )
 

@@ -13,5 +13,20 @@
             "python": "${workspaceFolder}/.pixi/envs/isaaclab/bin/python",
             "justMyCode": false
         },
+        {
+            "name": "[Core] Tests.",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "exploy/exporter/core/tests/test_export_environment.py"
+            ],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/.pixi/envs/core/bin/python",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
     ]
 }

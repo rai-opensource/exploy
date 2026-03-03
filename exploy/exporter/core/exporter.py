@@ -1,6 +1,5 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-import copy
 import datetime
 import json
 import os
@@ -80,7 +79,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         self._env: ExportableEnvironment = env
 
         self.verbose = verbose
-        self.actor = copy.deepcopy(actor)
+        self.actor = actor
 
         self.export_mode = ExportMode.Default
 

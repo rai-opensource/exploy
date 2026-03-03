@@ -5,9 +5,9 @@ import pathlib
 import numpy as np
 import onnx
 import onnxruntime as ort
-import torch
 from onnx import helper
 
+from exploy.exporter.core.actor import ExportableActor
 from exploy.exporter.core.utils.paths import prepare_onnx_paths
 
 
@@ -18,7 +18,7 @@ class SessionWrapper:
         self,
         onnx_folder: pathlib.Path,
         onnx_file_name: str,
-        policy: torch.nn.Module | None = None,
+        actor: ExportableActor | None = None,
         optimize: bool = True,
     ):
         """Construct a `SessionWrapper` to use it for policy inference.
@@ -26,7 +26,7 @@ class SessionWrapper:
         Args:
             onnx_folder: The folder containing an ONNX file to load.
             onnx_file_name: The name of the ONNX file contained in `ONNX_folder`.
-            policy: A `torch.nn.Module` representing the actor.
+            actor: An `ExportableActor` representing the actor.
             optimize: If true, optimize the ONNX graph, save it to file, and use it for inference.
         """
         # Prepare file paths
@@ -59,7 +59,7 @@ class SessionWrapper:
         self.session = session
         self.input_names = [inp.name for inp in session.get_inputs()]
         self.output_names = [val.name for val in session.get_outputs()]
-        self._policy = policy
+        self._actor = actor
         self.metadata = session.get_modelmeta()
 
         self._results = None
@@ -81,13 +81,13 @@ class SessionWrapper:
         self._results = self.session.run(self.output_names, in_kwargs)
         return self._results
 
-    def get_torch_model(self) -> torch.nn.Module:
-        """Get the original torch policy model.
+    def get_actor(self) -> ExportableActor | None:
+        """Get the original `ExportableActor` object used by this session wrapper.
 
         Returns:
-            The torch.nn.Module representing the policy, or None if not provided.
+            The `ExportableActor` representing the actor, or None if not provided.
         """
-        return self._policy
+        return self._actor
 
     def get_output_value(self, output_name: str):
         """Get a specific output value from the last inference run.

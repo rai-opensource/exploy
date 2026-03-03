@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import torch
 
+from exploy.exporter.core.actor import make_exportable_actor
 from exploy.exporter.core.session_wrapper import SessionWrapper
 
 
@@ -39,11 +40,11 @@ class TestSessionWrapper:
 
     def test_session_wrapper_initialization(self, mock_onnx_model):
         """Test SessionWrapper initialization."""
-        policy = torch.nn.Linear(3, 2)
+        actor = make_exportable_actor(torch.nn.Linear(3, 2))
         wrapper = SessionWrapper(
             onnx_folder=mock_onnx_model.parent,
             onnx_file_name=mock_onnx_model.name,
-            policy=policy,
+            actor=actor,
             optimize=True,
         )
 
@@ -55,14 +56,14 @@ class TestSessionWrapper:
         # Optimized model should be created during session initialization
         assert optimized_path.exists()
 
-        assert wrapper.get_torch_model() == policy
+        assert wrapper.get_actor() == actor
 
     def test_session_wrapper_inference(self, mock_onnx_model):
         """Test SessionWrapper inference."""
         wrapper = SessionWrapper(
             onnx_folder=mock_onnx_model.parent,
             onnx_file_name=mock_onnx_model.name,
-            policy=None,
+            actor=None,
             optimize=False,
         )
 

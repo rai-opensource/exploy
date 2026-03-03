@@ -184,25 +184,23 @@ def evaluate(
     context_manager: ContextManager,
     session_wrapper: SessionWrapper,
     num_steps: int,
-    observations: torch.Tensor | None = None,
     verbose: bool = True,
     reset_from_onnx_counter_steps: int = 50,
     atol: float = 1.0e-5,
     rtol: float = 1.0e-5,
     pause_on_failure: bool = True,
 ) -> tuple[bool, torch.Tensor]:
-    """Evaluate an ONNX exported model against the original IsaacLab environment and torch policy.
+    """Evaluate an ONNX exported model against an `ExportableEnvironment` stepped through a `SessionWrapper`.
 
     This function runs the simulation for a specified number of steps and compares the
-    outputs of the ONNX model with the environment's state and the original torch model's
-    outputs at each step. This is useful for verifying the correctness of the ONNX export.
+    outputs of the ONNX model with the environment's state and actor's actions at each step.
+    This is useful for verifying the correctness of the ONNX export.
 
     Args:
         env: The environment to run the evaluation in.
         context_manager: The context manager handling inputs and outputs.
         session_wrapper: An ONNX session wrapper.
         num_steps: The number of steps to run the evaluation for.
-        observations: The initial observations. If None, the environment is reset. Defaults to None.
         verbose: Whether to print verbose output during evaluation. Defaults to True.
         reset_from_onnx_counter_steps: Set after how many steps we should set memory inputs from ONNX instead of using
             the environment's state.
@@ -220,7 +218,15 @@ def evaluate(
         the final observations tensor.
     """
 
-    obs = observations.clone() if observations is not None else env.observations_reset()
+    # Reset both the environment and the actor.
+    obs = env.observations_reset()
+
+    actor = session_wrapper.get_actor()
+    if actor is None:
+        raise ValueError(
+            "Session wrapper has no actor. Cannot evaluate ONNX model without access to original actor for comparison."
+        )
+    actor.reset(torch.tensor([True], device=obs.device))
 
     # Print ONNX graph structure if verbose
     if verbose:
@@ -259,9 +265,10 @@ def evaluate(
     )
 
     # Compute actions for the initial observations.
-    env_actions: torch.Tensor = session_wrapper.get_torch_model()(obs)
+    env_actions: torch.Tensor = actor(obs)
 
     reset_memory_from_env = False
+    env.context_manager().read_inputs()
 
     while step_ctr < num_steps:
         reset_memory_from_env = (
@@ -270,14 +277,15 @@ def evaluate(
         next_obs, is_reset_step = env.step(env_actions)
         # Use the environment's observations for the next step.
         obs[:] = next_obs
-        # Compute actions from the new observations.
-        env_actions = session_wrapper.get_torch_model()(obs)
 
         # Check if the environment was reset.
         if is_reset_step:
             # Re-read the ONNX inputs from the environment after a reset to avoid mismatch between
             # ONNX inputs and environment state after reset.
             env.context_manager().read_inputs()
+
+            # Reset the actor state.
+            actor.reset(torch.tensor([is_reset_step], device=env_actions.device))
 
             # We need to reset the memory inputs from the environment after a reset.
             reset_memory_from_env = True
@@ -327,6 +335,9 @@ def evaluate(
             component.output_name: component.get_from_env_cb().clone().cpu()
             for component in context_manager.get_output_components()
         }
+
+        # Compute actions from the new observations.
+        env_actions = actor(obs)
 
         # Compare outputs from environment and ONNX model.
         step_export_ok, msg = _compare_step_outputs(

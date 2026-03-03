@@ -18,6 +18,7 @@ import tempfile
 
 import torch
 
+from exploy.exporter.core.actor import ExportableActor, add_actor_memory
 from exploy.exporter.core.context_manager import Group, Input, Memory, Output
 from exploy.exporter.core.evaluator import evaluate
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
@@ -189,8 +190,8 @@ class EnvWithTorchModule(Env):
         )
 
 
-class Actor(torch.nn.Module):
-    """A simple actor network that takes in observations and outputs actions.
+class Actor(ExportableActor):
+    """An actor network that takes in observations and outputs actions.
     This will be used as the policy network in the environment.
     """
 
@@ -219,9 +220,45 @@ class Actor(torch.nn.Module):
         return self._net(x)
 
 
+class RNNActor(ExportableActor):
+    """An RNN-based actor network that takes in observations and outputs actions.
+    This will be used as the policy network in the environment.
+    """
+
+    def __init__(self, num_obs: int, num_act: int):
+        super().__init__()
+
+        hidden_dim = 5
+        num_rnn_layers = 1
+
+        self._rnn = torch.nn.LSTM(
+            input_size=num_obs,
+            hidden_size=hidden_dim,
+            num_layers=num_rnn_layers,
+            batch_first=False,
+        )
+
+        self._net = Actor(num_obs=hidden_dim, num_act=num_act)
+
+        self._state = None
+
+    def reset(self, dones: torch.Tensor):
+        if self._state is None:
+            return
+        for state in self._state:
+            state[:, dones, :] = 0.0
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        rnn_out, self._state = self._rnn(x.unsqueeze(dim=0), self._state)
+        return self._net(rnn_out.squeeze(dim=0))
+
+    def get_state(self) -> tuple[torch.Tensor, ...] | None:
+        return self._state
+
+
 def export_and_evaluate_env(
     env: Env,
-    actor: torch.nn.Module,
+    actor: ExportableActor,
     onnx_file_name: str,
     num_eval_steps: int,
 ) -> bool:
@@ -281,7 +318,7 @@ def export_and_evaluate_env(
         session_wrapper = SessionWrapper(
             onnx_folder=onnx_path,
             onnx_file_name=onnx_file_name,
-            policy=actor,
+            actor=actor,
             optimize=True,
         )
 
@@ -319,13 +356,38 @@ class TestExportableEnvironment:
         to compute observations."""
         data_source = DataSource()
         env = EnvWithTorchModule(data_source=data_source)
-        actor = Actor(num_obs=env.num_obs, num_act=env.num_act)
+        actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
         env.context_manager().add_module(env.module)
 
         export_ok = export_and_evaluate_env(
             env=env,
             actor=actor,
             onnx_file_name="test_export_env_with_module.onnx",
+            num_eval_steps=20,
+        )
+        assert export_ok, "ONNX export validation failed"
+
+    def test_env_with_module_and_rnn_actor(self):
+        """Test exporting an environment that uses a torch Module
+        to compute observations, and uses an RNN-based actor network as the policy."""
+        data_source = DataSource()
+        env = EnvWithTorchModule(data_source=data_source)
+        env.context_manager().add_module(env.module)
+
+        actor = RNNActor(num_obs=env.num_obs, num_act=env.num_act).eval()
+
+        # Call the actor once to initialize its hidden state.
+        actor(env.empty_actor_observations())
+
+        add_actor_memory(
+            context_manager=env.context_manager(),
+            get_hidden_states_func=actor.get_state,
+        )
+
+        export_ok = export_and_evaluate_env(
+            env=env,
+            actor=actor,
+            onnx_file_name="test_export_env_with_rnn_actor.onnx",
             num_eval_steps=20,
         )
         assert export_ok, "ONNX export validation failed"

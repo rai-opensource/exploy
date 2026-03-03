@@ -107,10 +107,11 @@ isaaclab = { version = ">=2,<3", extras = ["all"] }
 isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 
 [feature.isaaclab.tasks]
-export-isaaclab-g1 = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
-export-isaaclab-anymal = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
+export-isaaclab-g1 = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
+export-isaaclab-g1-rnn = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Exploy-Velocity-Flat-G1-RNN-Play-v0 --pause-on-failure"
+export-isaaclab-anymal = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
 export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
-export-isaaclab-ci = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
+export-isaaclab-ci = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/isaaclab/tests"
