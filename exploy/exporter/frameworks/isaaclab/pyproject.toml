@@ -16,9 +16,5 @@ isaaclab = ["isaaclab"]
 
 [tool.setuptools.packages.find]
 where = ["../../../../"]
-include = [
-    "exploy.exporter.core*",
-    "exploy.exporter.frameworks.manager_based*",
-    "exploy.exporter.frameworks.isaaclab*",
-]
+include = ["exploy.exporter.frameworks.isaaclab*", "exploy.exporter.core*"]
 namespaces = false

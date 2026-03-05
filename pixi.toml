@@ -107,35 +107,16 @@ isaaclab = { version = ">=2,<3", extras = ["all"] }
 isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 
 [feature.isaaclab.tasks]
-export-isaaclab-g1 = "python examples/exporter_scripts/isaaclab/export.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
-export-isaaclab-g1-rnn = "python examples/exporter_scripts/isaaclab/export.py --task Exploy-Velocity-Flat-G1-RNN-Play-v0 --pause-on-failure"
-export-isaaclab-anymal = "python examples/exporter_scripts/isaaclab/export.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
+export-isaaclab-g1 = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
+export-isaaclab-g1-rnn = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Exploy-Velocity-Flat-G1-RNN-Play-v0 --pause-on-failure"
+export-isaaclab-anymal = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
 export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
-export-isaaclab-ci = "python examples/exporter_scripts/isaaclab/export.py --task Isaac-Velocity-Rough-G1-Play-v0"
-test-import = "python -c \"import isaaclab; print('IsaacLab installed:', isaaclab.__file__)\""
+export-isaaclab-ci = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
+test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/isaaclab/tests"
 test = { depends-on = ["test-python", "verify"] }
 verify = { depends-on = ["test-import", "test-torch"] }
-
-[feature.mjlab.dependencies]
-python = "3.11.*"
-
-[feature.mjlab.pypi-dependencies]
-exploy-frameworks-mjlab = { path = "./exploy/exporter/frameworks/mjlab", editable = true }
-mjlab = "==1.0.0"
-rsl-rl-lib = "==3.1.0"
-torch = "==2.7.0"
-
-[feature.mjlab.tasks]
-export-mjlab = "python examples/exporter_scripts/mjlab/export.py"
-export-mjlab-ci = "python examples/exporter_scripts/mjlab/export.py"
-test-import = "python -c \"import mjlab; print('mjlab installed:', mjlab.__file__)\""
-test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
-verify = { depends-on = ["test-import", "test-torch"] }
-test-python = { cmd = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH bash -c 'for test in $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/mjlab/tests/test_*.py; do echo \"Running $test...\"; pytest -s \"$test\" || exit 1; done'", depends-on = ["verify"] }
-test = { depends-on = ["test-python", "verify"] }
-
 
 # FEATURE: Documentation - Sphinx documentation building
 [feature.docs.dependencies]
@@ -164,8 +145,7 @@ open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html
 python = ["python"]             # Python-only development
 cpp = ["cpp"]                   # C++-only development
 core = ["python", "core"]       # Exporter environment: Python + core functionality
-isaaclab = ["isaaclab", "core"] # IsaacLab + core exporter functionality
-mjlab = ["mjlab", "core"]       # mjlab + core exporter functionality
+isaaclab = ["isaaclab", "core"] # Isaac Lab + core exporter functionality
 controller = ["python", "cpp"]  # Controller environment: Python + C++
 docs = ["docs"]                 # Documentation building
 
@@ -174,14 +154,14 @@ docs = ["docs"]                 # Documentation building
 help = '''echo "Available environments:
   pixi run -e python <task>     - Python development only
   pixi run -e cpp <task>        - C++ development only
-  pixi run -e exploy <task>     - Python + IsaacLab (model export)
+  pixi run -e exploy <task>     - Python + Isaac Lab (model export)
   pixi run -e controller <task> - Python + C++ (controller dev)
   pixi run -e docs <task>       - Documentation building
 
 Feature-specific tasks:
   Python: test, lint, format, check, docs
   C++: build, test, format, check
-  IsaacLab: isaac-sim, export-isaaclab, lab-*
+  Isaac Lab: isaac-sim, export-isaaclab, lab-*
 
 Common workflows:
   pixi run -e docs build        - Build documentation
@@ -190,6 +170,6 @@ Common workflows:
   pixi run -e controller setup  - Setup controller development
   pixi run -e controller build  - Build C++ code
   pixi run -e controller test   - Test both Python and C++
-  pixi run -e exploy setup      - Setup exporter with IsaacLab"'''
+  pixi run -e exploy setup      - Setup exporter with Isaac Lab"'''
 
 clean = "rm -rf build .pixi pixi.lock"

@@ -40,8 +40,8 @@ INPUT_NAMES = [
     "sensor.ray_caster.trail.b",
     "sensor.depth_image.one",
     # body
-    "obj.box1.box.pos_b_rt_w_in_w",
-    "obj.box1.box.w_Q_b",
+    "obj.box1.bodies.box.pos_b_rt_w_in_w",
+    "obj.box1.bodies.box.w_Q_b",
     # memory
     "memory.output.joint_targets.jt1.pos.in",
     # step count

@@ -14,7 +14,7 @@ def test_articulation_data_interface(sim_setup):
 
     import gymnasium as gym
     import torch
-    from isaaclab.assets import Articulation, ArticulationData
+    from isaaclab.assets import Articulation
     from isaaclab_tasks.utils import parse_env_cfg
 
     from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
@@ -41,10 +41,10 @@ def test_articulation_data_interface(sim_setup):
     articulation: Articulation = env.scene.articulations["robot"]
     articulation_data_source = ArticulationDataSource(articulation=articulation)
 
-    # Cycle through every property available in `ArticulationData` and compare it with the same property
-    # from `ArticulationDataSource`.
+    # Cycle through every property available in `ArticulationDataSource` and compare it with the same property
+    # from `ArticulationData`.
     for name, _ in inspect.getmembers(
-        ArticulationData, predicate=lambda o: isinstance(o, property)
+        ArticulationDataSource, predicate=lambda o: isinstance(o, property)
     ):
         if "tendon" in name:
             continue
@@ -53,8 +53,6 @@ def test_articulation_data_interface(sim_setup):
         source_val = getattr(articulation_data_source, name)
         # For a discussion on how to set tolerances, see:
         #   https://docs.pytorch.org/docs/stable/testing.html
-        assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5), (
-            f"Mismatch found in property '{name}'"
-        )
+        assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5)
 
     env.close()

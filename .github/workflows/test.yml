@@ -90,7 +90,7 @@ jobs:
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           environments: isaaclab
 
-      - name: Run IsaacLab Export Test
+      - name: Run Isaac Lab Export Test
         env:
           OMNI_KIT_ACCEPT_EULA: yes
         run: pixi run -e isaaclab export-isaaclab-ci
@@ -116,41 +116,3 @@ jobs:
         env:
           OMNI_KIT_ACCEPT_EULA: yes
         run: pixi run -e isaaclab test
-
-  test-mjlab-export:
-    name: Test Export mjlab
-    runs-on: github-gpu-runner
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
-        with:
-          pixi-version: latest
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: mjlab
-
-      - name: Run mjlab Export Test
-        run: pixi run -e mjlab export-mjlab-ci
-
-  test-frameworks-mjlab:
-    name: Test Frameworks - mjlab
-    runs-on: github-gpu-runner
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
-        with:
-          pixi-version: latest
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: mjlab
-
-      - name: Run Frameworks mjlab Tests
-        run: pixi run -e mjlab test

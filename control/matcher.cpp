@@ -295,13 +295,9 @@ std::vector<std::unique_ptr<Input>> DepthImageMatcher::createInputs() const {
 // ---------------  Body matchers ------------------------------
 bool BodyPositionMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern =
-      std::regex(fmt::format("obj\\.({})\\.({})\\.pos_b_rt_w_in_w", alphanumeric, alphanumeric));
+  std::regex pattern = std::regex(
+      fmt::format("obj\\.({})\\.bodies\\.({})\\.pos_b_rt_w_in_w", alphanumeric, alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
-    // Exclude "base" - that's handled by BasePositionMatcher
-    if (match[2].str() == "base") {
-      return false;
-    }
     found_matches_[match[2].str()] = maybe_match;
     return true;
   }
@@ -319,12 +315,8 @@ std::vector<std::unique_ptr<Input>> BodyPositionMatcher::createInputs() const {
 bool BodyOrientationMatcher::matches(const Match& maybe_match) {
   std::smatch match;
   std::regex pattern =
-      std::regex(fmt::format("obj\\.({})\\.({})\\.w_Q_b", alphanumeric, alphanumeric));
+      std::regex(fmt::format("obj\\.({})\\.bodies\\.({})\\.w_Q_b", alphanumeric, alphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
-    // Exclude "base" - that's handled by BaseOrientationMatcher
-    if (match[2].str() == "base") {
-      return false;
-    }
     found_matches_[match[2].str()] = maybe_match;
     return true;
   }

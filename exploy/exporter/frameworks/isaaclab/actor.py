@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
-
 import torch
 from rsl_rl.modules import ActorCritic, ActorCriticRecurrent
 from rsl_rl.modules.actor_critic_recurrent import Memory

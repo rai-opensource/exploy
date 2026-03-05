@@ -1,24 +1,36 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-from typing import Any
+import json
+from collections.abc import Callable, Sequence
 
+import torch
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.sensors import RayCaster
 
+from exploy.exporter.core.exportable_environment import ExportableEnvironment
 from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
+from exploy.exporter.frameworks.isaaclab.raycaster_data import RayCasterDataSource
 from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
-from exploy.exporter.frameworks.manager_based.env import ExportableEnvironment
-from exploy.exporter.frameworks.manager_based.raycaster_data import RayCasterDataSource
-from exploy.exporter.frameworks.manager_based.utils import get_observation_names
+from exploy.exporter.frameworks.isaaclab.utils import get_observation_names
 
 
 class IsaacLabExportableEnvironment(ExportableEnvironment):
     def __init__(
         self,
         env: ManagerBasedRLEnv,
-        policy_obs_group_name: str = "policy",
     ):
-        super().__init__(env=env, policy_obs_group_name=policy_obs_group_name)
+        assert type(env) is ManagerBasedRLEnv, (
+            "IsaacLabExportableEnvironment only supports ManagerBasedRLEnv environments."
+        )
+
+        super().__init__()
+        self._env = env
+
+        # The group name of the policy observations in the environment's observation manager.
+        self._policy_obs_group_name = "policy"
+
+        self._empty_actor_observations = self._env.obs_buf[self._policy_obs_group_name].clone()
+        self._empty_actions = self._env.action_manager._action.clone()
 
         # Replace articulation data.
         self._art_data_list = []
@@ -41,8 +53,21 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
 
         assert self.validate()
 
+    @property
+    def env(self) -> ManagerBasedRLEnv:
+        return self._env
+
+    @property
+    def decimation(self) -> int:
+        return self._env.cfg.decimation
+
     def __del__(self):
         self.cleanup()
+
+    def prepare_export(self):
+        # We need to call compute on the commands to populate the command buffers if sensors are used.
+        # This is not required for other terms, as this is already done in IsaacLab.
+        self._env.command_manager.compute(dt=0.0)
 
     def cleanup(self):
         try:
@@ -60,20 +85,122 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
             # environment is being cleaned up anyway.
             return
 
-    def _get_robots_dict(self) -> dict[str, Any]:
-        return self._env.scene.articulations
+    def compute_observations(self) -> torch.Tensor:
+        """Compute and return the observations of the environment."""
+        obs_dict = self._env.observation_manager.compute()
+        observations = obs_dict[self._policy_obs_group_name].view(1, -1)
+        return observations
 
-    def _get_physics_dt(self) -> float:
-        return self._env.cfg.sim.dt
+    def process_actions(self, actions: torch.Tensor):
+        """Process actions."""
+        self._env.action_manager.process_action(actions)
 
-    def _get_scene_cfg_attr(self) -> str:
-        return "cfg"
+    def apply_actions(self):
+        """Apply processed actions (e.g., joint targets) to the environment"""
+        self._env.action_manager.apply_action()
 
-    def _compute_observations_kwargs(self) -> dict[str, Any]:
-        return {}
+    def validate(self) -> bool:
+        """Validate that the environment conforms to the ExportableEnvironment interface."""
+
+        # Check that the observation manager has a policy group.
+        if self._policy_obs_group_name not in self._env.observation_manager.active_terms:
+            raise RuntimeError(
+                "[OnnxEnvironmentExporter] Could not find observation group named {self._policy_obs_group_name} in"
+                " observation manager. Active terms are: {self._env.observation_manager.active_terms}"
+            )
+
+        # Check if observation terms are concatenated.
+        if not self._env.observation_manager.group_obs_concatenate[self._policy_obs_group_name]:
+            raise RuntimeError("[OnnxEnvironmentExporter] Observation terms must be concatenated.")
+
+        # Check that observation noise is disabled, else it will be part of the computational graph.
+        for group_cfg in self._env.observation_manager._group_obs_term_cfgs.values():
+            for term_cfg in group_cfg:
+                if term_cfg.noise is not None:
+                    raise RuntimeError(
+                        "[OnnxEnvironmentExporter] While trying to convert to ONNX, found an observation term with"
+                        " noise enabled."
+                        "\n[OnnxEnvironmentExporter] Hint: turn off observation noise, or use a `Play` task."
+                    )
+
+        return True
+
+    def empty_actor_observations(self) -> torch.Tensor:
+        return torch.zeros_like(
+            self._env.observation_manager._obs_buffer[self._policy_obs_group_name]
+        )
+
+    def empty_actions(self) -> torch.Tensor:
+        return torch.zeros_like(self._env.action_manager._action)
+
+    def metadata(self) -> dict[str, str]:
+        metadata = {}
+
+        # Observation names.
+        metadata["obs_term_names"] = json.dumps(
+            self._env.observation_manager._group_obs_term_names[self._policy_obs_group_name]
+        )
+
+        # Decimation info.
+        metadata["decimation"] = str(self._env.cfg.decimation)
+
+        # Sim_dt info.
+        metadata["sim_dt"] = str(self._env.cfg.sim.dt)
+
+        # Update rate.
+        metadata["update_rate"] = str(1.0 / (self._env.cfg.sim.dt))
+
+        return metadata
+
+    def register_evaluation_hooks(
+        self,
+        update: Callable[[], None],
+        reset: Callable[[], None],
+        evaluate_substep: Callable[[int], None],
+    ):
+        """Register evaluation hooks for this environment."""
+
+        self._env.scene.cfg.lazy_sensor_update = False
+
+        class ONNXEvaluatorSensor:
+            def __init__(self):
+                self.sub_step_ctr = 0
+
+            def update(self, dt: float, force_recompute: bool):
+                evaluate_substep(self.sub_step_ctr)
+                self.sub_step_ctr += 1
+                update()
+
+            def reset(self, env_ids: Sequence[int]):
+                reset()
+
+        self._env.scene._sensors["onnx"] = ONNXEvaluatorSensor()
+
+        class ONNXEvaluatorCommand:
+            def compute(self, dt: float):
+                update()
+
+            def reset(self, env_ids: Sequence[int]) -> dict[str, float]:
+                reset()
+                return {}
+
+        self._env.command_manager._terms["onnx"] = ONNXEvaluatorCommand()
+
+    def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
+        """Step the environment forward by one step."""
+        self._env.scene._sensors["onnx"].sub_step_ctr = 0
+        obs, _, dones, timeouts, _ = self._env.step(actions)
+        is_reset: bool = torch.logical_or(dones, timeouts).any()
+        obs = obs[self._policy_obs_group_name]
+        return obs, is_reset
 
     def get_observation_names(self) -> list[str]:
         return get_observation_names(
             observation_manager=self._env.observation_manager,
             group_name=self._policy_obs_group_name,
         )
+
+    def observations_reset(self) -> torch.Tensor:
+        with torch.inference_mode():
+            obs_buf, _ = self._env.reset()
+            return obs_buf[self._policy_obs_group_name].clone()

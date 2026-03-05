@@ -133,7 +133,7 @@ TEST_F(OnnxComponentsTest, JointVelocityInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
-  BodyOrientationInput body_input("obj.box1.box.w_Q_b", "test_body");
+  BodyOrientationInput body_input("obj.box1.bodies.box.w_Q_b", "test_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBodyOrientationW("test_body")).WillOnce(Return(true));

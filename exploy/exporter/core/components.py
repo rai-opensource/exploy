@@ -6,8 +6,6 @@ from typing import Any
 import numpy as np
 import torch
 
-from exploy.exporter.core.utils.onnx import make_alphanumeric
-
 
 class Input:
     """Abstraction for controller inputs.
@@ -31,7 +29,7 @@ class Input:
             metadata (Any): Optional metadata associated with this input (e.g., shape, data type,
                 semantic information).
         """
-        self._name = make_alphanumeric(name)
+        self._name = name
         self._get_from_env_cb = get_from_env_cb
         self._metadata: Any = metadata
         self._data: torch.Tensor = self._get_from_env_cb()
@@ -81,7 +79,7 @@ class Output:
         get_from_env_cb: Callable[[], torch.Tensor],
         metadata: Any = None,
     ):
-        self._name = make_alphanumeric(name)
+        self._name = name
         self._get_from_env_cb = get_from_env_cb
         self._metadata: Any = metadata
 
