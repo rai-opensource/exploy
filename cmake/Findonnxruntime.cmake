@@ -21,10 +21,10 @@ find_library(onnxruntime_LIBRARY
 )
 
 if(onnxruntime_LIBRARY)
-    add_library(onnxruntime SHARED IMPORTED)
-    set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION "${onnxruntime_LIBRARY}")
-    set_property(TARGET onnxruntime PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${onnxruntime_INCLUDE_DIRS}")
-    set_property(TARGET onnxruntime PROPERTY INTERFACE_COMPILE_OPTIONS "${onnxruntime_CXX_FLAGS}")
+    add_library(onnxruntime::onnxruntime SHARED IMPORTED)
+    set_property(TARGET onnxruntime::onnxruntime PROPERTY IMPORTED_LOCATION "${onnxruntime_LIBRARY}")
+    set_property(TARGET onnxruntime::onnxruntime PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${onnxruntime_INCLUDE_DIRS}")
+    set_property(TARGET onnxruntime::onnxruntime PROPERTY INTERFACE_COMPILE_OPTIONS "${onnxruntime_CXX_FLAGS}")
 endif()
 
 find_package_handle_standard_args(onnxruntime DEFAULT_MSG onnxruntime_LIBRARY onnxruntime_INCLUDE_DIRS)

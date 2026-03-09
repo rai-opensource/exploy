@@ -34,7 +34,7 @@ target_link_libraries(exploy PUBLIC
     Eigen3::Eigen
     nlohmann_json::nlohmann_json
     fmt::fmt
-    onnxruntime
+    onnxruntime::onnxruntime
 )
 
 # Tests
