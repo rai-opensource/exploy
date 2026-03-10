@@ -150,6 +150,11 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         # Update rate.
         metadata["update_rate"] = str(1.0 / (self._env.cfg.sim.dt))
 
+        # Floating base names.
+        metadata["base_names"] = json.dumps(
+            {art_name: art.body_names[0] for art_name, art in self._env.scene.articulations.items()}
+        )
+
         return metadata
 
     def register_evaluation_hooks(

@@ -60,7 +60,7 @@ def add_body_pos(
     articulations: dict[str, Articulation],
     context_manager: ContextManager,
 ):
-    """Add body position inputs for all articulations.
+    """Add body position inputs for all articulations, skipping root bodies.
 
     For each articulation, this function adds inputs for the position
     of each body belonging to that articulation.
@@ -72,7 +72,10 @@ def add_body_pos(
 
     # Add inputs for all body positions in world frame
     for obj_name, articulation in articulations.items():
+        root_name = articulation.body_names[0]
         for body_name in articulation.data.body_names:
+            if body_name == root_name:
+                continue
             body_ids, _ = articulation.find_bodies(body_name)
             assert len(body_ids) == 1, (
                 f"Body name {body_name} is not unique in articulation {obj_name}. "
@@ -90,7 +93,7 @@ def add_body_quat(
     articulations: dict[str, Articulation],
     context_manager: ContextManager,
 ):
-    """Add body orientation inputs for all articulations.
+    """Add body orientation inputs for all articulations, skipping root bodies.
 
     For each articulation, this function adds inputs for the quaternion
     of each body belonging to that articulation.
@@ -101,7 +104,10 @@ def add_body_quat(
     """
     # Add inputs for all body quaternions in world frame
     for obj_name, articulation in articulations.items():
+        root_name = articulation.body_names[0]
         for body_name in articulation.data.body_names:
+            if body_name == root_name:
+                continue
             body_ids, _ = articulation.find_bodies(body_name)
             assert len(body_ids) == 1, (
                 f"Body name {body_name} is not unique in articulation {obj_name}. "
@@ -119,7 +125,7 @@ def add_body_pos_and_quat(
     articulations: dict[str, Articulation],
     context_manager: ContextManager,
 ):
-    """Add body position and orientation inputs for all articulations.
+    """Add body position and orientation inputs for all articulations, skipping root bodies.
 
     For each articulation, this function adds inputs for the position and quaternion
     of each body belonging to that articulation.
@@ -153,19 +159,48 @@ def add_base_vel(
         context_manager: The context manager to add base velocity inputs to.
     """
     for obj_name, articulation in articulations.items():
-        input_name_prefix = f"{OBJ_PREFIX}.{obj_name}"
+        input_name_prefix = f"{OBJ_PREFIX}.{obj_name}.{articulation.body_names[0]}"
 
-        # Add base orientation and velocities
-        base_lin_vel_b_rt_w_in_b = Input(
-            name=f"{input_name_prefix}.base.lin_vel_b_rt_w_in_b",
+        # Add base linear and angular velocities expressed in base frame.
+        lin_vel_b_rt_w_in_b = Input(
+            name=f"{input_name_prefix}.lin_vel_b_rt_w_in_b",
             get_from_env_cb=lambda art=articulation: art.data.root_lin_vel_b,
         )
-        base_ang_vel_b_rt_w_in_b = Input(
-            name=f"{input_name_prefix}.base.ang_vel_b_rt_w_in_b",
+        ang_vel_b_rt_w_in_b = Input(
+            name=f"{input_name_prefix}.ang_vel_b_rt_w_in_b",
             get_from_env_cb=lambda art=articulation: art.data.root_ang_vel_b,
         )
-        context_manager.add_component(base_lin_vel_b_rt_w_in_b)
-        context_manager.add_component(base_ang_vel_b_rt_w_in_b)
+        context_manager.add_component(lin_vel_b_rt_w_in_b)
+        context_manager.add_component(ang_vel_b_rt_w_in_b)
+
+
+def add_base_pose(
+    articulations: dict[str, Articulation],
+    context_manager: ContextManager,
+):
+    """Add base pose inputs for all articulations.
+
+    For each articulation, this function adds inputs for the base position and orientation
+    in the world frame.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add base pose inputs to.
+    """
+    for obj_name, articulation in articulations.items():
+        input_name_prefix = f"{OBJ_PREFIX}.{obj_name}.{articulation.body_names[0]}"
+
+        # Add base position and orientation
+        pos_b_rt_w_in_w = Input(
+            name=f"{input_name_prefix}.pos_b_rt_w_in_w",
+            get_from_env_cb=lambda art=articulation: art.data.root_pos_w,
+        )
+        w_Q_b = Input(
+            name=f"{input_name_prefix}.w_Q_b",
+            get_from_env_cb=lambda art=articulation: art.data.root_quat_w,
+        )
+        context_manager.add_component(pos_b_rt_w_in_w)
+        context_manager.add_component(w_Q_b)
 
 
 def add_joint_pos_and_vel(
