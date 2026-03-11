@@ -4,7 +4,7 @@ EXport and dePLOY Reinforcement Learning policies.
 
 The core idea lies in a "self-contained" export approach:
 Rather than exporting only the neural network policy, this tool captures the entire environment
-logic—including observation generation and action processing—into a single ONNX file.
+logic, including observation generation and action processing, into a single ONNX file.
 By tracing Torch operations from the simulation environment, the exporter embeds the computational
 layers required to transform raw robot state interfaces into policy inputs and policy outputs into
 executable commands.
@@ -12,6 +12,8 @@ executable commands.
 By encapsulating the environment's computation graph within the model file itself,
 this library minimizes operational effort and maximizes confidence that a policy will behave
 identically in simulation and on physical hardware.
+
+Authors: Dario Bellicoso, Annika Wollschläger
 
 ## Features
 
@@ -25,7 +27,7 @@ identically in simulation and on physical hardware.
 ## Project Structure
 
 - `control/`: C++ controller library with ONNX Runtime integration
-- `exporter/`: Python exporter package for policy and environment export
+- `exploy/`: Python exporter package for policy and environment export
 - `examples/`: Usage examples for supported frameworks
 - `docs/`: Documentation source files
 
@@ -82,6 +84,9 @@ pixi run export-isaaclab
 ```python
 import exploy.exporter.core as exporter
 from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
+
+# Create an environment.
+env = . . .
 
 # Create an exportable environment from a ManagerBasedRLEnv
 exportable_env = IsaacLabExportableEnvironment(env)
@@ -269,3 +274,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE)
 file for details.
 
 Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute
+
+## Citation
+
+If you use this work in your research or project, please consider citing it using the 'Cite this repository'
+button in the sidebar, or using:
+
+```bibtex
+@misc{exploy2026,
+  author = {Dario Bellicoso, Annika Wollschläger},
+  title = {Exploy: EXport and dePLOY Reinforcement Learning policies},
+  month = {March},
+  year = {2026},
+  url = {https://github.com/bdaiinstitute/exploy}
+}
+```
