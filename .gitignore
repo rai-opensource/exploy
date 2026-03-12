@@ -10,6 +10,9 @@ dist/
 *.egg-info
 *.whl
 
+# dynamic versioning
+python/**/_version.py
+
 # IsaacLab & ONNX
 IsaacLab/
 *.onnx

@@ -32,7 +32,7 @@ ruff = "*"
 pre-commit = "*"
 
 [feature.python.pypi-dependencies]
-exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
+exploy = { path = ".", editable = true }
 build = "*"
 
 [feature.python.tasks]
@@ -81,11 +81,11 @@ setup = { depends-on = ["configure"] }
 pytest = "*"
 
 [feature.core.pypi-dependencies]
-exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
+exploy = { path = ".", editable = true }
 pytest-gitignore = "*"
 
 [feature.core.tasks]
-test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/exploy/exporter/core"
+test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/python/exploy/exporter/core"
 test = { depends-on = ["test-python"] }
 
 [feature.isaaclab.dependencies]
@@ -103,7 +103,7 @@ libglu = "*"
 extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
-exploy-frameworks-isaaclab = { path = "./exploy/exporter/frameworks/isaaclab", editable = true }
+exploy = { path = ".", editable = true }
 isaaclab = { version = ">=2,<3", extras = ["all"] }
 isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 
@@ -115,7 +115,7 @@ export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
 export-isaaclab-ci = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
-test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/exploy/exporter/frameworks/isaaclab/tests"
+test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/python/exploy/exporter/frameworks/isaaclab/tests"
 test = { depends-on = ["test-python", "verify"] }
 verify = { depends-on = ["test-import", "test-torch"] }
 
@@ -130,8 +130,7 @@ breathe = "*"
 myst-parser = "*"
 
 [feature.docs.pypi-dependencies]
-exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
-exploy-frameworks-isaaclab = { path = "./exploy/exporter/frameworks/isaaclab", editable = true }
+exploy = { path = ".", editable = true }
 
 [feature.docs.tasks]
 doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"

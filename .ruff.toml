@@ -2,6 +2,7 @@
 
 # Ruff configuration
 line-length = 100
+src = ["python/"]
 target-version = "py311"
 
 [lint]
@@ -42,4 +43,5 @@ exclude = [
     ".pixi",
     "IsaacLab",
     "*.egg-info",
+    "python/**/_version.py",
 ]

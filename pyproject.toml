@@ -1,0 +1,95 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+[project]
+description = "EXport and dePLOY Reinforcement Learning policies."
+name = "exploy"
+requires-python = ">=3.11"
+
+# Version is determined dynamically from git tags.
+dynamic = ["version"]
+
+authors = [
+    { name = "Dario Bellicoso", email = "dbellicoso@rai-inst.com" },
+    { name = "Annika Wollschläger", email = "awollschlaeger@rai-inst.com" },
+]
+maintainers = [
+    { name = "Dario Bellicoso", email = "dbellicoso@rai-inst.com" },
+    { name = "Annika Wollschläger", email = "awollschlaeger@rai-inst.com" },
+]
+
+license = { file = "LICENSE" }
+readme = "README.md"
+
+classifiers = [
+    "Framework :: Robot Framework",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Games/Entertainment :: Simulation",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development",
+]
+keywords = [
+    "controllers",
+    "deploy",
+    "export",
+    "onnx",
+    "policy",
+    "rl",
+    "robot",
+    "robotics",
+    "sim-to-real",
+    "training",
+]
+
+dependencies = [
+    # Dependencies of the `exploy.core` subpackage.
+    "numpy",
+    "onnx",
+    "onnxruntime",
+    "torch",
+]
+
+[project.optional-dependencies]
+all = ["exploy[isaaclab,style,testing]"]
+isaaclab = ["gymnasium", "isaaclab", "rsl-rl-lib", "torch"]
+style = ["flake8", "pre-commit", "ruff"]
+testing = ["pytest"]
+
+[project.urls]
+Changelog = "https://github.com/bdaiinstitute/exploy/releases"
+Documentation = "https://bdaiinstitute.github.io/exploy"
+Source = "https://github.com/bdaiinstitute/exploy"
+Tracker = "https://github.com/bdaiinstitute/exploy/issues"
+
+# ===========
+# Build tools
+# ===========
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "python/exploy/_version.py"
+
+[tool.hatch.build.targets.sdist]
+packages = ["python/exploy"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/exploy"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
