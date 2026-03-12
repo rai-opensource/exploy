@@ -1,13 +1,95 @@
 /* Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved. */
 
-/* Increase the maximum width of the content area */
-.wy-nav-content {
-    max-width: 1200px !important;
+/* ── Layout ── */
+:root {
+    --content-width: 1200px;
 }
 
-/* Alternative: Use percentage-based width for more flexibility */
-/* Uncomment to use this instead:
-.wy-nav-content {
-    max-width: 90% !important;
+/* ── API name colors (override default red) ── */
+body[data-theme="light"],
+body:not([data-theme="dark"]) {
+    --color-api-name: #2962ff;
+    --color-api-pre-name: #2962ff;
 }
-*/
+
+body[data-theme="dark"] {
+    --color-api-name: #82b1ff;
+    --color-api-pre-name: #82b1ff;
+}
+
+/* ── Typography ── */
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Headings ── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* ── Code blocks ── */
+pre {
+    border-radius: 8px !important;
+    font-size: 0.85em;
+}
+
+code.literal {
+    border-radius: 4px;
+    padding: 0.15em 0.4em;
+    font-size: 0.875em;
+}
+
+/* ── API signatures ── */
+dl.py dt,
+dl.cpp dt {
+    border-radius: 6px;
+    padding: 0.5em 0.75em;
+    font-size: 0.9em;
+}
+
+/* ── Parameter lists ── */
+dl.field-list>dt {
+    font-weight: 600;
+    font-size: 0.9em;
+    margin-top: 0.75em;
+}
+
+dl.field-list>dd {
+    margin-left: 1em;
+    margin-bottom: 0.5em;
+}
+
+/* ── Admonitions ── */
+.admonition {
+    border-radius: 8px;
+}
+
+/* ── Tables ── */
+table.docutils {
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+table.docutils th {
+    font-weight: 600;
+}
+
+/* ── Sidebar ── */
+.sidebar-brand-text {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* ── Smooth transitions ── */
+a {
+    transition: color 0.15s ease;
+}

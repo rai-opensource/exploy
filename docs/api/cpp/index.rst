@@ -80,22 +80,17 @@ Input and output components for data flow management.
 Data Types
 ----------
 
-Core data structures used throughout the controller.
+Core data structures and type aliases used throughout the controller.
 
-.. doxygenstruct:: exploy::control::Position
-   :members:
+.. doxygentypedef:: exploy::control::Position
 
-.. doxygenstruct:: exploy::control::Quaternion
-   :members:
+.. doxygentypedef:: exploy::control::Quaternion
 
-.. doxygenstruct:: exploy::control::LinearVelocity
-   :members:
+.. doxygentypedef:: exploy::control::LinearVelocity
 
-.. doxygenstruct:: exploy::control::AngularVelocity
-   :members:
+.. doxygentypedef:: exploy::control::AngularVelocity
 
-.. doxygenstruct:: exploy::control::SE2Velocity
-   :members:
+.. doxygentypedef:: exploy::control::SE2Velocity
 
 .. doxygenstruct:: exploy::control::SE3Pose
    :members:
@@ -120,22 +115,22 @@ Metadata
 
 Metadata structures for component configuration.
 
-.. doxygenstruct:: exploy::control::JointMetadata
+.. doxygenstruct:: exploy::control::metadata::JointMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::JointOutputMetadata
+.. doxygenstruct:: exploy::control::metadata::JointOutputMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::SE2VelocityCommandMetadata
+.. doxygenstruct:: exploy::control::metadata::SE2VelocityCommandMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::HeightScanMetadata
+.. doxygenstruct:: exploy::control::metadata::HeightScanMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::RangeImageMetadata
+.. doxygenstruct:: exploy::control::metadata::RangeImageMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::DepthImageMetadata
+.. doxygenstruct:: exploy::control::metadata::DepthImageMetadata
    :members:
 
 Matchers

@@ -11,12 +11,7 @@ The core exporter functionality for ONNX export.
 .. toctree::
    :maxdepth: 2
 
-   exporter/components
-   exporter/context_manager
-   exporter/evaluator
-   exporter/exporter
-   exporter/session_wrapper
-   exporter/tensor_proxy
+   core/core
 
 Exporter Frameworks
 -------------------

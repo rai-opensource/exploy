@@ -123,7 +123,7 @@ verify = { depends-on = ["test-import", "test-torch"] }
 [feature.docs.dependencies]
 python = "3.11.*"
 sphinx = "*"
-sphinx_rtd_theme = "*"
+furo = "*"
 sphinx-autodoc-typehints = "*"
 doxygen = "*"
 breathe = "*"

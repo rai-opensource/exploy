@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 185 56" fill="none">
+  <!-- Rounded box encapsulating the word (represents graph encapsulation) -->
+  <rect x="34" y="2" width="120" height="50" rx="9" ry="9" fill="none" stroke="#82b1ff" stroke-width="2.2"/>
+  <!-- Input arrow shaft entering from the left into the X (shorter) -->
+  <line x1="20" y1="27" x2="65" y2="27" stroke="#82b1ff" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- X letter formed by crossing diagonals -->
+  <line x1="65" y1="20" x2="79" y2="34" stroke="#82b1ff" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="65" y1="34" x2="79" y2="20" stroke="#82b1ff" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Output arrow: from X, up and over the word inside the box, exiting right -->
+  <path d="M 72 20 V 11 Q 72 8 75 8 H 146 Q 149 8 149 11 V 27 H 172"
+        fill="none" stroke="#82b1ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Output arrowhead -->
+  <polyline points="167,22 172,27 167,32" fill="none" stroke="#82b1ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- "e" before the X -->
+  <text x="48" y="36" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="-0.03em" fill="#e0e0e0">e</text>
+  <!-- "ploy" after the X: l=green (outputs), y=orange (memory) -->
+  <text x="81" y="36" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="-0.03em" fill="#e0e0e0">p<tspan fill="#69f0ae">l</tspan>o<tspan fill="#ffab40">y</tspan></text>
+</svg>

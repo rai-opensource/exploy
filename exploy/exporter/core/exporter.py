@@ -94,23 +94,25 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         self,
         input_data: dict[str, torch.Tensor],
     ) -> tuple[torch.Tensor, ...]:
-        """Use the robot's state to compute policy actions, joint position targets, and policy observations, and outputs
-        that support history.
+        """Use the robot's state to compute policy actions, joint position targets, and policy
+            observations, and outputs that support history.
 
         Args:
-            input_data: A dictionary containing all input tensors required for the forward pass. The expected keys and
-            shapes of the tensors depend on the environment's context manager and the policy's computational graph.
+            input_data: A dictionary containing all input tensors required for the forward pass.
+                The expected keys and shapes of the tensors depend on the environment's context
+                manager and the policy's computational graph.
 
         Notes:
             - Dictionary inputs are flattened by the torch ONNX exporter implementation.
-            - Only inputs that are part of the computational graph will be required when using the resulting ONNX file for inference.
-              For example, if `pos_base_in_w` is not used by any of the observation functions, it will not be a required
-              input. This can be verified by querying the ONNX input names when using the ONNX runtime framework.
+            - Only inputs that are part of the computational graph will be required when using the
+              resulting ONNX file for inference. For example, if `pos_base_in_w` is not used by
+              any of the observation functions, it will not be a required input. This can be
+              verified by querying the ONNX input names when using the ONNX runtime framework.
 
         Returns:
-            joint_targets, actions, output_memory:
-            A tuple of desired joint positions (i.e., processed actions), actions (i.e., unprocessed actions),
-            memory (containing the previous actions for example).
+            tuple[torch.Tensor, ...]: Environment outputs.
+            A tuple of desired joint positions (i.e., processed actions), actions (i.e., unprocessed
+            actions), memory (containing the previous actions for example).
         """
         # Set data handlers from source inputs.
         self._env.context_manager().write_connections()
@@ -183,9 +185,10 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         """Export to ONNX.
 
         Args:
-            path: The path to the folder that will contain the ONNX file.
-            filename: The name (including the `ONNX` extension) of the exported file.
-            model_source: Information about the policy's origin (e.g., wandb, local file, etc.), added to the ONNX metadata.
+            onnx_path: The path to the folder that will contain the ONNX file.
+            onnx_file_name: The name (including the `ONNX` extension) of the exported file.
+            model_source: Information about the policy's origin (e.g., wandb, local file, etc.),
+                added to the ONNX metadata.
         """
         self.eval()
 

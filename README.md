@@ -71,6 +71,11 @@ Authors: Dario Bellicoso, Annika Wollschläger
    pixi run -e controller test
    ```
 
+### Tutorials
+
+- [**Exporter Tutorial**](docs/tutorial/exporter/exporter_tutorial.md) — Step-by-step guide to
+  exporting an RL environment and policy to a self-contained ONNX file using `exploy.exporter.core`.
+
 ### Usage Examples
 
 #### Exporting a Policy from IsaacLab
@@ -86,7 +91,10 @@ import exploy.exporter.core as exporter
 from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
 
 # Create an environment.
-env = . . .
+env = ...
+
+# Create an actor.
+actor = ...
 
 # Create an exportable environment from a ManagerBasedRLEnv
 exportable_env = IsaacLabExportableEnvironment(env)
@@ -104,7 +112,7 @@ exporter.export_environment_as_onnx(
 session_wrapper = exporter.SessionWrapper(
     onnx_folder=onnx_export_dir,
     onnx_file_name=onnx_export_file,
-    policy=policy,
+    actor=actor,
     optimize=True,
 )
 

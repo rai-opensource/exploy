@@ -7,38 +7,15 @@
 
 import os
 import sys
-from unittest.mock import MagicMock
 
 # Add the parent directory of exporter packages to the path
 # This allows "import exploy.exporter.core" and "import exploy.exporter.frameworks" to work
 sys.path.insert(0, os.path.abspath("../exploy"))
 
-
-# Mock isaaclab and isaacsim to avoid import errors
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-
-MOCK_MODULES = [
-    "isaaclab",
-    "isaacsim",
-    "isaaclab.app",
-    "isaaclab.envs",
-    "isaaclab.sim",
-    "isaaclab_tasks",
-    "isaaclab_rl",
-    "isaaclab_rl.rsl_rl",
-    "rsl_rl",
-    "rsl_rl.runners",
-]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Exporter"
+project = "Exploy"
 copyright = "2026, RAI Institute"
 author = "RAI Institute"
 release = "0.1.0"
@@ -62,13 +39,13 @@ breathe_default_project = "Exporter"
 breathe_default_members = ("members", "undoc-members")
 
 # Add external documentation links for Eigen types
-breathе_domain_by_extension = {
+breathe_domain_by_extension = {
     "hpp": "cpp",
     "cpp": "cpp",
 }
 
 # Custom configuration for linking Eigen documentation
-breathе_show_enumvalue_initializer = True
+breathe_show_enumvalue_initializer = True
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -76,9 +53,31 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+
+html_theme_options = {
+    "light_logo": "logo-light.svg",
+    "dark_logo": "logo-dark.svg",
+    "light_css_variables": {
+        "color-brand-primary": "#2962ff",
+        "color-brand-content": "#2962ff",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "#82b1ff",
+        "color-brand-content": "#82b1ff",
+    },
+    "navigation_with_keys": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/bdaiinstitute/exploy",
+            "html": '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>',
+            "class": "",
+        },
+    ],
+}
 
 # -- Options for autodoc -----------------------------------------------------
 autodoc_default_options = {
@@ -89,16 +88,25 @@ autodoc_default_options = {
     "exclude-members": "__weakref__",
 }
 
-# Skip isaaclab and isaacsim modules in autodoc
-autodoc_mock_imports = ["isaaclab", "isaacsim", "isaaclab_tasks", "isaaclab_rl", "rsl_rl"]
+# Mock external dependencies that are not available in the docs environment
+autodoc_mock_imports = [
+    "gymnasium",
+    "isaaclab",
+    "isaaclab_rl",
+    "isaaclab_tasks",
+    "isaacsim",
+    "rsl_rl",
+]
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    """Skip documenting isaaclab and isaacsim related members."""
-    # Skip if the module is from isaaclab or isaacsim
+    """Skip inherited members that come from mocked external packages."""
     if hasattr(obj, "__module__"):
-        module = obj.__module__
-        if module and any(mod in module for mod in ["isaaclab", "isaacsim"]):
+        module = obj.__module__ or ""
+        # Skip members from external packages, but keep our own isaaclab framework modules
+        if not module.startswith("exploy") and any(
+            mod in module for mod in ["isaaclab", "isaacsim"]
+        ):
             return True
     return skip
 
@@ -164,9 +172,17 @@ napoleon_attr_annotations = True
 # -- Intersphinx configuration -----------------------------------------------
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "torch": ("https://pytorch.org/docs/stable/", None),
+    "torch": ("https://docs.pytorch.org/docs/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
+
+# -- MyST parser configuration ------------------------------------------------
+# Generate heading anchors up to depth 4 so that #anchor links in markdown work.
+myst_heading_anchors = 4
+
+# Suppress cross-reference warnings for links that are valid on GitHub but cannot
+# resolve inside the Sphinx doc tree (e.g., README links to files at the repo root).
+suppress_warnings = ["myst.xref_missing"]
 
 # Note: Eigen uses Doxygen, not Sphinx, so intersphinx won't work.
 # For Eigen cross-references, use direct links or configure Doxygen tag files in breathe_doxygen_config_options

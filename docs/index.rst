@@ -12,6 +12,7 @@ frameworks and deploying them using ONNX Runtime for efficient inference.
    :caption: Contents:
 
    getting_started
+   tutorial/exporter/exporter_tutorial
    api/index
 
 Indices and tables
