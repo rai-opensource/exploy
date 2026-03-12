@@ -26,6 +26,21 @@ std::optional<int> parseUpdateRate(OnnxRuntime& onnx_model) {
   return static_cast<int>(std::stod(maybe_update_rate.value()));
 }
 
+std::unordered_map<std::string, std::string> parseBaseNames(const OnnxRuntime& onnx_model) {
+  std::unordered_map<std::string, std::string> base_names;
+  const auto maybe_base_names = onnx_model.getCustomMetadata("base_names");
+  if (!maybe_base_names.has_value()) return base_names;
+  try {
+    auto json_base_names = json::parse(maybe_base_names.value());
+    for (auto it = json_base_names.begin(); it != json_base_names.end(); ++it) {
+      base_names[it.key()] = it.value().get<std::string>();
+    }
+  } catch (const json::exception& e) {
+    LOG_STREAM(ERROR, "Failed to parse base_names metadata: " << e.what());
+  }
+  return base_names;
+}
+
 }  // namespace
 
 // Registration methods
@@ -56,10 +71,13 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   if (!maybe_update_rate.has_value()) return false;
   update_rate_ = maybe_update_rate.value();
 
+  base_names_ = parseBaseNames(onnx_model);
+
   for (const auto& input_name : onnx_model.inputNames()) {
     Match maybe_match{
         .name = input_name,
         .metadata = onnx_model.getCustomMetadata(input_name),
+        .base_names = base_names_,
     };
     bool found_match = false;
     for (auto& group_matchers : group_matchers_) {
@@ -81,6 +99,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
     Match maybe_match{
         .name = output_name,
         .metadata = onnx_model.getCustomMetadata(output_name),
+        .base_names = base_names_,
     };
     bool found_match = false;
     for (auto& group_matchers : group_matchers_) {

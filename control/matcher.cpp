@@ -1,7 +1,9 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 #include <optional>
+#include <ranges>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -12,6 +14,21 @@
 #include "matcher.hpp"
 
 namespace exploy::control {
+
+namespace {
+
+// Builds a regex pattern for base tensor matching.
+// Returns std::nullopt when base_names is empty, causing matchers to reject the tensor.
+std::optional<std::regex> buildBasePattern(
+    const std::unordered_map<std::string, std::string>& base_names, std::string_view field) {
+  if (base_names.empty()) return std::nullopt;
+  auto pairs = base_names | std::views::transform([](const auto& p) {
+                 return fmt::format(R"({}\.{})", p.first, p.second);
+               });
+  return std::regex(fmt::format(R"(obj\.({})\.{})", fmt::join(pairs, "|"), field));
+}
+
+}  // namespace
 
 // ---------------  Joint matchers --------------------------------
 bool JointMatcher::matches(const Match& maybe_match) {
@@ -53,8 +70,8 @@ std::vector<std::unique_ptr<Input>> JointMatcher::createInputs() const {
 
 // ---------------  Base matchers --------------------------------
 bool BasePositionMatcher::matches(const Match& maybe_match) {
-  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.base\\.pos_b_rt_w_in_w", alphanumeric));
-  if (std::regex_match(maybe_match.name, pattern)) {
+  auto maybe_pattern = buildBasePattern(maybe_match.base_names, "pos_b_rt_w_in_w");
+  if (maybe_pattern.has_value() && std::regex_match(maybe_match.name, maybe_pattern.value())) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
   }
@@ -70,8 +87,8 @@ std::vector<std::unique_ptr<Input>> BasePositionMatcher::createInputs() const {
 }
 
 bool BaseOrientationMatcher::matches(const Match& maybe_match) {
-  std::regex pattern = std::regex(fmt::format("obj\\.({})\\.base\\.w_Q_b", alphanumeric));
-  if (std::regex_match(maybe_match.name, pattern)) {
+  auto maybe_pattern = buildBasePattern(maybe_match.base_names, "w_Q_b");
+  if (maybe_pattern.has_value() && std::regex_match(maybe_match.name, maybe_pattern.value())) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
   }
@@ -87,9 +104,8 @@ std::vector<std::unique_ptr<Input>> BaseOrientationMatcher::createInputs() const
 }
 
 bool BaseLinearVelocityMatcher::matches(const Match& maybe_match) {
-  std::regex pattern =
-      std::regex(fmt::format("obj\\.({})\\.base\\.lin_vel_b_rt_w_in_b", alphanumeric));
-  if (std::regex_match(maybe_match.name, pattern)) {
+  auto maybe_pattern = buildBasePattern(maybe_match.base_names, "lin_vel_b_rt_w_in_b");
+  if (maybe_pattern.has_value() && std::regex_match(maybe_match.name, maybe_pattern.value())) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
   }
@@ -105,9 +121,8 @@ std::vector<std::unique_ptr<Input>> BaseLinearVelocityMatcher::createInputs() co
 }
 
 bool BaseAngularVelocityMatcher::matches(const Match& maybe_match) {
-  std::regex pattern =
-      std::regex(fmt::format("obj\\.({})\\.base\\.ang_vel_b_rt_w_in_b", alphanumeric));
-  if (std::regex_match(maybe_match.name, pattern)) {
+  auto maybe_pattern = buildBasePattern(maybe_match.base_names, "ang_vel_b_rt_w_in_b");
+  if (maybe_pattern.has_value() && std::regex_match(maybe_match.name, maybe_pattern.value())) {
     found_matches_[maybe_match.name] = maybe_match;
     return true;
   }

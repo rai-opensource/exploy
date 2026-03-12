@@ -28,8 +28,9 @@ constexpr std::string_view alphanumeric = "[a-zA-Z0-9_]+";
  * from the ONNX model.
  */
 struct Match {
-  std::string name{};                     ///< ONNX tensor name.
-  std::optional<std::string> metadata{};  ///< Optional JSON metadata string.
+  std::string name{};                                       ///< ONNX tensor name.
+  std::optional<std::string> metadata{};                    ///< Optional JSON metadata string.
+  std::unordered_map<std::string, std::string> base_names;  ///< Map of base names.
 };
 
 /**

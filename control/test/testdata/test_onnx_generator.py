@@ -17,10 +17,10 @@ INPUT_NAMES = [
     "obj.robot1.joints.pos",
     "obj.robot1.joints.vel",
     # base
-    "obj.robot1.base.pos_b_rt_w_in_w",
-    "obj.robot1.base.w_Q_b",
-    "obj.robot1.base.lin_vel_b_rt_w_in_b",
-    "obj.robot1.base.ang_vel_b_rt_w_in_b",
+    "obj.robot1.base_name.pos_b_rt_w_in_w",
+    "obj.robot1.base_name.w_Q_b",
+    "obj.robot1.base_name.lin_vel_b_rt_w_in_b",
+    "obj.robot1.base_name.ang_vel_b_rt_w_in_b",
     # commands
     "cmd.se2_velocity.vel",
     "cmd.se2_velocity.vel_with_range",
@@ -216,6 +216,7 @@ def get_env_metadata() -> dict:
     return {
         "exploy_version": "0.1.0",
         "update_rate": 10.0,
+        "base_names": {"robot1": "base_name"},
     }
 
 

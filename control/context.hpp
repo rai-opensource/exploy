@@ -81,8 +81,9 @@ class OnnxContext {
   std::vector<std::unique_ptr<Output>> outputs_;  ///< Output components for writing robot commands.
   std::vector<std::unique_ptr<Matcher>> matchers_;  ///< Registered single-tensor matchers.
   std::vector<std::unique_ptr<GroupMatcher>>
-      group_matchers_;  ///< Registered multi-tensor matchers.
-  int update_rate_{0};  ///< Control loop update rate in Hz.
+      group_matchers_;                                       ///< Registered multi-tensor matchers.
+  int update_rate_{0};                                       ///< Control loop update rate in Hz.
+  std::unordered_map<std::string, std::string> base_names_;  ///< Map of base names.
 };
 
 }  // namespace exploy::control

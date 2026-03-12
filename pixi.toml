@@ -25,6 +25,7 @@ pip = "*"
 # FEATURE: Python Development - Python tools, linting, formatting, testing
 [feature.python.dependencies]
 python = "3.11.*"
+onnx = "*"
 onnxscript = "*"
 pybind11 = ">=2.10"
 ruff = "*"

@@ -53,7 +53,7 @@ TEST_F(OnnxComponentsTest, JointPositionInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitAndRead) {
-  BasePositionInput base_input("obj.robot1.base.pos_b_rt_w_in_w");
+  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w");
 
   // Test successful initialization
   EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(true));
@@ -67,13 +67,13 @@ TEST_F(OnnxComponentsTest, BasePositionInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitFailure) {
-  BasePositionInput base_input("obj.robot1.base.pos_b_rt_w_in_w");
+  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w");
   EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(false));
   EXPECT_FALSE(base_input.init(state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BaseOrientationInput_InitAndRead) {
-  BaseOrientationInput base_input("obj.robot1.base.w_Q_b");
+  BaseOrientationInput base_input("obj.robot1.base_name.w_Q_b");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseQuatW()).WillOnce(Return(true));
@@ -87,7 +87,7 @@ TEST_F(OnnxComponentsTest, BaseOrientationInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BaseLinearVelocityInput_InitAndRead) {
-  BaseLinearVelocityInput base_input("obj.robot1.base.lin_vel_b_rt_w_in_b");
+  BaseLinearVelocityInput base_input("obj.robot1.base_name.lin_vel_b_rt_w_in_b");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
@@ -101,7 +101,7 @@ TEST_F(OnnxComponentsTest, BaseLinearVelocityInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BaseAngularVelocityInput_InitAndRead) {
-  BaseAngularVelocityInput base_input("obj.robot1.base.ang_vel_b_rt_w_in_b");
+  BaseAngularVelocityInput base_input("obj.robot1.base_name.ang_vel_b_rt_w_in_b");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
