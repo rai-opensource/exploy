@@ -65,10 +65,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
     return false;
   }
 
-  // TODO: enable strict mode to ensure version compatibility.
-  if (!metadata::checkExployVersion(onnx_model.getCustomMetadata("exploy_version"),
-                                    /*strict*/ false))
-    return false;
+  if (!metadata::checkExployVersion(onnx_model.getCustomMetadata("exploy_version"))) return false;
 
   std::optional<int> maybe_update_rate = parseUpdateRate(onnx_model);
   if (!maybe_update_rate.has_value()) return false;
@@ -123,7 +120,6 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
     });
   }
 
-  // TODO: simplify
   for (auto& matcher : matchers_) {
     auto inputs = matcher->createInputs();
     inputs_.insert(inputs_.end(), std::make_move_iterator(inputs.begin()),

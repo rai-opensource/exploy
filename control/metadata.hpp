@@ -251,89 +251,79 @@ inline void from_json(const json& j, JointMetadata& jm) {
 }
 
 /**
- * @brief Parsed semantic version (MAJOR.MINOR.PATCH).
+ * @brief Parsed version (MAJOR.MINOR).
  */
 struct Version {
   int major{0};
   int minor{0};
-  int patch{0};
 
-  std::string toString() const { return fmt::format("{}.{}.{}", major, minor, patch); }
+  std::string toString() const { return fmt::format("{}.{}", major, minor); }
 
   bool operator<=(const Version& other) const {
     if (major != other.major) return major < other.major;
-    if (minor != other.minor) return minor < other.minor;
-    return patch <= other.patch;
+    return minor <= other.minor;
   }
 };
 
-constexpr Version kMinSupportedExployVersion{0, 1, 0};
-constexpr Version kMaxSupportedExployVersion{0, 1, 0};
+constexpr Version kMinSupportedExployVersion{0, 0};
 
 /**
- * @brief Parse a "MAJOR.MINOR.PATCH" version string.
+ * @brief Parse a version string into MAJOR.MINOR.
  *
- * @param s Version string to parse.
- * @return Parsed Version, or std::nullopt if the string is not a valid semver.
+ * Only the leading MAJOR.MINOR digits are extracted; any trailing content
+ * (e.g. ".PATCH", ".postN", ".devN", "+local") is ignored.
+ *
+ * @param s Version string to parse (e.g. "1.2.3", "0.0.post1.dev96+gabcdef").
+ * @return Parsed Version, or std::nullopt if the string does not start with MAJOR.MINOR.
  */
 inline std::optional<Version> parseVersion(const std::string& s) {
-  static const std::regex kVersionRegex(R"(^(\d+)\.(\d+)\.(\d+)$)");
+  static const std::regex kVersionRegex(R"(^(\d+)\.(\d+))");
   std::smatch match;
-  if (!std::regex_match(s, match, kVersionRegex)) return std::nullopt;
-  return Version{std::stoi(match[1]), std::stoi(match[2]), std::stoi(match[3])};
+  if (!std::regex_search(s, match, kVersionRegex)) return std::nullopt;
+  return Version{std::stoi(match[1]), std::stoi(match[2])};
 }
 
 /**
- * @brief Check that the ONNX model's exploy_version metadata is present and within the supported
- * range [kMinSupportedExployVersion, kMaxSupportedExployVersion]. Logs an error if not.
+ * @brief Check that the ONNX model's exploy_version metadata is present and at least
+ * @p min_version. Logs an error if not.
  *
  * @param maybe_version_str The value of the "exploy_version" metadata key, or std::nullopt if
  * absent.
- * @param strict If true, treat mismatch as a failure. If false, only log a warning and return true.
- * @return true if the version is present and within the supported range, false otherwise.
+ * @param min_version Minimum accepted version. Defaults to kMinSupportedExployVersion.
+ * @return true if the version is present and >= @p min_version, false otherwise.
  */
 inline bool checkExployVersion(const std::optional<std::string>& maybe_version_str,
-                               bool strict = true) {
-  const auto log = [&](const std::string& msg) {
-    if (strict) {
-      LOG_STREAM(ERROR, msg);
-    } else {
-      LOG_STREAM(WARN, msg);
-    }
-  };
-
+                               const Version& min_version = kMinSupportedExployVersion) {
   if (!maybe_version_str.has_value()) {
-    log("ONNX model does not contain 'exploy_version' metadata. "
-        "The ONNX file might not be compatible with this controller.");
-    return !strict;
+    LOG_STREAM(ERROR,
+               "ONNX model does not contain 'exploy_version' metadata. "
+               "The ONNX file might not be compatible with this controller.");
+    return false;
   }
 
   std::string version_str;
   try {
     version_str = json::parse(maybe_version_str.value()).get<std::string>();
   } catch (const json::exception&) {
-    log(
-        fmt::format("Failed to JSON parse exploy_version: '{}'. "
-                    "The ONNX file might not be compatible with this controller.",
-                    maybe_version_str.value()));
-    return !strict;
+    LOG_STREAM(ERROR, fmt::format("Failed to JSON parse exploy_version: '{}'. "
+                                  "The ONNX file might not be compatible with this controller.",
+                                  maybe_version_str.value()));
+    return false;
   }
 
   auto maybe_version = parseVersion(version_str);
   if (!maybe_version.has_value()) {
-    log(
-        fmt::format("Failed to parse exploy_version: '{}'. "
-                    "The ONNX file might not be compatible with this controller.",
-                    version_str));
-    return !strict;
+    LOG_STREAM(ERROR, fmt::format("Failed to parse exploy_version: '{}'. "
+                                  "The ONNX file might not be compatible with this controller.",
+                                  version_str));
+    return false;
   }
 
   const auto& v = maybe_version.value();
-  const bool in_range = kMinSupportedExployVersion <= v && v <= kMaxSupportedExployVersion;
-  if (!in_range) {
-    log(fmt::format("exploy_version '{}' is outside the supported range [{}, {}].", version_str,
-                    kMinSupportedExployVersion.toString(), kMaxSupportedExployVersion.toString()));
-    return !strict;
+  if (!(min_version <= v)) {
+    LOG_STREAM(ERROR, fmt::format("exploy_version '{}' is below the minimum supported version {}.",
+                                  version_str, min_version.toString()));
+    return false;
   }
   return true;
 }

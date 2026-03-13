@@ -18,15 +18,15 @@ ONNX_EXTENSION = ".onnx"
 
 
 def get_exploy_version() -> str:
-    """Get the installed exploy-exporter-core package version.
+    """Get the installed exploy package version.
 
     Returns:
-        Version string, or "unknown" if the package metadata is not available.
+        Version string, or "0.0.0" if the package metadata is not available.
     """
     try:
-        return importlib.metadata.version("exploy-exporter-core")
+        return importlib.metadata.version("exploy")
     except importlib.metadata.PackageNotFoundError:
-        return "unknown"
+        return "0.0.0"
 
 
 def _ensure_onnx_extension(filename: str) -> pathlib.Path:
