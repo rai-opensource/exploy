@@ -58,7 +58,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["exploy[isaaclab,style,testing]"]
-isaaclab = ["gymnasium", "isaaclab", "rsl-rl-lib", "torch"]
+isaaclab = ["isaaclab"]
 style = ["flake8", "pre-commit", "ruff"]
 testing = ["pytest"]
 

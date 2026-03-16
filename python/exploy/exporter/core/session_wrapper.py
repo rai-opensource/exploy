@@ -3,9 +3,7 @@
 import pathlib
 
 import numpy as np
-import onnx
 import onnxruntime as ort
-from onnx import helper
 
 from exploy.exporter.core.actor import ExportableActor
 from exploy.exporter.core.utils.paths import prepare_onnx_paths
@@ -108,14 +106,3 @@ class SessionWrapper:
     def reset(self):
         """Reset the internal results to zeros to avoid stale data at environment reset."""
         self._results = [np.zeros_like(output) for output in self._results]
-
-    def print_graph(self) -> None:
-        """Print the ONNX graph structure in a readable format."""
-        try:
-            print("\n📊 ONNX Graph Structure:")
-            print("=" * 50)
-            onnx_model = onnx.load(str(self._onnx_file_path))
-            print(helper.printable_graph(onnx_model.graph))
-            print("=" * 50)
-        except Exception as e:
-            print(f"⚠️  Could not load ONNX graph: {e}")

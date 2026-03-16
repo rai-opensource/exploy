@@ -27,26 +27,83 @@ Authors: Dario Bellicoso, Annika Wollschläger
 ## Project Structure
 
 - `control/`: C++ controller library with ONNX Runtime integration
-- `exploy/`: Python exporter package for policy and environment export
-- `examples/`: Usage examples for supported frameworks
+- `python/exploy/`: Python exporter package for policy and environment export
+- `examples/exporter_scripts/`: Usage examples for supported frameworks
+- `examples/controller/`: Usage examples for control development
 - `docs/`: Documentation source files
+
+## Documentation
+
+Exploy's documentation is available at [bdaiinstitute.github.io/exploy](https://bdaiinstitute.github.io/exploy).
+To get started with Exploy's core concepts, refer to the following guides:
+
+- [**Exporter**](docs/tutorial/exporter/exporter_tutorial.md) — Step-by-step guide to
+  exporting an RL environment and policy to a self-contained ONNX file using `exploy.exporter.core`.
+- [**Controller**](docs/tutorial/controller/controller_tutorial.md) — Step-by-step guide to
+  deploying a trained policy on a robot using the C++ controller with ONNX Runtime integration.
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Pixi](https://pixi.sh) installed on your system
+We use [Pixi](https://pixi.sh) to build this repository. See the
+[Pixi installation guide](https://pixi.prefix.dev/latest/installation/) for setup instructions.
 
 ### Installation
 
-1. **Clone the repository**:
+#### Clone the repository
 
    ```bash
    git clone https://github.com/bdaiinstitute/exploy.git
    cd exploy
    ```
 
-2. **Initialize the environment and install dependencies**:
+#### Install the Python exporter as a pip package
+
+  Exploy is split into two packages: the Exporter package developed in Python and the Controller package developed in C++.
+  To use the exporter in your project, install it with `pip`:
+
+   ```bash
+   pip install -e .
+   ```
+
+   The command above installs the core implementation of the exporter. This repository also provides
+   support for exporter integrations with environments developed in `IsaacLab`. You can install
+   the additional dependency with:
+
+   ```bash
+   pip install -e .[isaaclab]
+   ```
+
+#### Integrate into your CMake project
+
+   The easiest way to consume the library is via `add_subdirectory`:
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.20)
+   project(my_robot_controller LANGUAGES CXX)
+
+   set(CMAKE_CXX_STANDARD 20)
+   set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+   # Path to the exploy project root
+   set(EXPLOY_ROOT_DIR "/path/to/exploy" CACHE PATH "Exploy root directory")
+
+   # Pull in the exploy shared library (disables its tests in your build)
+   set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+   add_subdirectory(
+       "${EXPLOY_ROOT_DIR}/control"
+       "${CMAKE_CURRENT_BINARY_DIR}/exploy_control"
+       EXCLUDE_FROM_ALL
+   )
+
+   add_executable(my_controller main.cpp)
+   target_link_libraries(my_controller PRIVATE exploy)
+   ```
+
+  See [`examples/controller/`](examples/controller/) for a complete working example.
+
+#### Initialize the environment and install dependencies
 
    ```bash
    pixi install
@@ -54,14 +111,14 @@ Authors: Dario Bellicoso, Annika Wollschläger
 
 ### Building the Project
 
-1. **Configure and Build C++ Library**:
+#### Configure and Build C++ Library
 
    ```bash
    pixi run -e controller configure
    pixi run -e controller build
    ```
 
-2. **Run tests**:
+#### Run tests
 
    ```bash
    # Python tests
@@ -71,12 +128,11 @@ Authors: Dario Bellicoso, Annika Wollschläger
    pixi run -e controller test
    ```
 
-### Tutorials
+### Use Exploy
 
-- [**Exporter Tutorial**](docs/tutorial/exporter/exporter_tutorial.md) — Step-by-step guide to
-  exporting an RL environment and policy to a self-contained ONNX file using `exploy.exporter.core`.
-- [**Controller Tutorial**](docs/tutorial/controller/controller_tutorial.md) — Step-by-step guide to
-  deploying a trained policy on a robot using the C++ controller with ONNX Runtime integration.
+Start with the [documentation](#documentation) to learn the core workflow for exporting and
+deploying a task. If you have an NVIDIA GPU, you can also run an IsaacLab exporter example with
+`pixi run -e isaaclab export-isaaclab`.
 
 ## Versioning
 
@@ -84,26 +140,9 @@ This project uses semantic versioning (MAJOR.MINOR.PATCH). The current version i
 
 Releases are published using GitHub Releases. Version tags follow the format `vX.Y.Z`.
 
-## Limitations
-
-- IsaacLab integration requires NVIDIA GPU with CUDA support
-- C++ controller is designed for real-time systems but performance depends
-  on hardware
-- ONNX model execution time varies based on policy complexity
-
 ## Dependencies
 
 All dependencies are managed through Pixi and specified in `pixi.toml` with version constraints.
-
-### Core Dependencies
-
-- **Python**: 3.11.x
-- **C++ Build Tools**: CMake (3.24), Ninja, GCC/G++
-- **C++ Libraries**: ONNX Runtime (>=1.15), Eigen (>=3.4), fmt (>=9.1), nlohmann_json (>=3.11)
-- **Python Libraries**: PyTorch, onnxscript
-- **Testing**: GoogleTest, pytest
-
-See `pixi.toml` for complete dependency specifications with version ranges.
 
 ## Development
 
@@ -121,20 +160,27 @@ pixi run -e python pre-commit run --all-files
 
 ### Available Tasks
 
-Specified in `pixi.toml`:
+Tasks are run through Pixi and defined in `pixi.toml`. Common tasks include:
 
-**Python tasks** (use `-e core` environment):
+#### Core exporter tasks
 
 - `pixi run -e core test`: Run Python tests with pytest
+
+#### Python code quality tasks
+
 - `pixi run -e core lint-python`: Check Python code with ruff
 - `pixi run -e core format-python`: Format Python code with ruff
 
-**C++ tasks** (use `-e controller` environment):
+#### C++ tasks
 
 - `pixi run -e controller configure`: Run CMake configuration
 - `pixi run -e controller build`: Build the C++ library
 - `pixi run -e controller test`: Run C++ tests with CTest
 - `pixi run -e controller format-cpp`: Format C++ code with clang-format
+
+#### Example task
+
+- `pixi run -e isaaclab export-isaaclab`: Export a policy for an existing IsaacLab task
 
 ## Maintenance and Support
 

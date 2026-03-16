@@ -228,7 +228,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                 str(file_path),
                 export_params=True,
                 opset_version=self._opset_version,
-                verbose=self.verbose,
+                verbose=False,
                 input_names=input_names,
                 output_names=output_names,
                 # constant folding requires that all tensors are on the same device. as constants

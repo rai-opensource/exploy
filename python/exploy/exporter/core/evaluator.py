@@ -228,10 +228,6 @@ def evaluate(
         )
     actor.reset(torch.tensor([True], device=obs.device))
 
-    # Print ONNX graph structure if verbose
-    if verbose:
-        session_wrapper.print_graph()
-
     step_ctr = 0
     export_ok = True
     failed_steps = 0

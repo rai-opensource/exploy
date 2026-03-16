@@ -147,8 +147,8 @@ build = { cmd = "sphinx-build -b html docs docs/_build/html", depends-on = [
   "doxygen",
 ] }
 linkcheck = { cmd = "sphinx-build -b linkcheck docs docs/_build/linkcheck", depends-on = [
-   "doxygen",
-]}
+  "doxygen",
+] }
 clean = "rm -rf docs/_build"
 open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html"
 
@@ -166,22 +166,28 @@ docs = ["docs"]                 # Documentation building
 help = '''echo "Available environments:
   pixi run -e python <task>     - Python development only
   pixi run -e cpp <task>        - C++ development only
-  pixi run -e exploy <task>     - Python + Isaac Lab (model export)
+  pixi run -e core <task>       - Exporter core (Python + tests)
+  pixi run -e isaaclab <task>   - Isaac Lab exporter workflows
   pixi run -e controller <task> - Python + C++ (controller dev)
   pixi run -e docs <task>       - Documentation building
 
 Feature-specific tasks:
-  Python: test, lint, format, check, docs
-  C++: build, test, format, check
-  Isaac Lab: isaac-sim, export-isaaclab, lab-*
+  Python: lint-python, lint-python-fix, format-python, format-python-check
+  Core: test-python, test
+  C++: configure, build, test-cpp, test, format-cpp, format-cpp-check
+  Isaac Lab: export-isaaclab-*, test-import, test-torch, verify, test
+  Docs: doxygen, build, linkcheck, clean, open
 
 Common workflows:
+  pixi install -e core          - Install exporter core environment
+  pixi run -e core test         - Run exporter core tests
   pixi run -e docs build        - Build documentation
   pixi run -e docs open         - Open documentation
   pixi install -e controller    - Install controller environment
   pixi run -e controller setup  - Setup controller development
   pixi run -e controller build  - Build C++ code
-  pixi run -e controller test   - Test both Python and C++
-  pixi run -e exploy setup      - Setup exporter with Isaac Lab"'''
+  pixi run -e controller test   - Run C++ controller tests
+  pixi install -e isaaclab      - Install exporter with Isaac Lab
+  pixi run -e isaaclab export-isaaclab-g1 - Export Isaac Lab policy"'''
 
 clean = "rm -rf build .pixi pixi.lock"
