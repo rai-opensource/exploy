@@ -4,8 +4,7 @@ description = "EXport and dePLOY Reinforcement Learning policies."
 name = "exploy"
 requires-python = ">=3.11"
 
-# Version is determined dynamically from git tags.
-dynamic = ["version"]
+version = "0.1.0"
 
 authors = [
     { name = "Dario Bellicoso", email = "dbellicoso@rai-inst.com" },
@@ -74,17 +73,7 @@ Tracker = "https://github.com/bdaiinstitute/exploy/issues"
 
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling", "hatch-vcs"]
-
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.version.raw-options]
-version_scheme = "only-version"
-local_scheme = "no-local-version"
-
-[tool.hatch.build.hooks.vcs]
-version-file = "python/exploy/_version.py"
+requires = ["hatchling"]
 
 [tool.hatch.build.targets.sdist]
 packages = ["python/exploy"]

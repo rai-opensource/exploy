@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
-from ._version import __version__
+from importlib.metadata import PackageNotFoundError, version
 
-__all__ = [
-    "__version__",
-]
+try:
+    __version__ = version(__name__)
+except PackageNotFoundError:
+    __version__ = "unknown"
