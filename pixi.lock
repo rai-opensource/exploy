@@ -1638,8 +1638,8 @@ packages:
   timestamp: 1771259434699
 - pypi: ./
   name: exploy
-  version: 0.0.0.post1.dev17+g98412da37
-  sha256: fc580fa45fa5707570b79730ae726d77523d21427ff1d63277cd906b7552c00d
+  version: 0.0.0
+  sha256: 798f01f14d95e59f12ece46700713acb4c5db60358cdcaba70c4e0b76bbf88d3
   requires_dist:
   - numpy
   - onnx

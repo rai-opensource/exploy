@@ -80,7 +80,8 @@ requires = ["hatchling", "hatch-vcs"]
 source = "vcs"
 
 [tool.hatch.version.raw-options]
-version_scheme = "no-guess-dev"
+version_scheme = "only-version"
+local_scheme = "no-local-version"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "python/exploy/_version.py"
