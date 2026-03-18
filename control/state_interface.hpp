@@ -467,7 +467,7 @@ class RobotStateInterface {
    * @param base_quat_w The base orientation in world frame.
    * @return A vector of heightscans.
    */
-  virtual std::optional<HeightScan*> heightScan(
+  virtual std::optional<const HeightScan*> heightScan(
       const std::string& /*sensor_name*/, const std::unordered_set<std::string>& /*layer_names*/,
       const Position& /*base_pos_w*/, const Quaternion& /*base_quat_w*/) {
     LOG_STREAM(ERROR, "heightScan() not implemented");
@@ -496,7 +496,7 @@ class RobotStateInterface {
    * @param channel_names The set of channel names to retrieve.
    * @return Pointer to the spherical image data.
    */
-  virtual std::optional<MultiChannelImage*> sphericalImage(
+  virtual std::optional<const MultiChannelImage*> sphericalImage(
       const std::string& /*sensor_name*/,
       const std::unordered_set<std::string>& /*channel_names*/) {
     LOG_STREAM(ERROR, "sphericalImage() not implemented");
@@ -525,7 +525,7 @@ class RobotStateInterface {
    * @param channel_names The set of channel names to retrieve.
    * @return Pointer to the pinhole image data.
    */
-  virtual std::optional<MultiChannelImage*> pinholeImage(
+  virtual std::optional<const MultiChannelImage*> pinholeImage(
       const std::string& /*sensor_name*/,
       const std::unordered_set<std::string>& /*channel_names*/) {
     LOG_STREAM(ERROR, "pinholeImage() not implemented");

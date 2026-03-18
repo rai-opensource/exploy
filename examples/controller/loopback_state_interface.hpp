@@ -169,7 +169,7 @@ class LoopbackRobotStateInterface : public RobotStateInterface {
     return true;
   }
 
-  std::optional<HeightScan*> heightScan(
+  std::optional<const HeightScan*> heightScan(
       const std::string& sensor_name,
       const std::unordered_set<std::string>& /*layer_names*/,
       const Position& /*base_pos_w*/,

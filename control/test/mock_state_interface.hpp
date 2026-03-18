@@ -55,19 +55,19 @@ class MockRobotStateInterface : public RobotStateInterface {
               (const override));
   MOCK_METHOD(bool, initHeightScan,
               (const std::string& sensor_name, const HeightScanConfig& config), (override));
-  MOCK_METHOD(std::optional<HeightScan*>, heightScan,
+  MOCK_METHOD(std::optional<const HeightScan*>, heightScan,
               (const std::string& sensor_name, const std::unordered_set<std::string>& layer_names,
                const Position& base_pos_w, const Quaternion& base_quat_w),
               (override));
   MOCK_METHOD(bool, initSphericalImage,
               (const std::string& sensor_name, const SphericalImageConfig& config), (override));
-  MOCK_METHOD(std::optional<MultiChannelImage*>, sphericalImage,
+  MOCK_METHOD(std::optional<const MultiChannelImage*>, sphericalImage,
               (const std::string& sensor_name,
                const std::unordered_set<std::string>& channel_names),
               (override));
   MOCK_METHOD(bool, initPinholeImage,
               (const std::string& sensor_name, const PinholeImageConfig& config), (override));
-  MOCK_METHOD(std::optional<MultiChannelImage*>, pinholeImage,
+  MOCK_METHOD(std::optional<const MultiChannelImage*>, pinholeImage,
               (const std::string& sensor_name,
                const std::unordered_set<std::string>& channel_names),
               (override));
