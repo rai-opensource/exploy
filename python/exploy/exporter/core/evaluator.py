@@ -109,6 +109,8 @@ def _compare_step_outputs(
         )
         msg += "\n  • Review compute_observation() implementation for data flow correctness"
         return False, msg
+    else:
+        msg += "\n✅ Observations match between environment and ONNX model."
 
     step_export_ok = step_export_ok and obs_ok
 
@@ -133,6 +135,8 @@ def _compare_step_outputs(
         msg += "\n  • Verify actor network matches between env and ONNX"
         msg += "\n  • Ensure action normalizer parameters are correctly exported"
         return False, msg
+    else:
+        msg += "\n✅ Actions match between environment and ONNX model."
 
     step_export_ok = step_export_ok and actions_ok
 
@@ -173,6 +177,8 @@ def _compare_step_outputs(
                 "\n  • Review process_action() and apply_action() implementations for consistency"
             )
             return False, msg
+        else:
+            msg += "\n✅ Outputs match between environment and ONNX model."
 
         step_export_ok = step_export_ok and outputs_ok
 
@@ -233,8 +239,21 @@ def evaluate(
     failed_steps = 0
     inference_times = []
 
-    # Evaluate a single substep at sim dt.
+    # Hold a dictionary of environment outputs to compare against ONNX outputs at each step.
+    # This is populated at each decimation step of each environment update, and later
+    # compared against the ONNX outputs after running inference.
+    env_outputs = {}
+
     def evaluate_substep(step_ctr: int):
+        """Evaluate a single substep at sim dt.
+
+        Args:
+            step_ctr: The current decimation step counter.
+        """
+        # Get the environment's outputs.
+        for component in context_manager.get_output_components():
+            env_outputs[component.output_name] = component.get_from_env_cb().clone().cpu()
+
         # Skip first step, as we evaluate the policy in the main evaluation loop before calling env.step().
         # Skip if we have not run the session yet.
         if step_ctr == 0 or session_wrapper._results is None:
@@ -249,9 +268,15 @@ def evaluate(
         session_wrapper(**onnx_inputs)
 
     def update():
+        """Callback passed to the environment's evaluation hooks to update the
+        context manager's inputs from the environment's state at each step.
+        """
         context_manager.read_inputs()
 
     def reset():
+        """Callback passed to the environment's evaluation hooks to reset the
+        context manager's inputs from the environment's state at each reset.
+        """
         context_manager.read_inputs()
 
     env.register_evaluation_hooks(
@@ -321,16 +346,17 @@ def evaluate(
         t_inference_s = time.perf_counter() - t_start
         inference_times.append(t_inference_s)
 
-        # Get observations and actions. Needs to be called before env.step() to get them
-        # from the full model.
+        # Get observations and actions.
         ort_observations = torch.from_numpy(session_wrapper.get_output_value("obs")).clone()
         ort_actions = torch.from_numpy(session_wrapper.get_output_value("actions")).clone()
 
-        # Get the environment's outputs.
-        env_outputs = {
-            component.output_name: component.get_from_env_cb().clone().cpu()
-            for component in context_manager.get_output_components()
-        }
+        if not env_outputs:
+            # The env_outputs dict is empty. This happens if the exportable environment
+            # does not register its evaluation hooks. Populate the environment outputs here.
+            env_outputs = {
+                component.output_name: component.get_from_env_cb().clone().cpu()
+                for component in context_manager.get_output_components()
+            }
 
         # Compute actions from the new observations.
         env_actions = actor(obs)
@@ -348,6 +374,8 @@ def evaluate(
             atol=atol,
             rtol=rtol,
         )
+
+        env_outputs = {}
 
         export_ok = export_ok and step_export_ok
         if not step_export_ok:
