@@ -13,6 +13,7 @@ def compare_tensors(
     name_b: str = None,
     atol: float = 1.0e-5,
     rtol: float = 1.0e-5,
+    max_mismatch_print: int | None = None,
 ) -> tuple[bool, str]:
     """Compare two tensors, and print a message showing the differences.
 
@@ -23,11 +24,14 @@ def compare_tensors(
         index_names: A list of names, one for each element of the input tensors.
         name_a: A name identifying the source of the first input tensor.
         name_b: A name identifying the source of the second input tensor.
-        atol : Absolute tolerance.
-        rtol : Relative tolerance.
+        atol: Absolute tolerance.
+        rtol: Relative tolerance.
+        max_mismatch_print: Maximum number of mismatches to print. If None, print all mismatches.
 
     Returns:
-        A tuple of (is_close, message), where `is_close` is a boolean indicating whether the tensors are close within the specified tolerances, and `message` is a string describing the comparison results, including details of any mismatches.
+        A tuple of (is_close, message), where `is_close` is a boolean indicating whether the tensors
+        are close within the specified tolerances, and `message` is a string describing the
+        comparison results, including details of any mismatches.
     """
     is_close = torch.isclose(vec_a, vec_b, atol=atol, rtol=rtol)
 
@@ -38,10 +42,16 @@ def compare_tensors(
 
     mismatched_indices = (torch.logical_not(is_close)).nonzero(as_tuple=False)
 
+    if max_mismatch_print is None:
+        max_mismatch_print = len(mismatched_indices)
+
     msg += "\033[91mfound mismatch.\033[0m"
     name_a = "a" if name_a is None else name_a
     name_b = "b" if name_b is None else name_b
-    for idx in mismatched_indices:
+    for i, idx in enumerate(mismatched_indices):
+        if i >= max_mismatch_print:
+            msg += f"\n\t...and {len(mismatched_indices) - max_mismatch_print} more mismatches."
+            break
         idx_tuple = tuple(idx.tolist())
         val_a = vec_a[idx_tuple].item()
         val_b = vec_b[idx_tuple].item()

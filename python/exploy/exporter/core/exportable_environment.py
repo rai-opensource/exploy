@@ -59,7 +59,6 @@ class ExportableEnvironment(abc.ABC):
     def register_evaluation_hooks(
         self,
         update: Callable[[], None],
-        reset: Callable[[], None],
         evaluate_substep: Callable[[int], None],
     ):
         """Register evaluation hooks for this environment."""

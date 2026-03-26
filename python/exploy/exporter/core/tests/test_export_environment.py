@@ -213,7 +213,7 @@ class ExportableEnv(ExportableEnvironment):
     def observations_reset(self) -> torch.Tensor:
         return self.env.compute_obs()
 
-    def register_evaluation_hooks(self, update, reset, evaluate_substep):
+    def register_evaluation_hooks(self, update, evaluate_substep):
         pass
 
     def metadata(self) -> dict:
@@ -309,7 +309,8 @@ def export_and_evaluate_env(
     exp_env: ExportableEnv,
     actor: ExportableActor,
     onnx_file_name: str,
-    num_eval_steps: int,
+    num_eval_episodes: int,
+    max_eval_steps_per_episode: int,
 ) -> bool:
     """Helper function to export an environment and evaluate it using the exported ONNX graph."""
     exp_env.context_manager().add_components(
@@ -372,13 +373,13 @@ def export_and_evaluate_env(
         )
 
         # Evaluate.
-        evaluate_steps = num_eval_steps
         with torch.inference_mode():
             export_ok, _ = evaluate(
                 env=exp_env,
                 context_manager=exp_env.context_manager(),
                 session_wrapper=session_wrapper,
-                num_steps=evaluate_steps,
+                num_episodes=num_eval_episodes,
+                max_episode_steps=max_eval_steps_per_episode,
                 verbose=False,
                 pause_on_failure=False,
             )
@@ -397,7 +398,8 @@ class TestExportableEnvironment:
             exp_env=exp_env,
             actor=actor,
             onnx_file_name="test_export_env.onnx",
-            num_eval_steps=20,
+            num_eval_episodes=2,
+            max_eval_steps_per_episode=20,
         )
         assert export_ok, "ONNX export validation failed"
 
@@ -414,7 +416,8 @@ class TestExportableEnvironment:
             exp_env=exp_env,
             actor=actor,
             onnx_file_name="test_export_env_with_module.onnx",
-            num_eval_steps=20,
+            num_eval_episodes=2,
+            max_eval_steps_per_episode=20,
         )
         assert export_ok, "ONNX export validation failed"
 
@@ -440,6 +443,7 @@ class TestExportableEnvironment:
             exp_env=exp_env,
             actor=actor,
             onnx_file_name="test_export_env_with_rnn_actor.onnx",
-            num_eval_steps=20,
+            num_eval_episodes=2,
+            max_eval_steps_per_episode=20,
         )
         assert export_ok, "ONNX export validation failed"

@@ -164,13 +164,15 @@ def export_isaaclab(
     )
 
     # Evaluate.
-    evaluate_steps = 200
+    evaluate_episodes = 2
+    evaluate_steps = 100
     with torch.inference_mode():
         export_ok, _ = evaluate(
             env=exportable_env,
             context_manager=exportable_env.context_manager(),
             session_wrapper=session_wrapper,
-            num_steps=evaluate_steps,
+            num_episodes=evaluate_episodes,
+            max_episode_steps=evaluate_steps,
             verbose=True,
             pause_on_failure=pause_on_failure,
         )

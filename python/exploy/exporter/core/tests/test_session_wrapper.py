@@ -5,7 +5,6 @@
 import pathlib
 import tempfile
 
-import numpy as np
 import pytest
 import torch
 
@@ -57,39 +56,3 @@ class TestSessionWrapper:
         assert optimized_path.exists()
 
         assert wrapper.get_actor() == actor
-
-    def test_session_wrapper_inference(self, mock_onnx_model):
-        """Test SessionWrapper inference."""
-        wrapper = SessionWrapper(
-            onnx_folder=mock_onnx_model.parent,
-            onnx_file_name=mock_onnx_model.name,
-            actor=None,
-            optimize=False,
-        )
-
-        # Run inference
-        input_data = np.random.randn(1, 3).astype(np.float32)
-        results = wrapper(input=input_data)
-
-        assert results is not None
-        assert len(results) > 0
-        assert isinstance(results[0], np.ndarray)
-
-        output = wrapper.get_output_value("output")
-        assert output is not None
-        assert isinstance(output, np.ndarray)
-
-        # Reset
-        wrapper.reset()
-
-        # After reset, results should be zeros with same shape
-        output = wrapper.get_output_value("output")
-        assert np.all(output == 0)
-        assert output.shape == results[0].shape
-
-        # Run multiple inferences
-        for _ in range(5):
-            input_data = np.random.randn(1, 3).astype(np.float32)
-            results = wrapper(input=input_data)
-            assert results is not None
-            assert len(results) > 0

@@ -2,7 +2,6 @@
 
 import pathlib
 
-import numpy as np
 import onnxruntime as ort
 
 from exploy.exporter.core.actor import ExportableActor
@@ -105,4 +104,4 @@ class SessionWrapper:
 
     def reset(self):
         """Reset the internal results to zeros to avoid stale data at environment reset."""
-        self._results = [np.zeros_like(output) for output in self._results]
+        self._results = None

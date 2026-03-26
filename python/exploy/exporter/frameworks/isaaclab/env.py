@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import json
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 import torch
 from isaaclab.envs import ManagerBasedRLEnv
@@ -160,7 +160,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
     def register_evaluation_hooks(
         self,
         update: Callable[[], None],
-        reset: Callable[[], None],
         evaluate_substep: Callable[[int], None],
     ):
         """Register evaluation hooks for this environment."""
@@ -171,22 +170,21 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
             def __init__(self):
                 self.sub_step_ctr = 0
 
-            def update(self, dt: float, force_recompute: bool):
+            def update(self, *args, **kwargs):
                 evaluate_substep(self.sub_step_ctr)
                 self.sub_step_ctr += 1
                 update()
 
-            def reset(self, env_ids: Sequence[int]):
-                reset()
+            def reset(self, *args, **kwargs):
+                pass
 
         self._env.scene._sensors["onnx"] = ONNXEvaluatorSensor()
 
         class ONNXEvaluatorCommand:
-            def compute(self, dt: float):
+            def compute(self, *args, **kwargs):
                 update()
 
-            def reset(self, env_ids: Sequence[int]) -> dict[str, float]:
-                reset()
+            def reset(self, *args, **kwargs) -> dict[str, float]:
                 return {}
 
         self._env.command_manager._terms["onnx"] = ONNXEvaluatorCommand()

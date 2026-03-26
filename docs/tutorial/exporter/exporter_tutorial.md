@@ -33,7 +33,7 @@ import torch
 
 from exploy.exporter.core.actor import ExportableActor, add_actor_memory
 from exploy.exporter.core.context_manager import Group, Input, Memory, Output
-from exploy.exporter.core.evaluator import evaluate
+from exploy.exporter.core.evaluator import evaluate, evaluate_episode
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
 from exploy.exporter.core.exporter import export_environment_as_onnx
 from exploy.exporter.core.session_wrapper import SessionWrapper
@@ -212,7 +212,7 @@ class ExportableEnv(ExportableEnvironment):
     def metadata(self) -> dict:
         return {"env_name": "Env", "version": "1.0"}
 
-    def register_evaluation_hooks(self, update, reset, evaluate_substep):
+    def register_evaluation_hooks(self, update, evaluate_substep):
         pass
 
     def get_observation_names(self) -> list[str]:
@@ -497,7 +497,8 @@ with torch.inference_mode():
         env=exp_env,
         context_manager=exp_env.context_manager(),
         session_wrapper=session_wrapper,
-        num_steps=20,
+        num_episodes=1,
+        max_episode_steps=20,
         verbose=True,
         pause_on_failure=False,
     )
@@ -510,6 +511,23 @@ with torch.inference_mode():
 
 If `export_ok` is `False`, the evaluator prints a detailed diagnostic showing which outputs
 diverged and at which step.
+
+Under the hood, {py:func}`evaluate() <exploy.exporter.core.evaluator.evaluate>` calls
+{py:func}`evaluate_episode() <exploy.exporter.core.evaluator.evaluate_episode>` once per episode.
+You can call `evaluate_episode()` directly when you want finer control — for example, to run and
+inspect a single episode in a tight debugging loop without the outer episode iteration:
+
+```python
+with torch.inference_mode():
+    episode_ok, observations = evaluate_episode(
+        env=exp_env,
+        context_manager=exp_env.context_manager(),
+        session_wrapper=session_wrapper,
+        max_num_steps=20,
+        verbose=True,
+        pause_on_failure=False,
+    )
+```
 
 ---
 
@@ -649,7 +667,8 @@ def export_and_evaluate(
     exp_env: ExportableEnv,
     actor: ExportableActor,
     onnx_file_name: str,
-    num_eval_steps: int,
+    num_eval_episodes: int,
+    max_eval_steps_per_episode: int,
 ) -> bool:
     # Register inputs, outputs, and memory.
     exp_env.context_manager().add_components(
@@ -714,7 +733,8 @@ def export_and_evaluate(
                 env=exp_env,
                 context_manager=exp_env.context_manager(),
                 session_wrapper=session_wrapper,
-                num_steps=num_eval_steps,
+                num_episodes=num_eval_episodes,
+                max_episode_steps=max_eval_steps_per_episode,
                 verbose=False,
                 pause_on_failure=False,
             )
@@ -730,7 +750,7 @@ env = Environment(data_source=data_source)
 exp_env = ExportableEnv(env=env)
 actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
 
-assert export_and_evaluate(exp_env, actor, "policy.onnx", num_eval_steps=20)
+assert export_and_evaluate(exp_env, actor, "policy.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
 ```
 
 ### Environment with a torch module
@@ -742,7 +762,7 @@ exp_env = ExportableEnv(env=env)
 actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
 exp_env.context_manager().add_module(env.module)
 
-assert export_and_evaluate(exp_env, actor, "policy_with_module.onnx", num_eval_steps=20)
+assert export_and_evaluate(exp_env, actor, "policy_with_module.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
 ```
 
 ### Environment with a torch module and an RNN actor
@@ -760,5 +780,5 @@ add_actor_memory(
     get_hidden_states_func=actor.get_state,
 )
 
-assert export_and_evaluate(exp_env, actor, "policy_with_rnn.onnx", num_eval_steps=20)
+assert export_and_evaluate(exp_env, actor, "policy_with_rnn.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
 ```

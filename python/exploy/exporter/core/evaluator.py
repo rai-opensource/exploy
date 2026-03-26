@@ -18,7 +18,6 @@ def _print_progress_bar(
     num_steps: int,
     failed_steps: int,
     step_export_ok: bool,
-    is_reset_step: bool,
     inference_times: list[float],
 ) -> None:
     """Print progress bar with step information.
@@ -28,7 +27,6 @@ def _print_progress_bar(
         num_steps: Total number of steps.
         failed_steps: Number of failed steps so far.
         step_export_ok: Whether current step passed validation.
-        is_reset_step: Whether environment was reset this step.
         inference_times: List of inference times.
     """
     status_emoji = "🔴" if not step_export_ok else "🟢"
@@ -41,8 +39,6 @@ def _print_progress_bar(
     mean_time = np.mean(inference_times) * 1.0e3
     std_time = np.std(inference_times) * 1.0e3
     extra_info.append(f"⏱️  μ={mean_time:.3f}ms σ={std_time:.3f}ms")
-    if is_reset_step:
-        extra_info.append("RESET")
     extra_str = " | ".join(extra_info)
 
     print(
@@ -189,7 +185,8 @@ def evaluate(
     env: ExportableEnvironment,
     context_manager: ContextManager,
     session_wrapper: SessionWrapper,
-    num_steps: int,
+    num_episodes: int,
+    max_episode_steps: int | None = None,
     verbose: bool = True,
     reset_from_onnx_counter_steps: int = 50,
     atol: float = 1.0e-5,
@@ -198,15 +195,16 @@ def evaluate(
 ) -> tuple[bool, torch.Tensor]:
     """Evaluate an ONNX exported model against an `ExportableEnvironment` stepped through a `SessionWrapper`.
 
-    This function runs the simulation for a specified number of steps and compares the
-    outputs of the ONNX model with the environment's state and actor's actions at each step.
-    This is useful for verifying the correctness of the ONNX export.
+    This function runs the simulation for a specified number of episodes, each with a maximum number
+    of steps, and compares the outputs of the ONNX model with the environment's state and actor's
+    actions at each step. This is useful for verifying the correctness of the ONNX export.
 
     Args:
         env: The environment to run the evaluation in.
         context_manager: The context manager handling inputs and outputs.
         session_wrapper: An ONNX session wrapper.
-        num_steps: The number of steps to run the evaluation for.
+        num_episodes: The number of episodes to run the evaluation for.
+        max_episode_steps: The maximum number of steps per episode.
         verbose: Whether to print verbose output during evaluation. Defaults to True.
         reset_from_onnx_counter_steps: Set after how many steps we should set memory inputs from ONNX instead of using
             the environment's state.
@@ -218,14 +216,76 @@ def evaluate(
             Note: this value is chosen arbitrarily.
         atol: Absolute tolerance used to compare tensors.
         rtol: Relative tolerance used to compare tensors.
+        pause_on_failure: Whether to pause on each failed step and wait for user input before
+            continuing. Defaults to True.
 
     Returns:
         A tuple containing a boolean indicating if the evaluation was successful and
         the final observations tensor.
     """
+    if verbose:
+        print("Starting evaluation...")
 
-    # Reset both the environment and the actor.
+    for i_episode in range(num_episodes):
+        if verbose:
+            print(f"\nStarting episode {i_episode + 1}/{num_episodes}...")
+        export_ok, final_obs = evaluate_episode(
+            env=env,
+            context_manager=context_manager,
+            session_wrapper=session_wrapper,
+            max_num_steps=max_episode_steps,
+            verbose=verbose,
+            reset_from_onnx_counter_steps=reset_from_onnx_counter_steps,
+            atol=atol,
+            rtol=rtol,
+            pause_on_failure=pause_on_failure,
+        )
+    return export_ok, final_obs
+
+
+def evaluate_episode(
+    env: ExportableEnvironment,
+    context_manager: ContextManager,
+    session_wrapper: SessionWrapper,
+    max_num_steps: int | None = None,
+    verbose: bool = True,
+    reset_from_onnx_counter_steps: int = 50,
+    atol: float = 1.0e-5,
+    rtol: float = 1.0e-5,
+    pause_on_failure: bool = True,
+):
+    """Run evaluation for a single episode, comparing the ONNX model outputs against the environment.
+
+    Steps the environment and the ONNX session in lockstep, comparing observations, actions, and
+    outputs at each step. Useful for fine-grained inspection of a single episode, e.g. in a
+    debugging loop, without the outer episode iteration of :func:`evaluate`.
+
+    Args:
+        env: The environment to run the evaluation in.
+        context_manager: The context manager handling inputs and outputs.
+        session_wrapper: An ONNX session wrapper.
+        max_num_steps: The maximum number of steps to run. If ``None``, runs until the environment
+            signals a reset.
+        verbose: Whether to print verbose output during evaluation. Defaults to True.
+        reset_from_onnx_counter_steps: Set after how many steps we should set memory inputs from
+            ONNX instead of using the environment's state.
+
+            Note: we do this to avoid numerical error accumulation that would occur if we only
+            ever use the ONNX inference outputs as memory fed back as ONNX inference inputs,
+            while all other inputs are set directly from the environment's state.
+
+            Note: this value is chosen arbitrarily.
+        atol: Absolute tolerance used to compare tensors.
+        rtol: Relative tolerance used to compare tensors.
+        pause_on_failure: Whether to pause on each failed step and wait for user input before
+            continuing. Defaults to True.
+
+    Returns:
+        A tuple containing a boolean indicating if the episode evaluation was successful and
+        the final observations tensor.
+    """
     obs = env.observations_reset()
+    session_wrapper.reset()
 
     actor = session_wrapper.get_actor()
     if actor is None:
@@ -273,15 +333,8 @@ def evaluate(
         """
         context_manager.read_inputs()
 
-    def reset():
-        """Callback passed to the environment's evaluation hooks to reset the
-        context manager's inputs from the environment's state at each reset.
-        """
-        context_manager.read_inputs()
-
     env.register_evaluation_hooks(
         update=update,
-        reset=reset,
         evaluate_substep=evaluate_substep,
     )
 
@@ -291,7 +344,7 @@ def evaluate(
     reset_memory_from_env = False
     env.context_manager().read_inputs()
 
-    while step_ctr < num_steps:
+    while step_ctr < max_num_steps if max_num_steps is not None else True:
         reset_memory_from_env = (
             reset_memory_from_env or (step_ctr % reset_from_onnx_counter_steps) == 0
         )
@@ -301,18 +354,9 @@ def evaluate(
 
         # Check if the environment was reset.
         if is_reset_step:
-            # Re-read the ONNX inputs from the environment after a reset to avoid mismatch between
-            # ONNX inputs and environment state after reset.
-            env.context_manager().read_inputs()
-
-            # Reset the actor state.
-            actor.reset(torch.tensor([is_reset_step], device=env_actions.device))
-
-            # We need to reset the memory inputs from the environment after a reset.
-            reset_memory_from_env = True
-
-            # Reset the session wrapper results to avoid using stale outputs.
-            session_wrapper._results = None
+            if verbose:
+                print(f"\n🔄 Environment reset at step {step_ctr + 1}.")
+            break
 
         # Get onnx outputs if the session has been run.
         ort_outputs = (
@@ -383,16 +427,13 @@ def evaluate(
 
         # Display progress bar.
         if verbose:
-            if step_ctr == 0:
-                print("\n\nStarting evaluation...")
             if not step_export_ok:
                 print(msg)
             _print_progress_bar(
                 step_ctr=step_ctr,
-                num_steps=num_steps,
+                num_steps=max_num_steps,
                 failed_steps=failed_steps,
                 step_export_ok=step_export_ok,
-                is_reset_step=is_reset_step,
                 inference_times=inference_times,
             )
 
