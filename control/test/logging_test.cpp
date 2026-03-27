@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "logging_utils.hpp"
+#include "exploy/logging_utils.hpp"
 #include "mock_logging_interface.hpp"
 
 #include <gmock/gmock.h>

@@ -47,14 +47,16 @@ check = { depends-on = ["lint", "format"] }
 
 # FEATURE: C++ Development - Build tools, native libraries, C++ linting/testing
 [feature.cpp.dependencies]
-cmake = "=3.24"
+cmake = ">=3.23"
+extra-cmake-modules = "*"
 ninja = "*"
 eigen = ">=3.4"
 nlohmann_json = ">=3.11"
 fmt = ">=9.1"
 gtest = "*"
 gmock = "*"
-onnxruntime-cpp = ">=1.15"
+# This should be >=1.15 but we need 1.24.2 for OOTB CMake support.
+onnxruntime-cpp = ">=1.24.2"
 gcc_linux-64 = "*"
 gxx_linux-64 = "*"
 libstdcxx-ng = "*"
@@ -62,13 +64,13 @@ clang-format = "*"
 
 [feature.cpp.tasks]
 # C++ build and testing
-configure = "cmake -S control -B build/control -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_MODULE_PATH=$PIXI_PROJECT_ROOT/cmake"
+configure = "cmake -S control -B build/control -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 build = { cmd = "cmake --build build/control", depends-on = ["configure"] }
 test-cpp = "ctest --test-dir build/control --output-on-failure"
 test = { depends-on = ["test-cpp"] }
 
 # Controller example
-configure-example = "cmake -S examples/controller -B build/examples/controller -G Ninja -DCMAKE_MODULE_PATH=$PIXI_PROJECT_ROOT/cmake -DEXPLOY_ROOT_DIR=$PIXI_PROJECT_ROOT"
+configure-example = "cmake -S examples/controller -B build/examples/controller -G Ninja"
 build-example = { cmd = "cmake --build build/examples/controller", depends-on = [
   "configure-example",
 ] }

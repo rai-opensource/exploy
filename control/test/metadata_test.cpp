@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "metadata.hpp"
+#include "exploy/metadata.hpp"
 
 #include <gtest/gtest.h>
 

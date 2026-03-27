@@ -38,10 +38,10 @@
 #include <thread>
 #include <vector>
 
-#include "components.hpp"
-#include "controller.hpp"
-#include "logging_interface.hpp"
-#include "matcher.hpp"
+#include "exploy/components.hpp"
+#include "exploy/controller.hpp"
+#include "exploy/logging_interface.hpp"
+#include "exploy/matcher.hpp"
 
 #include "fixed_command_interface.hpp"
 #include "loopback_state_interface.hpp"

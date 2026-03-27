@@ -2,7 +2,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include "command_interface.hpp"
+#include "exploy/command_interface.hpp"
 
 namespace exploy::control {
 

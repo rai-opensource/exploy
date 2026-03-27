@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "controller.hpp"
-#include "components.hpp"
-#include "context.hpp"
-#include "matcher.hpp"
+#include "exploy/controller.hpp"
+#include "exploy/components.hpp"
+#include "exploy/context.hpp"
+#include "exploy/matcher.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_data_collection_interface.hpp"
 #include "mock_state_interface.hpp"

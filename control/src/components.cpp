@@ -4,7 +4,7 @@
 #include <regex>
 #include <string>
 
-#include "components.hpp"
+#include "exploy/components.hpp"
 
 namespace exploy::control {
 

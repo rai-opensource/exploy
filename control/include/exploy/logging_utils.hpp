@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 #pragma once
 
-#include "logging_interface.hpp"
+#include "exploy/logging_interface.hpp"
 
 #include <fmt/core.h>
 #include <fmt/ostream.h>

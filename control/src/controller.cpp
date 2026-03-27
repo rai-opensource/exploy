@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
-#include "controller.hpp"
-#include "logging_utils.hpp"
+#include "exploy/controller.hpp"
+#include "exploy/logging_utils.hpp"
 
 #include <fmt/format.h>
 

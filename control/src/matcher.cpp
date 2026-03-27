@@ -10,8 +10,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "components.hpp"
-#include "matcher.hpp"
+#include "exploy/components.hpp"
+#include "exploy/matcher.hpp"
 
 namespace exploy::control {
 

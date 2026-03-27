@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "context.hpp"
-#include "logging_utils.hpp"
-#include "metadata.hpp"
+#include "exploy/context.hpp"
+#include "exploy/logging_utils.hpp"
+#include "exploy/metadata.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>

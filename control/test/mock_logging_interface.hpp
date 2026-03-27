@@ -2,7 +2,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include "logging_interface.hpp"
+#include "exploy/logging_interface.hpp"
 
 namespace exploy::control {
 

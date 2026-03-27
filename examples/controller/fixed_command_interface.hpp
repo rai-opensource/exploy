@@ -4,8 +4,8 @@
 #include <optional>
 #include <string>
 
-#include "command_interface.hpp"
-#include "interfaces.hpp"
+#include "exploy/command_interface.hpp"
+#include "exploy/interfaces.hpp"
 
 namespace exploy::control::examples {
 

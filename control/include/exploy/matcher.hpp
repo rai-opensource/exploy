@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "components.hpp"
+#include "exploy/components.hpp"
 
 namespace exploy::control {
 

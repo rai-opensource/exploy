@@ -2,7 +2,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include "data_collection_interface.hpp"
+#include "exploy/data_collection_interface.hpp"
 
 namespace exploy::control {
 

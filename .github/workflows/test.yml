@@ -100,6 +100,11 @@ jobs:
           OMNI_KIT_ACCEPT_EULA: yes
         run: pixi run -e isaaclab export-isaaclab-ci
 
+      - name: Build Exploy Library
+        run: |
+          pixi run -e controller setup
+          pixi run -e controller build
+
       - name: Run Controller Loopback Example
         run: pixi run -e controller run-example
 

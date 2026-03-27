@@ -3,7 +3,7 @@
 
 #include <gmock/gmock.h>
 #include <unordered_set>
-#include "state_interface.hpp"
+#include "exploy/state_interface.hpp"
 
 namespace exploy::control {
 

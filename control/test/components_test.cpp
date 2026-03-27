@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-#include "components.hpp"
-#include "matcher.hpp"
+#include "exploy/components.hpp"
+#include "exploy/matcher.hpp"
+#include "exploy/onnx_runtime.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_state_interface.hpp"
-#include "onnx_runtime.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
