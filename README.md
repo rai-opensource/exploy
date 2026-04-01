@@ -1,217 +1,291 @@
 # Exploy
 
-EXport and dePLOY Reinforcement Learning policies.
+**EX**port and de**PLOY** reinforcement learning policies.
 
-The core idea lies in a "self-contained" export approach:
-Rather than exporting only the neural network policy, this tool captures the entire environment
-logic, including observation generation and action processing, into a single ONNX file.
-By tracing Torch operations from the simulation environment, the exporter embeds the computational
-layers required to transform raw robot state interfaces into policy inputs and policy outputs into
-executable commands.
+Exploy is a library that packages complex reinforcement learning environment logic and policies into a single,
+deployable computational graph.
 
-By encapsulating the environment's computation graph within the model file itself,
-this library minimizes operational effort and maximizes confidence that a policy will behave
-identically in simulation and on physical hardware.
+## Motivation
 
-Authors: Dario Bellicoso, Annika Wollschläger
+A common approach in robotics reinforcement learning is training policies in simulation and deploying
+them on physical hardware.
+These two domains are typically quite different, since simulation environments are defined in Python
+while real robots operate using C++ / ROS.
+To bridge this gap, a standard method for exchanging policies is exporting them as ONNX files.
+This provides a language-agnostic format that can be loaded and executed across different software stacks.
+
+However, this is only part of the story.
+Most policy exchange solutions only include the structure and weights of the neural network within the ONNX file.
+They map raw observations to raw actions but ignore the complex surrounding logic required for observation
+generation and action processing.
+
+Exploy solves this by embedding the exact computational layers required to execute the entire environment logic.
+It captures the complete pipeline that maps high-level robot states into policy observations and post-processes
+the network's output into real actuation signals.
+
+This is achieved by tracing PyTorch operations directly from the simulation environment.
+By encapsulating the environment's entire computation graph within the model file, Exploy minimizes operational effort
+and maximizes confidence that your policy will behave identically in simulation and on the physical robot.
+
+**Authors**: Dario Bellicoso, Annika Wollschläger
 
 ## Features
 
-- **Environment Exporting**: Export RL environments and policies from
-  simulation frameworks in a self-contained ONNX file.
-- **C++ Controller with ONNX Runtime Integration**: Deploy trained policies using ONNX Runtime
-  for real-time policy execution
-- **Multi-Framework Support**: Built-in support for IsaacLab with extensible
-  framework integration
+- **Environment Exporting**:
+  Export RL environments and policies from simulation frameworks in a self-contained ONNX file.
+- **C++ Controller with ONNX Runtime Integration**:
+  Deploy trained policies using ONNX Runtime for real-time policy execution.
+- **Multi-Framework Support**:
+  Built-in support for [IsaacLab][isaaclab], with an architecture designed for extensible framework integration.
+
+[isaaclab]: https://github.com/isaac-sim/IsaacLab
 
 ## Project Structure
 
-- `control/`: C++ controller library with ONNX Runtime integration
-- `python/exploy/`: Python exporter package for policy and environment export
-- `examples/exporter_scripts/`: Usage examples for supported frameworks
-- `examples/controller/`: Usage examples for control development
-- `docs/`: Documentation source files
+```text
+exploy/
+├── control/               # C++ controller library with ONNX Runtime integration
+├── docs/                  # Documentation source files
+├── examples/
+│   ├── controller/        # Usage examples for control development
+│   └── exporter_scripts/  # Usage examples for supported frameworks
+├── python/exploy/         # Python exporter package for policy and environment
+└── ros/                   # ROS integration packages
+```
 
 ## Documentation
 
-Exploy's documentation is available at [bdaiinstitute.github.io/exploy](https://bdaiinstitute.github.io/exploy).
-To get started with Exploy's core concepts, refer to the following guides:
+Exploy's documentation is available at [bdaiinstitute.github.io/exploy][docs].
+To get started with the core concepts, refer to our step-by-step guides:
 
-- [**Exporter**](docs/tutorial/exporter/exporter_tutorial.md) — Step-by-step guide to
-  exporting an RL environment and policy to a self-contained ONNX file using `exploy.exporter.core`.
-- [**Controller**](docs/tutorial/controller/controller_tutorial.md) — Step-by-step guide to
-  deploying a trained policy on a robot using the C++ controller with ONNX Runtime integration.
+- [**Exporter**][tutorial_exporter]:
+  Learn to export an RL environment and policy to a self-contained ONNX file using  `exploy.exporter.core`.
+- [**Controller**][tutorial_controller]:
+  Learn to deploy a trained policy on a robot using the C++ controller with ONNX Runtime integration.
 
-## Getting Started
+[docs]: https://bdaiinstitute.github.io/exploy
+[tutorial_exporter]: https://bdaiinstitute.github.io/exploy/tutorial/exporter/exporter_tutorial.html
+[tutorial_controller]: https://bdaiinstitute.github.io/exploy/tutorial/controller/controller_tutorial.html
 
-### Prerequisites
+## Installation and Usage
 
-We use [Pixi](https://pixi.sh) to build this repository. See the
-[Pixi installation guide](https://pixi.prefix.dev/latest/installation/) for setup instructions.
+### Python Exporter
 
-### Installation
+To consume the Python package in your own project,
+the recommended approach is to install it directly from the git repository using `pip`:
 
-#### Clone the repository
+```bash
+pip install git+https://github.com/bdaiinstitute/exploy.git
+```
 
-   ```bash
-   git clone https://github.com/bdaiinstitute/exploy.git
-   cd exploy
-   ```
+To install with additional dependencies for `IsaacLab` integration:
 
-#### Install the Python exporter as a pip package
+```bash
+pip install "exploy[isaaclab]@git+https://github.com/bdaiinstitute/exploy.git"
+```
 
-  Exploy is split into two packages: the Exporter package developed in Python and the Controller package developed in C++.
-  To use the exporter in your project, install it with `pip`:
+### C++ Controller Library
 
-   ```bash
-   pip install -e .
-   ```
+To consume the C++ controller library, use plain CMake commands to build and install it on your system (or to a custom prefix):
 
-   The command above installs the core implementation of the exporter. This repository also provides
-   support for exporter integrations with environments developed in `IsaacLab`. You can install
-   the additional dependency with:
+```bash
+git clone https://github.com/bdaiinstitute/exploy.git
+cd exploy
+cmake -S control/ -B build/ -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake --build build/ --parallel
+cmake --install build/
+```
 
-   ```bash
-   pip install -e .[isaaclab]
-   ```
+Once installed, you can integrate it into your downstream CMake project:
 
-#### Integrate into your CMake project
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(my_robot_controller LANGUAGES CXX)
 
-   The easiest way to consume the library is via `add_subdirectory`:
+# Find the installed exploy package.
+find_package(exploy CONFIG REQUIRED)
 
-   ```cmake
-   cmake_minimum_required(VERSION 3.20)
-   project(my_robot_controller LANGUAGES CXX)
+# Link against the exploy library.
+add_executable(my_controller main.cpp)
+target_link_libraries(my_controller PRIVATE exploy::exploy)
+```
 
-   set(CMAKE_CXX_STANDARD 20)
-   set(CMAKE_CXX_STANDARD_REQUIRED ON)
+See the [`examples/controller/`](./examples/controller) directory for a complete working example.
 
-   # Path to the exploy project root
-   set(EXPLOY_ROOT_DIR "/path/to/exploy" CACHE PATH "Exploy root directory")
+### ROS Integration
 
-   # Pull in the exploy shared library (disables its tests in your build)
-   set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-   add_subdirectory(
-       "${EXPLOY_ROOT_DIR}/control"
-       "${CMAKE_CURRENT_BINARY_DIR}/exploy_control"
-       EXCLUDE_FROM_ALL
-   )
+If you are deploying your policy within a ROS ecosystem, Exploy provides resources to easily load it into your workspace.
+You can use the `exploy_vendor` wrapper package located in the [`ros/`](./ros) folder.
 
-   add_executable(my_controller main.cpp)
-   target_link_libraries(my_controller PRIVATE exploy)
-   ```
+Simply copy or symlink the package into your colcon workspace's `src` directory, and then build it with:
 
-  See [`examples/controller/`](https://github.com/bdaiinstitute/exploy/blob/main/examples/controller) for a complete working example.
+```bash
+colcon build --packages-up-to exploy_vendor
+```
 
-#### Initialize the environment and install dependencies
+This ensures the Exploy C++ controller library is built and exposed correctly as a dependency for your other ROS packages.
 
-   ```bash
-   pixi install
-   ```
+### Running Examples
 
-### Building the Project
+> [!NOTE]
+> This example assumes you have an NVIDIA GPU available.
 
-#### Configure and Build C++ Library
+You can export an ONNX policy for an existing [IsaacLab][isaaclab] tasks:
 
-   ```bash
-   pixi run -e controller configure
-   pixi run -e controller build
-   ```
+```bash
+pixi run export-isaaclab
+```
 
-#### Run tests
+Then, you can run the [C++ example][cpp_example] that loads and executes the exported policy:
 
-   ```bash
-   # Python tests
-   pixi run -e core test
-
-   # C++ tests
-   pixi run -e controller test
-   ```
-
-### Use Exploy
-
-Start with the [documentation](#documentation) to learn the core workflow for exporting and
-deploying a task. If you have an NVIDIA GPU, you can also run an IsaacLab exporter example with
-`pixi run -e isaaclab export-isaaclab`.
-
-## Versioning
-
-This project uses semantic versioning (MAJOR.MINOR.PATCH). The current version is specified in `pixi.toml`.
-
-Releases are published using GitHub Releases. Version tags follow the format `vX.Y.Z`.
-
-## Dependencies
-
-All dependencies are managed through Pixi and specified in `pixi.toml` with version constraints.
+```bash
+pixi run run-cpp-example
+```
 
 ## Development
 
-### Pre-commit Hooks
+### Using Official Pixi Environment
 
-We use pre-commit hooks to ensure code quality. To set up pre-commit hooks:
+This project uses [Pixi][pixi] to deliver a ready-to-use, reproducible, and fully isolated development environment.
+It supports both C++ and Python development, with all required dependencies preinstalled and configured.
+The repository also includes a VS Code setup that integrates seamlessly with the Pixi environment,
+enabling features such as IntelliSense and debugging for both languages out of the box.
+
+See the [Pixi installation guide][pixi_setup] for initial setup instructions.
+
+[pixi]: https://pixi.sh
+[pixi_setup]: https://pixi.prefix.dev/latest/installation/
+
+#### 1. Clone the repository
 
 ```bash
-# Install pre-commit hooks
-pixi run -e python pre-commit install
-
-# Run pre-commit on all files (optional)
-pixi run -e python pre-commit run --all-files
+git clone https://github.com/bdaiinstitute/exploy.git
+cd exploy
 ```
 
-### Available Tasks
+#### 2. Install the environment and build the project
 
-Tasks are run through Pixi and defined in `pixi.toml`. Common tasks include:
+```bash
+pixi install
+pixi run build
+```
 
-#### Core exporter tasks
+#### 3. Open the project in VSCode
 
-- `pixi run -e core test`: Run Python tests with pytest
+After running this command, you can open the project folder in VS Code.
+The editor will automatically detect the Pixi environment.
 
-#### Python code quality tasks
+- C++ autocompletion should work out of the box.
+- By default, the Python environment is configured for the `exploy.exporter.core` subpackage.
 
-- `pixi run -e core lint-python`: Check Python code with ruff
-- `pixi run -e core format-python`: Format Python code with ruff
+If you are working on a machine with an NVIDIA GPU, you can switch to the environment
+for the `exploy.exporter.frameworks.isaaclab` component:
 
-#### C++ tasks
+- Click the Python icon in the left sidebar.
+- In the `Environment Managers` panel, locate `Pixi`.
+- Select the `exploy/isaaclab` entry and set it as the project environment.
 
-- `pixi run -e controller configure`: Run CMake configuration
-- `pixi run -e controller build`: Build the C++ library
-- `pixi run -e controller test`: Run C++ tests with CTest
-- `pixi run -e controller format-cpp`: Format C++ code with clang-format
+#### 4. Available Tasks
 
-#### Example task
+We define a variety of development tasks in `pixi.toml`.
 
-- `pixi run -e isaaclab export-isaaclab`: Export a policy for an existing IsaacLab task
+You can inspect all available tasks at any time by running:
 
-## Maintenance and Support
+```text
+$ pixi task list
+Tasks that can run on this machine:
+-----------------------------------
+# <...>
 
-This project is under **light maintenance**. No feature development is
-guaranteed, but if you have bug reports and/or pull requests that fix bugs,
-expect an RAI maintainer to respond within a few weeks.
+Task    Description
 
-## Contributing
+build   Build all C++ code.
+check   Check all code without making changes.
+clean   Clean all build artifacts and caches.
+format  Format all code.
+lint    Lint all code.
+test    Run all tests.
+```
 
-We welcome your contributions!
+To simplify development, the main tasks wrap both Python and C++ operations.
+Most of these main tasks also come with language-specific variants by appending `-cpp` or `-python`.
 
-To contribute:
+[cpp_example]: ./examples/controller
+
+#### 5. Linting and Formatting
+
+We use pre-commit hooks to ensure code quality.
+
+Either run the same check performed in our CI pipeline locally before pushing your changes:
+
+```bash
+pixi run pre-commit-ci
+```
+
+or install the pre-commit hooks to run automatically on every commit:
+
+```bash
+pixi run -e ci pre-commit install
+```
+
+### Alternative method
+
+Specifically for Python development, you might prefer to install `exploy` in editable mode directly within your setup.
+
+Run the following command with a `pip` that points to your desired Python environment:
+
+```bash
+# Install only the core component
+pip install -e .
+
+# Install the isaaclab component
+pip install -e ".[isaaclab]"
+```
+
+Using this method, you are responsible for ensuring the consistency of the dependencies in your environment,
+which is not guaranteed to be the same as the one used in our CI.
+
+## Maintenance and Contributing
+
+This project is under **light maintenance**.
+
+No feature development is guaranteed, but RAI maintainers aim to respond to bug reports and pull requests within a few weeks.
+
+We welcome your contributions! To contribute:
 
 - Report bugs and suggest improvements by opening an issue.
 - Submit pull requests for code changes or documentation updates.
-- Follow the project's code style and testing guidelines (see comments and existing code for reference).
-- Ensure your changes pass all tests and pre-commit checks.
+- Follow the project's code style and testing guidelines.
+- Ensure your changes pass all tests and pre-commit checks before requesting a review.
 
-All contributions are reviewed by project maintainers before merging. Thank you for helping improve this project!
+## Versioning
+
+- This project uses [semantic versioning 2.0][semver2].
+- Releases are published using GitHub Releases with tags formatted as `vM.m.p`.
+- The current version is specified in `pixi.toml` and need manual propagation to the C++, Python, and ROS components.
+- All Python dependencies are declared in [`pyproject.toml`][pyproject].
+- All C++ dependencies are declared in the main [`CMakeLists.txt`][cmakelists].
+- The `pixi.toml` file and its lock file can be used as source of truth for a fully reproducible development environment
+  with exact versions tested in CI.
+
+[semver2]: https://semver.org/
+[pyproject]: ./pyproject.toml
+[cmakelists]: ./control/CMakeLists.txt
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE)
-file for details.
+This project is licensed under the MIT License. See the [LICENSE][license] file for details.
 
-Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute
+[license]: LICENSE
+
+```text
+Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute.
+```
 
 ## Citation
 
 If you use this work in your research or project, please consider citing it using the 'Cite this repository'
-button in the sidebar, or using:
+button in the sidebar, or using the following BibTeX entry:
 
 ```bibtex
 @misc{exploy2026,
