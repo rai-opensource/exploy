@@ -29,6 +29,7 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
   context_.registerMatcher(std::make_unique<CommandSE2VelocityMatcher>());
   context_.registerMatcher(std::make_unique<CommandBooleanMatcher>());
   context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
+  context_.registerMatcher(std::make_unique<CommandJointPositionMatcher>());
   context_.registerMatcher(std::make_unique<StepCountMatcher>());
   // Register all group matchers
   context_.registerGroupMatcher(std::make_unique<JointMatcher>());

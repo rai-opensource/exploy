@@ -337,6 +337,19 @@ class CommandFloatMatcher : public Matcher {
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
+
+/**
+ * @brief Matcher for joint position command input tensors.
+ *
+ * Matches patterns like "cmd.joint_pos.{name}" and creates CommandJointPositionInput
+ * components. The joint names are read from the tensor's JSON metadata field
+ * ("joint_names" array).
+ */
+class CommandJointPositionMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
 // ---------------------------------------------------------------
 
 // ---------------  Body matchers --------------------------------

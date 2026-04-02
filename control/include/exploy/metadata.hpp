@@ -266,6 +266,15 @@ struct JointMetadata {
 };
 
 /**
+ * @brief Metadata for joint position commands.
+ *
+ * Specifies the ordered list of joint names whose positions are provided by the command.
+ */
+struct JointPositionCommandMetadata {
+  std::vector<std::string> joint_names{};  ///< Ordered joint names.
+};
+
+/**
  * @brief Parse JointMetadata from JSON.
  *
  * @param j JSON object containing joint configuration.
@@ -273,6 +282,16 @@ struct JointMetadata {
  */
 inline void from_json(const json& j, JointMetadata& jm) {
   j.at("joint_names").get_to(jm.names);
+}
+
+/**
+ * @brief Parse JointPositionCommandMetadata from JSON.
+ *
+ * @param j JSON object containing a "joint_names" array.
+ * @param cmd JointPositionCommandMetadata object to populate.
+ */
+inline void from_json(const json& j, JointPositionCommandMetadata& cmd) {
+  j.at("joint_names").get_to(cmd.joint_names);
 }
 
 /**

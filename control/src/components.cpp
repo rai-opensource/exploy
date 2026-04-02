@@ -485,6 +485,43 @@ bool CommandBooleanInput::read(OnnxRuntime& runtime, RobotStateInterface& /*stat
   return true;
 }
 
+// Implementation of CommandJointPositionInput methods
+CommandJointPositionInput::CommandJointPositionInput(
+    const std::string& key, const std::string& command_name,
+    const metadata::JointPositionCommandMetadata& metadata)
+    : key_(key), command_name_(command_name), metadata_(metadata) {}
+
+bool CommandJointPositionInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
+  if (metadata_.joint_names.empty()) {
+    LOG_STREAM(ERROR,
+               "initJointPosition() called with empty joint_names for command: " << command_name_);
+    return false;
+  }
+  for (const auto& joint_name : metadata_.joint_names) {
+    if (!command.initJointPosition(command_name_, joint_name)) return false;
+  }
+  return true;
+}
+
+bool CommandJointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
+                                     CommandInterface& command) {
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  auto buffer = maybe_buffer.value();
+  if (buffer.size() != metadata_.joint_names.size()) {
+    LOG_STREAM(ERROR, "Buffer size " << buffer.size() << " does not match joint_names size "
+                                     << metadata_.joint_names.size()
+                                     << " for command: " << command_name_);
+    return false;
+  }
+  for (std::size_t i = 0; i < metadata_.joint_names.size(); ++i) {
+    auto maybe_pos = command.jointPosition(command_name_, metadata_.joint_names[i]);
+    if (!maybe_pos.has_value()) return false;
+    buffer[i] = maybe_pos.value();
+  }
+  return true;
+}
+
 // Implementation of CommandFloatInput methods
 CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& command_name,
                                      const metadata::FloatCommandMetadata& metadata)

@@ -434,6 +434,30 @@ std::vector<std::unique_ptr<Input>> CommandFloatMatcher::createInputs() const {
   return inputs;
 }
 
+bool CommandJointPositionMatcher::matches(const Match& maybe_match) {
+  std::smatch match;
+  std::regex pattern = std::regex(fmt::format("cmd\\.joint_pos\\.({})", kAlphanumeric));
+  if (std::regex_match(maybe_match.name, match, pattern)) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> CommandJointPositionMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [name, match] : found_matches_) {
+    if (!match.metadata.has_value()) continue;
+    auto maybe_metadata =
+        metadata::safe_json_get<metadata::JointPositionCommandMetadata>(match.metadata.value());
+    if (!maybe_metadata.has_value()) continue;
+    if (maybe_metadata.value().joint_names.empty()) continue;
+    inputs.push_back(
+        std::make_unique<CommandJointPositionInput>(match.name, name, maybe_metadata.value()));
+  }
+  return inputs;
+}
+
 bool CommandSE2VelocityMatcher::matches(const Match& maybe_match) {
   std::smatch match;
   std::regex pattern = std::regex(fmt::format("cmd\\.se2_velocity\\.({})", kAlphanumeric));

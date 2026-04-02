@@ -486,6 +486,34 @@ class CommandBooleanInput : public Input {
 };
 
 /**
+ * @brief Input component that reads commanded joint positions.
+ *
+ * Reads the commanded position for each joint specified in the metadata by calling
+ * CommandInterface::jointPosition() once per joint, then copies the values to the
+ * ONNX input buffer in the order defined by the metadata joint names.
+ */
+class CommandJointPositionInput : public Input {
+ public:
+  /**
+   * @brief Construct a joint position command input component.
+   *
+   * @param key ONNX input tensor name (e.g., "cmd.joint_pos.arm").
+   * @param command_name Name of the joint position command to read.
+   * @param metadata Metadata specifying the ordered list of joint names.
+   */
+  CommandJointPositionInput(const std::string& key, const std::string& command_name,
+                            const metadata::JointPositionCommandMetadata& metadata);
+
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
+
+ private:
+  std::string key_;                                  ///< ONNX input tensor name.
+  std::string command_name_;                         ///< Joint position command name.
+  metadata::JointPositionCommandMetadata metadata_;  ///< Command configuration.
+};
+
+/**
  * @brief Input component that reads a floating-point command value.
  *
  * Reads an external float command (e.g., speed scale, gain parameter) and

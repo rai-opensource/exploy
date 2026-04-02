@@ -27,6 +27,7 @@ INPUT_NAMES = [
     "cmd.se3_pose.pose",
     "cmd.boolean.selector",
     "cmd.float.value",
+    "cmd.joint_pos.arm",
     # IMU
     "sensor.imu.torso.w_Q_b",
     "sensor.imu.pelvis.ang_vel_b_rt_w_in_b",
@@ -81,6 +82,7 @@ class FullTestModel(torch.nn.Module):
         cmd_se3_pose,
         cmd_boolean,
         cmd_float,
+        cmd_joint_pos_arm,
         imu_data_quat,
         imu_data_ang_vel,
         heightscan,
@@ -202,6 +204,9 @@ def get_command_metadata() -> dict:
             },
         },
         "cmd.float.value": {},
+        "cmd.joint_pos.arm": {
+            "joint_names": ["j1", "j2"],
+        },
     }
 
 
@@ -265,6 +270,9 @@ def create_dummy_inputs() -> tuple:
     # Custom extensible data
     custom_extensible_data = torch.rand((1, 3), dtype=torch.float32)
 
+    # Joint position command (2 joints: j1, j2)
+    cmd_joint_pos_arm = torch.rand((1, 2), dtype=torch.float32)
+
     return (
         # joints
         joint_pos,
@@ -280,6 +288,7 @@ def create_dummy_inputs() -> tuple:
         se3_pose_command,
         boolean_command,
         float_command,
+        cmd_joint_pos_arm,
         # IMU
         imu_data_quat,
         imu_data_ang_vel,

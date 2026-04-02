@@ -212,6 +212,51 @@ TEST_F(OnnxComponentsTest, MemoryOutput_WithRealRuntime) {
   EXPECT_TRUE(memory_was_overwritten) << "Memory should be overwritten with new output data";
 }
 
+TEST_F(OnnxComponentsTest, CommandJointPositionInput_InitAndRead) {
+  metadata::JointPositionCommandMetadata meta;
+  meta.joint_names = {"j1", "j2"};
+  CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
+
+  EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(true));
+  EXPECT_CALL(command_mock_, initJointPosition("arm", "j2")).WillOnce(Return(true));
+  EXPECT_TRUE(input.init(state_mock_, command_mock_));
+
+  EXPECT_CALL(command_mock_, jointPosition("arm", "j1")).WillOnce(Return(std::make_optional(0.1f)));
+  EXPECT_CALL(command_mock_, jointPosition("arm", "j2")).WillOnce(Return(std::make_optional(0.2f)));
+  EXPECT_TRUE(input.read(runtime, state_mock_, command_mock_));
+
+  auto buffer = runtime.inputBuffer<float>("cmd.joint_pos.arm");
+  ASSERT_TRUE(buffer.has_value());
+  ASSERT_EQ(buffer->size(), 2u);
+  EXPECT_FLOAT_EQ((*buffer)[0], 0.1f);
+  EXPECT_FLOAT_EQ((*buffer)[1], 0.2f);
+}
+
+TEST_F(OnnxComponentsTest, CommandJointPositionInput_InitFailsWhenJointNamesEmpty) {
+  metadata::JointPositionCommandMetadata meta;  // joint_names left empty
+  CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
+  EXPECT_FALSE(input.init(state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, CommandJointPositionInput_InitFailsWhenOneJointFails) {
+  metadata::JointPositionCommandMetadata meta;
+  meta.joint_names = {"j1", "j2"};
+  CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
+
+  EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(false));
+  EXPECT_FALSE(input.init(state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, CommandJointPositionInput_ReadFailsWhenJointUnavailable) {
+  metadata::JointPositionCommandMetadata meta;
+  meta.joint_names = {"j1", "j2"};
+  CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
+
+  EXPECT_CALL(command_mock_, jointPosition("arm", "j1")).WillOnce(Return(std::make_optional(0.1f)));
+  EXPECT_CALL(command_mock_, jointPosition("arm", "j2")).WillOnce(Return(std::nullopt));
+  EXPECT_FALSE(input.read(runtime, state_mock_, command_mock_));
+}
+
 // ---------------  Matcher tests for default metadata --------------------------------
 
 TEST(CommandFloatMatcherTest, CreatesInputWithoutMetadata) {
@@ -255,6 +300,63 @@ TEST(CommandSE2VelocityMatcherTest, CreatesInputWithMetadata) {
 
   auto inputs = matcher.createInputs();
   ASSERT_EQ(inputs.size(), 1u);
+}
+
+TEST(CommandJointPositionMatcherTest, DoesNotMatchOtherPatterns) {
+  CommandJointPositionMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "cmd.float.gain"}));
+  EXPECT_FALSE(matcher.matches({.name = "cmd.joint_vel.arm"}));
+  EXPECT_FALSE(matcher.matches({.name = "cmd.joint_pos"}));
+}
+
+TEST(CommandJointPositionMatcherTest, SkipsInputWithoutMetadata) {
+  CommandJointPositionMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "cmd.joint_pos.arm"}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 0u);
+}
+
+TEST(CommandJointPositionMatcherTest, SkipsInputWithEmptyJointNames) {
+  CommandJointPositionMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "cmd.joint_pos.arm", .metadata = R"({"joint_names": []})"}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 0u);
+}
+
+TEST(CommandJointPositionMatcherTest, CreatesInputWithMetadata) {
+  CommandJointPositionMatcher matcher;
+  Match m{
+      .name = "cmd.joint_pos.arm",
+      .metadata = R"({"joint_names": ["j1", "j2"]})",
+  };
+  ASSERT_TRUE(matcher.matches(m));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u);
+}
+
+TEST(CommandJointPositionMatcherTest, DoesNotMatchSameNameTwice) {
+  CommandJointPositionMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "cmd.joint_pos.arm"}));
+  // Second match with the same name overwrites, still produces one entry (but 0 inputs without
+  // metadata)
+  ASSERT_TRUE(matcher.matches({.name = "cmd.joint_pos.arm"}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 0u);
+}
+
+TEST(CommandJointPositionMatcherTest, MatchesMultipleCommands) {
+  CommandJointPositionMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "cmd.joint_pos.arm", .metadata = R"({"joint_names": ["j1", "j2"]})"}));
+  ASSERT_TRUE(matcher.matches(
+      {.name = "cmd.joint_pos.leg", .metadata = R"({"joint_names": ["j3", "j4"]})"}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
 }
 
 }  // namespace exploy::control

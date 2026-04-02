@@ -144,6 +144,33 @@ class CommandInterface {
     LOG_STREAM(ERROR, "floatValue() not implemented for command: " << command_name);
     return std::nullopt;
   }
+  /**
+   * @brief Initialize data source of a commanded joint position.
+   *
+   * Called once per joint during initialization (usually non real-time).
+   *
+   * @param command_name The name of the command.
+   * @param joint_name The name of the joint.
+   * @return True if initialization succeeded, false otherwise.
+   */
+  virtual bool initJointPosition(const std::string& command_name, const std::string& joint_name) {
+    LOG_STREAM(ERROR, "initJointPosition() not implemented for command: "
+                          << command_name << ", joint: " << joint_name);
+    return false;
+  }
+  /**
+   * @brief Get the commanded position for a single joint.
+   *
+   * @param command_name The name of the command.
+   * @param joint_name The name of the joint.
+   * @return The commanded joint position, or std::nullopt if unavailable.
+   */
+  virtual std::optional<float> jointPosition(const std::string& command_name,
+                                             const std::string& joint_name) const {
+    LOG_STREAM(ERROR, "jointPosition() not implemented for command: " << command_name
+                                                                      << ", joint: " << joint_name);
+    return std::nullopt;
+  }
 };
 
 }  // namespace exploy::control

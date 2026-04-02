@@ -225,6 +225,8 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(command_mock_, initSe3Pose("pose", _)).WillOnce(Return(true));
     EXPECT_CALL(command_mock_, initBooleanSelector("selector", _)).WillOnce(Return(true));
     EXPECT_CALL(command_mock_, initFloatValue("value", _)).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initJointPosition("arm", "j2")).WillOnce(Return(true));
   }
 
   void ExpectInitCustom() {
@@ -283,6 +285,10 @@ class OnnxControllerTest : public ::testing::Test {
         .WillRepeatedly(Return(std::make_optional(true)));
     EXPECT_CALL(command_mock_, floatValue("value"))
         .WillRepeatedly(Return(std::make_optional(1.23f)));
+    EXPECT_CALL(command_mock_, jointPosition("arm", "j1"))
+        .WillRepeatedly(Return(std::make_optional(0.0f)));
+    EXPECT_CALL(command_mock_, jointPosition("arm", "j2"))
+        .WillRepeatedly(Return(std::make_optional(0.0f)));
   }
 
   void ExpectReadCustom() {

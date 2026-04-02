@@ -24,6 +24,10 @@ class MockCommandInterface : public CommandInterface {
               (const std::string& command_name, const FloatScalarConfig& config), (override));
   MOCK_METHOD(std::optional<float>, floatValue, (const std::string& command_name),
               (const override));
+  MOCK_METHOD(bool, initJointPosition,
+              (const std::string& command_name, const std::string& joint_name), (override));
+  MOCK_METHOD(std::optional<float>, jointPosition,
+              (const std::string& command_name, const std::string& joint_name), (const, override));
 };
 
 }  // namespace exploy::control
