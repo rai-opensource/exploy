@@ -19,20 +19,20 @@ git = "*"
 [tasks.check]
 description = "Check all code without making changes."
 depends-on = [
-  { task = "format-python-check", environment = "python" },
-  { task = "format-cpp-check", environment = "cpp" },
+  { task = "format-python-check", environment = "ci" },
+  { task = "format-cpp-check", environment = "ci" },
 ]
 
 [tasks.format]
 description = "Format all code."
 depends-on = [
-  { task = "format-python", environment = "python" },
-  { task = "format-cpp", environment = "cpp" },
+  { task = "format-python", environment = "ci" },
+  { task = "format-cpp", environment = "ci" },
 ]
 
 [tasks.lint]
 description = "Lint all code."
-depends-on = [{ task = "lint-python", environment = "python" }]
+depends-on = [{ task = "lint-python", environment = "ci" }]
 
 [tasks.build]
 description = "Build all C++ code."
@@ -82,10 +82,6 @@ features = [
 solve-group = "exploy"
 
 [feature.env-python.tasks]
-lint-python = "ruff check ."
-lint-python-fix = "ruff check --fix ."
-format-python = "ruff format ."
-format-python-check = "ruff format --check ."
 test-python = "pytest"
 test-python-core = "pytest -m core"
 
@@ -112,7 +108,6 @@ features = [
 solve-group = "exploy"
 
 [feature.cpp-dev.dependencies]
-clang-format = "*"
 cmake = ">=3.23"
 compilers = "*"
 gmock = "*"
@@ -138,20 +133,14 @@ depends-on = ["configure-cpp"]
 [feature.env-cpp.tasks.test-cpp]
 cmd = "ctest --test-dir build/control --output-on-failure"
 
-# C++ formatting and linting
-[feature.env-cpp.tasks.format-cpp]
-cmd = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
-
-[feature.env-cpp.tasks.format-cpp-check]
-cmd = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror"
-
 # Controller example
 [feature.env-cpp.tasks.configure-cpp-example]
 cmd = """
 cmake \
   -S examples/controller \
   -B build/examples/controller \
-  -G Ninja
+  -G Ninja \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
 """
 
 [feature.env-cpp.tasks.build-cpp-example]
@@ -168,6 +157,40 @@ depends-on = [
   { task = "build-cpp-example", environment = "cpp" },
   { task = "export-isaaclab-ci", environment = "isaaclab" },
 ]
+
+# pre-commit run --show-diff-on-failure --all-files
+
+# ---------------
+# Environment: ci
+# ---------------
+
+[environments.ci]
+features = [
+  # Specific features.
+  "env-ci",
+  # Common features.
+  "default",
+  "exploy-python-runtime",
+  "editable-exploy-python",
+]
+solve-group = "exploy"
+
+[feature.env-ci.dependencies]
+clang-format = "*"
+nodejs = "*"
+pre-commit = "*"
+python = "*"
+"ruamel.yaml" = "*"
+ruff = "*"
+
+[feature.env-ci.tasks]
+lint-python = "ruff check ."
+lint-python-fix = "ruff check --fix ."
+format-python = "ruff format ."
+format-python-check = "ruff format --check ."
+pre-commit-ci = "pre-commit run --show-diff-on-failure --all-files"
+format-cpp = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
+format-cpp-check = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror"
 
 # -----------------
 # Environment: docs
@@ -297,12 +320,10 @@ hatch = "*"
 hatch-vcs = "*"
 ipython = "*"
 pip = "*"
-pre-commit = "*"
 pybind11 = ">=2.10"
 pytest = "*"
 python = "*"
 python-build = "*"
-ruff = "*"
 uv = "*"
 
 [feature.python-dev.pypi-dependencies]

@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,12 +39,6 @@ jobs:
       - name: Run Tests
         run: pixi run test-python-core --capture=no
 
-      - name: Run Python Linting
-        run: pixi run lint-python
-
-      - name: Check Python Formatting
-        run: pixi run format-python-check
-
   test-controller:
     name: Test Controller Environment
     runs-on: ubuntu-22.04
@@ -65,5 +60,20 @@ jobs:
       - name: Run Controller Tests
         run: pixi run test-cpp
 
-      - name: Check Formatting
-        run: pixi run format-cpp-check
+  pre-commit:
+    name: Pre-commit Hooks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: latest
+          frozen: true
+          cache: false
+
+      - name: Run pre-commit Hooks
+        run: pixi run pre-commit-ci

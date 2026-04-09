@@ -441,7 +441,7 @@ Suppose your model has an input tensor named `custom.planner.output` of shape
 The built-in matchers ignore tensors with the `custom.*` prefix, so you need a
 custom matcher.
 
-**Step 1 — define an interface for your data source**
+#### Step 1 — define an interface for your data source
 
 ```cpp
 // Your own header — no dependency on exploy.
@@ -456,7 +456,7 @@ class PlannerInterface {
 };
 ```
 
-**Step 2 — implement `Input`**
+#### Step 2 — implement `Input`
 
 ```cpp
 #include "exploy/components.hpp"  // Input, OnnxRuntime
@@ -499,7 +499,7 @@ class PlannerInput : public exploy::control::Input {
 };
 ```
 
-**Step 3 — implement `Matcher`**
+#### Step 3 — implement `Matcher`
 
 The matcher uses the `custom.<type>.<name>` pattern. The regex captures the
 type segment (group 1) and the name segment (group 2). Here the matcher
@@ -546,7 +546,7 @@ class PlannerMatcher : public exploy::control::Matcher {
 };
 ```
 
-**Step 4 — register the matcher before `controller.create()`**
+#### Step 4 — register the matcher before `controller.create()`
 
 ```cpp
 MyMotionPlanner planner;           // implements PlannerInterface

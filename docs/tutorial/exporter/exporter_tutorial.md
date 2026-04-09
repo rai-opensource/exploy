@@ -404,6 +404,7 @@ processing — and writes them into a single ONNX graph. The resulting file cont
 computation pipeline from raw inputs to commanded outputs, along with the metadata you registered.
 
 ### Inspecting and understanding the generated ONNX files
+
 When exporting an environment and its actor, Exploy produces `policy.onnx` (or whatever filename
 is passed to `export_environment_as_onnx()`). That exported file can then be used for evaluation
 (see [Putting It All Together](#putting-it-all-together)) or for deployment in a controller
@@ -423,19 +424,20 @@ debugging and visual inspection.
 - `debug/policy_process_actions.onnx`: The `ProcessActions` path of the computational graph.
 - `debug/policy_optimized.onnx`: The optimized version of the exported ONNX model.
 
-
 > **Note:** `debug/policy_optimized.onnx` is generated when `optimize=True` is passed to
 > {py:class}`SessionWrapper <exploy.exporter.core.session_wrapper.SessionWrapper>`. While fully
 > functional, it requires the same ONNX Runtime version to be used in both the exporter and the
 > controller. This constraint depends on the user's setup.
 > For deployment in a controller, only the `policy.onnx` file should be used.
 
-
 ### Visualizing the Exported ONNX Graph
 
 You can inspect the exported ONNX file using [Netron](https://github.com/lutzroeder/netron), an
 open-source viewer for neural network models. The screenshots below show the computational graphs
-produced by the export steps in this tutorial. The [unit test](https://github.com/bdaiinstitute/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py) runs on three different environments:
+produced by the export steps in this tutorial.
+The [unit test](https://github.com/bdaiinstitute/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py)
+runs on three different environments:
+
 - an environment that computes observations and uses an MLP actor
 - an environment that uses a torch module to compute parts of its observations and uses an MLP actor
 - an environment that uses a torch module to compute parts of its observations and uses an RNN-based actor
@@ -443,7 +445,6 @@ produced by the export steps in this tutorial. The [unit test](https://github.co
 Each exported ONNX file contains two subgraphs: a **Default** graph that computes observations and
 actions at the policy rate, and a **ProcessActions** graph that maps raw actions to commanded
 outputs at the simulation rate.
-
 
 #### Environment and MLP Actor
 
@@ -471,6 +472,7 @@ When using an RNN-based actor (see
 states as additional memory inputs and outputs:
 
 ![Default graph for environment with torch module and RNN actor](exporter_tutorial_netron_env_with_module_rnn_actor.svg)
+
 ---
 
 ## Step 6 — Load and Run the Exported Model

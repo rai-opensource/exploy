@@ -12,7 +12,7 @@ repos:
     hooks:
       # check for files > 1Mb on commit (ignores git-lfs tracked files)
       - id: check-added-large-files
-        args: ['--enforce-all', '--maxkb', '1024']
+        args: ["--enforce-all", "--maxkb", "1024"]
       # detect any unresolved merge conflicts remaining in files
       - id: check-merge-conflict
       # check that executable files have shebangs
@@ -23,7 +23,7 @@ repos:
       - id: check-toml
       # attempt to parse/load yaml files to verify they don't have obvious issues
       - id: check-yaml
-        args: ['--allow-multiple-documents']
+        args: ["--allow-multiple-documents"]
       # fix end of file inconsistencies caused by different editors
       - id: end-of-file-fixer
       # fix trailing whitespace in files of all types
@@ -35,24 +35,39 @@ repos:
     hooks:
       - id: insert-license
         files: (\.cpp|\.cc|\.c|\.hpp|\.h)$
-        args: [--comment-style, //, --license-filepath, .copyright.txt, --allow-past-years, --use-current-year, --no-extra-eol]
+        args:
+          [
+            --comment-style,
+            //,
+            --license-filepath,
+            .copyright.txt,
+            --allow-past-years,
+            --use-current-year,
+            --no-extra-eol,
+          ]
       - id: insert-license
         files: (\.sh|\.bash|\.py|CMakeLists\.txt|\.cmake|\.cmake\.in|\.yaml|\.yml|\.toml)$
-        args: [--license-filepath, .copyright.txt, --allow-past-years, --use-current-year, --no-extra-eol]
-
+        args:
+          [
+            --license-filepath,
+            .copyright.txt,
+            --allow-past-years,
+            --use-current-year,
+            --no-extra-eol,
+          ]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.41.0
     hooks:
       - id: markdownlint
-        args: [--fix]  # apply simple fixes (and report as failure)
+        args: [--fix] # apply simple fixes (and report as failure)
 
-  # custom hook to run python linter/formatter
   - repo: local
     hooks:
       - id: lint-python-fix
-        name: Run Python linter
-        entry: pixi run -e python lint-python-fix
+        name: run python linter
+        entry: pixi
+        args: [run, -e, ci, lint-python-fix]
         language: system
         types: [python]
         pass_filenames: false
@@ -60,8 +75,19 @@ repos:
   - repo: local
     hooks:
       - id: format-python
-        name: Run Python formatter
-        entry: pixi run -e python format-python
+        name: run python formatter
+        entry: pixi
+        args: [run, -e, ci, format-python]
         language: system
         types: [python]
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: format-cpp
+        name: run C++ formatter
+        entry: pixi
+        args: [run, -e, ci, format-cpp]
+        language: system
+        types: [c++]
         pass_filenames: false

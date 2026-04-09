@@ -1,32 +1,32 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "[Examples] Export IsaacLab task.",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/examples/exporter_scripts/export_isaaclab.py",
-            "console": "integratedTerminal",
-            "python": "${workspaceFolder}/.pixi/envs/isaaclab/bin/python",
-            "justMyCode": false
-        },
-        {
-            "name": "[Core] Tests.",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "pytest",
-            "args": [
-                "exploy/exporter/core/tests/test_export_environment.py"
-            ],
-            "console": "integratedTerminal",
-            "python": "${workspaceFolder}/.pixi/envs/core/bin/python",
-            "justMyCode": false,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "[Examples] Export IsaacLab task.",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/exporter_scripts/isaaclab/export_isaaclab.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.pixi/envs/isaaclab/bin/python",
+      "justMyCode": false
+    },
+    {
+      "name": "[Core] Tests.",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${workspaceFolder}/python/exploy/exporter/core/tests/test_export_environment.py"
+      ],
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.pixi/envs/python/bin/python",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+  ]
 }
