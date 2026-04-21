@@ -193,6 +193,25 @@ std::vector<std::unique_ptr<Output>> SE2VelocityMatcher::createOutputs() const {
 // ---------------------------------------------------------------
 
 // ---------------  Sensor matchers ------------------------------
+bool IMULinearVelocityMatcher::matches(const Match& maybe_match) {
+  std::regex pattern =
+      std::regex(fmt::format("sensor\\.imu\\.({})\\.lin_vel_b_rt_w_in_b", kAlphanumeric));
+  std::smatch match;
+  if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 1) {
+    found_matches_[match[1].str()] = maybe_match;
+    return true;
+  }
+  return false;
+}
+
+std::vector<std::unique_ptr<Input>> IMULinearVelocityMatcher::createInputs() const {
+  std::vector<std::unique_ptr<Input>> inputs;
+  for (const auto& [imu_name, found_match] : found_matches_) {
+    inputs.push_back(std::make_unique<IMULinearVelocityInput>(found_match.name, imu_name));
+  }
+  return inputs;
+}
+
 bool IMUAngularVelocityMatcher::matches(const Match& maybe_match) {
   std::regex pattern =
       std::regex(fmt::format("sensor\\.imu\\.({})\\.ang_vel_b_rt_w_in_b", kAlphanumeric));

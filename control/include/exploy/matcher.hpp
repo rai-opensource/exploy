@@ -281,6 +281,18 @@ class IMUAngularVelocityMatcher : public Matcher {
 };
 
 /**
+ * @brief Matcher for IMU linear velocity input tensors.
+ *
+ * Matches patterns like "sensor.imu.{imu_name}.lin_vel_b_rt_w_in_b" and creates
+ * IMULinearVelocityInput components.
+ */
+class IMULinearVelocityMatcher : public Matcher {
+ public:
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+/**
  * @brief Matcher for IMU orientation input tensors.
  *
  * Matches patterns for IMU orientation (quaternion) data and creates IMUOrientationInput

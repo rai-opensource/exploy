@@ -31,6 +31,7 @@ INPUT_NAMES = [
     # IMU
     "sensor.imu.torso.w_Q_b",
     "sensor.imu.pelvis.ang_vel_b_rt_w_in_b",
+    "sensor.imu.pelvis.lin_vel_b_rt_w_in_b",
     # sensors
     "sensor.ray_caster.one.height",
     "sensor.ray_caster.two.height",
@@ -85,6 +86,7 @@ class FullTestModel(torch.nn.Module):
         cmd_joint_pos_arm,
         imu_data_quat,
         imu_data_ang_vel,
+        imu_data_lin_vel,
         heightscan,
         another_heightscan,
         range_image,
@@ -252,6 +254,7 @@ def create_dummy_inputs() -> tuple:
     # IMU inputs
     imu_data_quat = torch.rand((1, 4), dtype=torch.float32)
     imu_data_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+    imu_data_lin_vel = torch.rand((1, 3), dtype=torch.float32)
 
     # Sensor inputs
     heightscan = torch.rand((1, 4), dtype=torch.float32)
@@ -292,6 +295,7 @@ def create_dummy_inputs() -> tuple:
         # IMU
         imu_data_quat,
         imu_data_ang_vel,
+        imu_data_lin_vel,
         # sensors
         heightscan,
         heightscan,

@@ -244,6 +244,30 @@ class IMUAngularVelocityInput : public Input {
 };
 
 /**
+ * @brief Input component that reads linear velocity from a specific IMU sensor.
+ *
+ * Reads linear velocity measurements from a named IMU sensor and copies the
+ * 3D vector (vx, vy, vz) to the ONNX input buffer.
+ */
+class IMULinearVelocityInput : public Input {
+ public:
+  /**
+   * @brief Construct an IMU linear velocity input component.
+   *
+   * @param key ONNX input tensor name (e.g., "sensor.imu.imu_pelvis.lin_vel_b_rt_w_in_b").
+   * @param imu_name Name of the IMU sensor to read from.
+   */
+  IMULinearVelocityInput(const std::string& key, const std::string& imu_name);
+
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
+
+ private:
+  std::string key_;       ///< ONNX input tensor name.
+  std::string imu_name_;  ///< IMU sensor name.
+};
+
+/**
  * @brief Input component that reads orientation from a specific IMU sensor.
  *
  * Reads orientation measurements from a named IMU sensor and copies the

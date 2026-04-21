@@ -206,6 +206,7 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, initHeightScan(_, _)).Times(3).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, initSphericalImage(_, _)).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initPinholeImage(_, _)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initImuLinearVelocityImu("pelvis")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initImuAngularVelocityImu("pelvis")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initImuOrientationW("torso")).WillOnce(Return(true));
   }
@@ -257,7 +258,10 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectReadState() {
-    EXPECT_CALL(state_mock_, imuAngularVelocityImu("pelvis")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, imuLinearVelocityImu("pelvis"))
+        .WillRepeatedly(Return(kLinearVelocityData));
+    EXPECT_CALL(state_mock_, imuAngularVelocityImu("pelvis"))
+        .WillRepeatedly(Return(kAngularVelocityData));
     EXPECT_CALL(state_mock_, imuOrientationW("torso")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, bodyPositionW("box")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));

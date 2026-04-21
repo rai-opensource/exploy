@@ -320,6 +320,27 @@ class RobotStateInterface {
     return false;
   }
   /**
+   * @brief Initialize data source of IMU linear velocity.
+   *
+   * Called once during initialization (usually non real-time).
+   *
+   * @param imu_name The name of the IMU.
+   */
+  virtual bool initImuLinearVelocityImu(const std::string& imu_name) {
+    LOG_STREAM(ERROR, "initImuLinearVelocityImu() not implemented for IMU: " << imu_name);
+    return false;
+  }
+  /**
+   * @brief Get IMU linear velocity in IMU frame.
+   *
+   * @param imu_name The name of the IMU.
+   * @return The linear velocity of the IMU in IMU frame (vx, vy, vz).
+   */
+  virtual std::optional<LinearVelocity> imuLinearVelocityImu(const std::string& imu_name) const {
+    LOG_STREAM(ERROR, "imuLinearVelocityImu() not implemented for IMU: " << imu_name);
+    return std::nullopt;
+  }
+  /**
    * @brief Initialize data source of IMU angular velocity.
    *
    * Called once during initialization (usually non real-time).

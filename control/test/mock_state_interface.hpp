@@ -35,8 +35,11 @@ class MockRobotStateInterface : public RobotStateInterface {
   MOCK_METHOD(bool, initSe2Velocity, (const std::string& frame_name), (override));
   MOCK_METHOD(bool, setSe2Velocity, (const std::string& frame_name, const SE2Velocity& velocity),
               (override));
+  MOCK_METHOD(bool, initImuLinearVelocityImu, (const std::string& imu_name), (override));
   MOCK_METHOD(bool, initImuAngularVelocityImu, (const std::string& imu_name), (override));
   MOCK_METHOD(bool, initImuOrientationW, (const std::string& imu_name), (override));
+  MOCK_METHOD(std::optional<LinearVelocity>, imuLinearVelocityImu, (const std::string& imu_name),
+              (const, override));
   MOCK_METHOD(std::optional<AngularVelocity>, imuAngularVelocityImu, (const std::string& imu_name),
               (const, override));
   MOCK_METHOD(std::optional<Quaternion>, imuOrientationW, (const std::string& imu_name),

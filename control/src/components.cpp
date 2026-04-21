@@ -66,6 +66,24 @@ void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
 
 }  // namespace
 
+// Implementation of IMULinearVelocityInput methods
+IMULinearVelocityInput::IMULinearVelocityInput(const std::string& key, const std::string& imu_name)
+    : key_(key), imu_name_(imu_name) {}
+
+bool IMULinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
+  return state.initImuLinearVelocityImu(imu_name_);
+}
+
+bool IMULinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
+                                  CommandInterface&) {
+  auto maybe_linvel = state.imuLinearVelocityImu(imu_name_);
+  if (!maybe_linvel.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_linvel.value(), maybe_buffer.value());
+  return true;
+}
+
 // Implementation of IMUAngularVelocityInput methods
 IMUAngularVelocityInput::IMUAngularVelocityInput(const std::string& key,
                                                  const std::string& imu_name)

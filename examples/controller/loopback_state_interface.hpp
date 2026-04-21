@@ -137,6 +137,18 @@ class LoopbackRobotStateInterface : public RobotStateInterface {
     return se2_velocities_;
   }
 
+  bool initImuLinearVelocityImu(const std::string& /*imu_name*/) override { return true; }
+
+  std::optional<LinearVelocity> imuLinearVelocityImu(const std::string& /*imu_name*/) const override {
+    return LinearVelocity::Zero();
+  }
+
+  bool initImuAngularVelocityImu(const std::string& /*imu_name*/) override { return true; }
+
+  std::optional<AngularVelocity> imuAngularVelocityImu(const std::string& /*imu_name*/) const override {
+    return AngularVelocity::Zero();
+  }
+
   bool initImuOrientationW(const std::string& /*imu_name*/) override { return true; }
 
   std::optional<Quaternion> imuOrientationW(const std::string& /*imu_name*/) const override {

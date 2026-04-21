@@ -21,6 +21,7 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
   context_.registerMatcher(std::make_unique<BaseLinearVelocityMatcher>());
   context_.registerMatcher(std::make_unique<BaseAngularVelocityMatcher>());
   context_.registerMatcher(std::make_unique<SE2VelocityMatcher>());
+  context_.registerMatcher(std::make_unique<IMULinearVelocityMatcher>());
   context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
   context_.registerMatcher(std::make_unique<IMUOrientationMatcher>());
   context_.registerMatcher(std::make_unique<BodyPositionMatcher>());
