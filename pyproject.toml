@@ -58,8 +58,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-all = ["exploy[isaaclab]"]
+all = ["exploy[isaaclab,mjlab]"]
 isaaclab = ["isaaclab"]
+mjlab = ["mjlab"]
 
 [project.urls]
 Changelog = "https://github.com/rai-opensource/exploy/releases"

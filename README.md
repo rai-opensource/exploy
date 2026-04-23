@@ -36,9 +36,10 @@ and maximizes confidence that your policy will behave identically in simulation 
 - **C++ Controller with ONNX Runtime Integration**:
   Deploy trained policies using ONNX Runtime for real-time policy execution.
 - **Multi-Framework Support**:
-  Built-in support for [IsaacLab][isaaclab], with an architecture designed for extensible framework integration.
+  Built-in support for [IsaacLab][isaaclab] and [MjLab][mjlab], with an architecture designed for extensible framework integration.
 
 [isaaclab]: https://github.com/isaac-sim/IsaacLab
+[mjlab]: https://github.com/mujocolab/mjlab
 
 ## Project Structure
 
@@ -82,6 +83,12 @@ To install with additional dependencies for `IsaacLab` integration:
 
 ```bash
 pip install "exploy[isaaclab]@git+https://github.com/rai-opensource/exploy.git"
+```
+
+To install with additional dependencies for `MjLab` integration:
+
+```bash
+pip install "exploy[mjlab]@git+https://github.com/rai-opensource/exploy.git"
 ```
 
 ### C++ Controller Library
@@ -130,16 +137,30 @@ This ensures the Exploy C++ controller library is built and exposed correctly as
 > [!NOTE]
 > This example assumes you have an NVIDIA GPU available.
 
-You can export an ONNX policy for an existing [IsaacLab][isaaclab] tasks:
+You can export an ONNX policy for an existing [IsaacLab][isaaclab] task:
 
 ```bash
 pixi run export-isaaclab
 ```
 
-Then, you can run the [C++ example][cpp_example] that loads and executes the exported policy:
+Or for an existing [MjLab][mjlab] task:
 
 ```bash
-pixi run run-cpp-example
+pixi run export-mjlab
+```
+
+Then, you can run the [C++ example][cpp_example] that loads and executes the exported policy:
+
+For IsaacLab:
+
+```bash
+pixi run run-cpp-example-isaaclab
+```
+
+For MjLab:
+
+```bash
+pixi run run-cpp-example-mjlab
 ```
 
 ## Development
@@ -179,11 +200,11 @@ The editor will automatically detect the Pixi environment.
 - By default, the Python environment is configured for the `exploy.exporter.core` subpackage.
 
 If you are working on a machine with an NVIDIA GPU, you can switch to the environment
-for the `exploy.exporter.frameworks.isaaclab` component:
+for the `exploy.exporter.frameworks.isaaclab` or `exploy.exporter.frameworks.mjlab` component:
 
 - Click the Python icon in the left sidebar.
 - In the `Environment Managers` panel, locate `Pixi`.
-- Select the `exploy/isaaclab` entry and set it as the project environment.
+- Select the `exploy/isaaclab` or `exploy/mjlab` entry and set it as the project environment.
 
 #### 4. Available Tasks
 
@@ -240,6 +261,9 @@ pip install -e .
 
 # Install the isaaclab component
 pip install -e ".[isaaclab]"
+
+# Install the mjlab component
+pip install -e ".[mjlab]"
 ```
 
 Using this method, you are responsible for ensuring the consistency of the dependencies in your environment,

@@ -14,6 +14,15 @@
       "justMyCode": false
     },
     {
+      "name": "[Examples] Export mjlab task.",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/exporter_scripts/mjlab/export_mjlab.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.pixi/envs/mjlab/bin/python",
+      "justMyCode": false
+    },
+    {
       "name": "[Core] Tests.",
       "type": "debugpy",
       "request": "launch",

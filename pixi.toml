@@ -147,7 +147,7 @@ cmake \
 cmd = "cmake --build build/examples/controller"
 depends-on = ["configure-cpp-example"]
 
-[feature.env-cpp.tasks.run-cpp-example]
+[feature.env-cpp.tasks.run-cpp-example-isaaclab]
 cmd = """
 build/examples/controller/loopback_controller_example \
   $PIXI_PROJECT_ROOT/examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx \
@@ -157,6 +157,20 @@ depends-on = [
   { task = "build-cpp-example", environment = "cpp" },
   { task = "export-isaaclab-ci", environment = "isaaclab" },
 ]
+
+[feature.env-cpp.tasks.run-cpp-example-mjlab]
+cmd = """
+build/examples/controller/loopback_controller_example \
+  $PIXI_PROJECT_ROOT/examples/exporter_scripts/mjlab/exporter_tests/test_export.onnx \
+  --cycles 100
+"""
+depends-on = [
+  { task = "build-cpp-example", environment = "cpp" },
+  { task = "export-mjlab-ci", environment = "mjlab" },
+]
+
+[feature.env-cpp.tasks.run-cpp-example]
+depends-on = ["run-cpp-example-isaaclab", "run-cpp-example-mjlab"]
 
 # pre-commit run --show-diff-on-failure --all-files
 
@@ -229,6 +243,43 @@ depends-on = ["doxygen"]
 [feature.env-docs.tasks.linkcheck]
 cmd = "sphinx-build -b linkcheck docs docs/_build/linkcheck"
 depends-on = ["doxygen"]
+
+# -------------------
+# Environment: mjlab
+# -------------------
+
+# Due to transitive git dependencies from MjLab (e.g. mujoco-warp), merging this environment
+# into the main 'exploy' solve group causes dependency conflicts. For now, we keep it separate.
+# Note: this environment is not using on purpose 'exploy-python-runtime' since delicate dependencies
+# that are shared with MjLab are handled directly in the 'mjlab-*' feature.
+[environments.mjlab]
+features = [
+  # Specific features.
+  "env-mjlab",
+  "mjlab-120",
+  "editable-exploy-python-mjlab",
+  # Common features.
+  "python-dev",
+]
+no-default-feature = true
+
+[feature.env-mjlab.tasks]
+export-mjlab-g1 = "python examples/exporter_scripts/mjlab/export_mjlab.py --task Mjlab-Velocity-Flat-Unitree-G1 --pause-on-failure"
+export-mjlab = { depends-on = ["export-mjlab-g1"] }
+
+test-python-mjlab = "pytest python/exploy/exporter/frameworks/mjlab"
+test-import-mjlab = "python -c \"import mjlab; print('MjLab installed:', mjlab.__file__)\""
+verify-mjlab = { depends-on = ["test-import-mjlab"] }
+test-mjlab = { depends-on = ["verify-mjlab", "test-python-mjlab"] }
+
+[feature.env-mjlab.tasks.export-mjlab-ci]
+cmd = "python examples/exporter_scripts/mjlab/export_mjlab.py --task Mjlab-Velocity-Flat-Unitree-G1"
+inputs = [
+  "python/exploy/exporter/core/*",
+  "python/exploy/exporter/frameworks/mjlab/*",
+  "examples/exporter_scripts/mjlab/export_mjlab.py",
+]
+outputs = ["examples/exporter_scripts/mjlab/exporter_tests/test_export.onnx"]
 
 # ---------------------
 # Environment: isaaclab
@@ -307,6 +358,10 @@ pytorch = "*"
 [feature.editable-exploy-python.pypi-dependencies]
 exploy = { path = ".", editable = true }
 
+# Editable installation of: exploy[mjlab].
+[feature.editable-exploy-python-mjlab.pypi-dependencies]
+exploy = { path = ".", extras = ["mjlab"], editable = true }
+
 # Editable installation of: exploy[isaaclab].
 [feature.editable-exploy-python-isaaclab.pypi-dependencies]
 exploy = { path = ".", extras = ["isaaclab"], editable = true }
@@ -328,6 +383,24 @@ uv = "*"
 
 [feature.python-dev.pypi-dependencies]
 pytest-gitignore = "*"
+
+# ---------------
+# Feature: mjlab
+# ---------------
+
+[feature.mjlab-120]
+platforms = ["linux-64"]
+
+[feature.mjlab-120.system-requirements]
+libc = { family = "glibc", version = "2.35" }
+
+[feature.mjlab-120.dependencies]
+numpy = "<2"
+python = "3.11.*"
+pytorch = "*"
+rich = ">=13.3.3"
+mjlab = "==1.2.0"
+scipy = "*"
 
 # -----------------
 # Feature: isaaclab

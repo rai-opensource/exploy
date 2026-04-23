@@ -22,6 +22,7 @@ Framework-specific implementations.
    :maxdepth: 2
 
    frameworks/isaaclab
+   frameworks/mjlab
 
 C++ API
 -------

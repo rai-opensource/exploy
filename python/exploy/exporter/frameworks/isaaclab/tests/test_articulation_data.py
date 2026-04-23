@@ -55,4 +55,23 @@ def test_articulation_data_interface(sim_setup):
         #   https://docs.pytorch.org/docs/stable/testing.html
         assert torch.allclose(expected_val, source_val, rtol=1.0e-6, atol=1.0e-5)
 
+    articulation_data_source_properties = inspect.getmembers(
+        ArticulationDataSource, predicate=lambda o: isinstance(o, property)
+    )
+    articulation_data_properties = inspect.getmembers(
+        type(articulation.data), predicate=lambda o: isinstance(o, property)
+    )
+
+    # Check if articulation_data_source_properties has names that are not in articulation_data.
+    articulation_data_source_property_names = {
+        name for name, _ in articulation_data_source_properties
+    }
+    articulation_data_property_names = {name for name, _ in articulation_data_properties}
+    extra_properties = articulation_data_source_property_names - articulation_data_property_names
+
+    # Assert that extra_properties is empty.
+    assert not extra_properties, (
+        f"ArticulationDataSource has properties that are not in ArticulationData: {extra_properties}"
+    )
+
     env.close()

@@ -95,6 +95,8 @@ autodoc_mock_imports = [
     "isaaclab_rl",
     "isaaclab_tasks",
     "isaacsim",
+    "mjlab",
+    "tensordict",
     "rsl_rl",
 ]
 

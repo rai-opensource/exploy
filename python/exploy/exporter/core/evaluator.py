@@ -186,7 +186,7 @@ def evaluate(
     context_manager: ContextManager,
     session_wrapper: SessionWrapper,
     num_episodes: int,
-    max_episode_steps: int | None = None,
+    max_episode_steps: int,
     verbose: bool = True,
     reset_from_onnx_counter_steps: int = 50,
     atol: float = 1.0e-5,
@@ -251,7 +251,7 @@ def evaluate_episode(
     env: ExportableEnvironment,
     context_manager: ContextManager,
     session_wrapper: SessionWrapper,
-    max_num_steps: int | None = None,
+    max_num_steps: int,
     verbose: bool = True,
     reset_from_onnx_counter_steps: int = 50,
     atol: float = 1.0e-5,
@@ -268,8 +268,7 @@ def evaluate_episode(
         env: The environment to run the evaluation in.
         context_manager: The context manager handling inputs and outputs.
         session_wrapper: An ONNX session wrapper.
-        max_num_steps: The maximum number of steps to run. If ``None``, runs until the environment
-            signals a reset.
+        max_num_steps: The maximum number of steps to run.
         verbose: Whether to print verbose output during evaluation. Defaults to True.
         reset_from_onnx_counter_steps: Set after how many steps we should set memory inputs from
             ONNX instead of using the environment's state.
@@ -348,7 +347,7 @@ def evaluate_episode(
     reset_memory_from_env = False
     env.context_manager().read_inputs()
 
-    while step_ctr < max_num_steps if max_num_steps is not None else True:
+    while step_ctr < max_num_steps:
         reset_memory_from_env = (
             reset_memory_from_env or (step_ctr % reset_from_onnx_counter_steps) == 0
         )
