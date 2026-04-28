@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <span>
 #include <string>
-#include <vector>
 
 namespace exploy::control {
 

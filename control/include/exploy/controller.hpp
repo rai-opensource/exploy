@@ -5,13 +5,10 @@
 #include "exploy/command_interface.hpp"
 #include "exploy/context.hpp"
 #include "exploy/data_collection_interface.hpp"
-#include "exploy/interfaces.hpp"
 #include "exploy/onnx_runtime.hpp"
 #include "exploy/state_interface.hpp"
 
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace exploy::control {
 

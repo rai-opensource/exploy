@@ -1,0 +1,11 @@
+If:
+  PathMatch: control/.*
+CompileFlags:
+  CompilationDatabase: build/control
+
+---
+
+If:
+  PathMatch: examples/.*
+CompileFlags:
+  CompilationDatabase: build/examples/controller

@@ -8,7 +8,11 @@
     ".pytest_cache/": true,
   },
   // "C_Cpp.loggingLevel": "Debug",
-  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--background-index",
+    "--completion-style=detailed"
+  ],
   "cmake.sourceDirectory": "${workspaceFolder}",
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.configureOnOpen": false,
@@ -19,11 +23,11 @@
   "editor.formatOnType": false,
   // Language-specific formatters
   "[cpp]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true
   },
   "[c]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true
   },
   "[python]": {

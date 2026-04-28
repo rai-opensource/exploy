@@ -4,11 +4,9 @@
 
 #include <fmt/format.h>
 
-#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <span>
-#include <vector>
 
 namespace exploy::control {
 

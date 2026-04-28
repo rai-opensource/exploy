@@ -4,8 +4,6 @@
 
 #include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 
-#include <algorithm>
-#include <filesystem>
 #include <memory>
 #include <optional>
 #include <span>

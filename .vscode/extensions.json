@@ -1,10 +1,10 @@
 {
   "recommendations": [
+    "llvm-vs-code-extensions.vscode-clangd",
     "charliermarsh.ruff",
     "lijian-onnx-viewer.onnxviewer",
     "ms-python.python",
     "ms-vscode.cpptools",
-    "ms-vscode.cpptools-extension-pack",
     "ms-vscode.cmake-tools",
     "renan-r-santos.pixi-code",
     "twxs.cmake",
