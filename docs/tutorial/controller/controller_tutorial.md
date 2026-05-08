@@ -278,6 +278,14 @@ maps every ONNX tensor to a concrete `Input` or `Output` using the built-in
 matchers. `controller.init()` then calls the corresponding `init*()` methods on
 your state and command interfaces, one per matched tensor.
 
+Pass `register_default_matchers = false` as the second argument to `create()` if
+you want to supply the complete set of matchers yourself and skip the built-ins:
+
+```cpp
+controller.context().registerMatcher(std::make_unique<MyMatcher>());
+controller.create("/path/to/policy.onnx", /*register_default_matchers=*/false);
+```
+
 ---
 
 ## Step 5 — Run the Control Loop
@@ -325,13 +333,17 @@ matches the training configuration.
 
 The built-in matchers cover the standard IsaacLab tensor naming conventions.
 If your model uses a different naming scheme you can register additional matchers
-before calling `controller.create()`:
+before calling `controller.create()`. Each tensor must be claimed by **exactly
+one** matcher — if a custom matcher's pattern overlaps with a built-in (or with
+another custom matcher), `create()` returns an error.
 
 ```cpp
 #include "matcher.hpp"
 
 class CustomBodyPositionMatcher : public exploy::control::Matcher {
  public:
+  CustomBodyPositionMatcher(): Matcher("CustomBodyPositionMatcher") {}
+
   bool matches(const exploy::control::Match& maybe_match) override {
     // Match tensors of the form obj.<articulation>.<body>.pos_b_rt_w_in_w.
     std::smatch m;
@@ -357,8 +369,8 @@ class CustomBodyPositionMatcher : public exploy::control::Matcher {
 controller.context().registerMatcher(std::make_unique<CustomBodyPositionMatcher>());
 ```
 
-Custom matchers are evaluated after the built-in ones, so you only need to handle
-tensors that the defaults don't cover.
+Only write a custom matcher for tensors that the built-in matchers do not cover.
+Overlapping patterns cause `create()` to fail.
 
 ---
 
@@ -573,5 +585,7 @@ cycle, immediately before ONNX inference.
   the model.
 - **Return value** — returning `false` from `read()` causes `controller.update()`
   to return `false` for that cycle, signalling a failed update to the caller.
-- **Custom matchers are evaluated after built-ins** — if a tensor name matches a
-  built-in matcher it is claimed first and your matcher will not see it.
+- **No overlap with built-ins** — every tensor must be claimed by exactly one
+  matcher. If a custom matcher returns `true` for a tensor that a built-in also
+  claims, `create()` logs an error and returns `false`. Only match tensors the
+  built-ins don't handle.

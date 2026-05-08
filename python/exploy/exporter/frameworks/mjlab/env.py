@@ -127,8 +127,10 @@ class MjlabExportableEnvironment(ExportableEnvironment):
         metadata["update_rate"] = str(1.0 / self._env.physics_dt)
         base_names = {}
         for entity_name, entity in self._env.scene.entities.items():
-            if hasattr(entity, "body_names") and len(entity.body_names) > 0:
-                base_names[entity_name] = entity.body_names[0]
+            if entity.is_articulated:
+                root_body = entity.root_body
+                root_body_name = root_body.name.split("/")[-1]
+                base_names[entity_name] = root_body_name
         metadata["base_names"] = json.dumps(base_names)
         return metadata
 

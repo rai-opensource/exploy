@@ -8,9 +8,7 @@
 #include <fmt/ranges.h>
 
 #include <cmath>
-#include <ranges>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace exploy::control {
@@ -26,6 +24,7 @@ std::optional<int> parseUpdateRate(OnnxRuntime& onnx_model) {
   return static_cast<int>(std::stod(maybe_update_rate.value()));
 }
 
+// Parse the `base_names` metadata into a map of {robot_name: base_name} for use in matchers.
 std::unordered_map<std::string, std::string> parseBaseNames(const OnnxRuntime& onnx_model) {
   std::unordered_map<std::string, std::string> base_names;
   const auto maybe_base_names = onnx_model.getCustomMetadata("base_names");
@@ -53,6 +52,12 @@ void OnnxContext::registerGroupMatcher(std::unique_ptr<GroupMatcher> matcher) {
 }
 
 bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
+  // Reset the components and matchers.
+  inputs_.clear();
+  outputs_.clear();
+  for (auto& m : matchers_) m->reset();
+  for (auto& m : group_matchers_) m->reset();
+
   // Check if ONNX model is properly loaded before accessing its properties
   if (!onnx_model.isInitialized()) {
     LOG_STREAM(ERROR, "ONNX model not properly loaded, skipping context creation");
@@ -73,27 +78,35 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
 
   base_names_ = parseBaseNames(onnx_model);
 
+  // Match metadata input names to registered matchers to create components. Each input must match
+  // exactly one matcher.
   for (const auto& input_name : onnx_model.inputNames()) {
     Match maybe_match{
         .name = input_name,
         .metadata = onnx_model.getCustomMetadata(input_name),
         .base_names = base_names_,
     };
-    bool found_match = false;
-    for (auto& group_matchers : group_matchers_) {
-      found_match |= group_matchers->matches(maybe_match);
+    std::vector<std::string> matched_by;
+    for (auto& group_matcher : group_matchers_) {
+      if (group_matcher->matches(maybe_match)) matched_by.push_back(group_matcher->getName());
     }
-    for (auto& matchers : matchers_) {
-      found_match |= matchers->matches(maybe_match);
+    for (auto& matcher : matchers_) {
+      if (matcher->matches(maybe_match)) matched_by.push_back(matcher->getName());
     }
-    if (!found_match) {
+    if (matched_by.empty()) {
       LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
       if (strict) {
         return false;
       }
+    } else if (matched_by.size() > 1) {
+      LOG_STREAM(ERROR, fmt::format("Multiple matchers ({}) found for input '{}': [{}]",
+                                    matched_by.size(), input_name, fmt::join(matched_by, ", ")));
+      return false;
     }
   }
 
+  // Match metadata output names to registered matchers to create components. Each output must match
+  // exactly one matcher.
   for (const auto& output_name : onnx_model.outputNames()) {
     if (output_name == "actions" || output_name == "obs") continue;
     Match maybe_match{
@@ -101,16 +114,20 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
         .metadata = onnx_model.getCustomMetadata(output_name),
         .base_names = base_names_,
     };
-    bool found_match = false;
-    for (auto& group_matchers : group_matchers_) {
-      found_match |= group_matchers->matches(maybe_match);
+    std::vector<std::string> matched_by;
+    for (auto& group_matcher : group_matchers_) {
+      if (group_matcher->matches(maybe_match)) matched_by.push_back(group_matcher->getName());
     }
-    for (auto& matchers : matchers_) {
-      found_match |= matchers->matches(maybe_match);
+    for (auto& matcher : matchers_) {
+      if (matcher->matches(maybe_match)) matched_by.push_back(matcher->getName());
     }
-    if (!found_match) {
+    if (matched_by.empty()) {
       LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
       if (strict) return false;
+    } else if (matched_by.size() > 1) {
+      LOG_STREAM(ERROR, fmt::format("Multiple matchers ({}) found for output '{}': [{}]",
+                                    matched_by.size(), output_name, fmt::join(matched_by, ", ")));
+      return false;
     }
   }
 

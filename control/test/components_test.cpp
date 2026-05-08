@@ -134,7 +134,7 @@ TEST_F(OnnxComponentsTest, JointVelocityInput_InitAndRead) {
 }
 
 TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
-  BodyOrientationInput body_input("obj.box1.bodies.box.w_Q_b", "test_body");
+  BodyOrientationInput body_input("obj.box1.box.w_Q_b", "test_body");
 
   // Test initialization
   EXPECT_CALL(state_mock_, initBodyOrientationW("test_body")).WillOnce(Return(true));
@@ -145,6 +145,58 @@ TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
   EXPECT_CALL(state_mock_, bodyOrientationW("test_body")).WillOnce(Return(expected_quat));
 
   EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_InitAndRead) {
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
+
+  // Test initialization
+  EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(true));
+  EXPECT_TRUE(body_input.init(state_mock_, command_mock_));
+
+  // Test read functionality
+  Eigen::Vector3d expected_vel(1.0, 0.5, 0.0);
+  EXPECT_CALL(state_mock_, bodyLinearVelocityB("box")).WillOnce(Return(expected_vel));
+
+  EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_InitFailure) {
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
+  EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(false));
+  EXPECT_FALSE(body_input.init(state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_ReadFailsWhenStateReturnsNullopt) {
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
+  EXPECT_CALL(state_mock_, bodyLinearVelocityB("box")).WillOnce(Return(std::nullopt));
+  EXPECT_FALSE(body_input.read(runtime, state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_InitAndRead) {
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
+
+  // Test initialization
+  EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(true));
+  EXPECT_TRUE(body_input.init(state_mock_, command_mock_));
+
+  // Test read functionality
+  Eigen::Vector3d expected_ang_vel(0.0, 0.1, 0.2);
+  EXPECT_CALL(state_mock_, bodyAngularVelocityB("box")).WillOnce(Return(expected_ang_vel));
+
+  EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_InitFailure) {
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
+  EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(false));
+  EXPECT_FALSE(body_input.init(state_mock_, command_mock_));
+}
+
+TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_ReadFailsWhenStateReturnsNullopt) {
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
+  EXPECT_CALL(state_mock_, bodyAngularVelocityB("box")).WillOnce(Return(std::nullopt));
+  EXPECT_FALSE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, StepCountInput_WithRealRuntime) {
@@ -357,6 +409,145 @@ TEST(CommandJointPositionMatcherTest, MatchesMultipleCommands) {
 
   auto inputs = matcher.createInputs();
   ASSERT_EQ(inputs.size(), 2u);
+}
+
+// ---------------  BodyLinearVelocityMatcher tests --------------------------------
+
+TEST(BodyLinearVelocityMatcherTest, MatchesBodyLinearVelocityPattern) {
+  BodyLinearVelocityMatcher matcher;
+  Match match{
+      .name = "obj.box1.box.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  };
+  EXPECT_TRUE(matcher.matches(match));
+}
+
+TEST(BodyLinearVelocityMatcherTest, MatchesBodyLinearVelocityPatternWithoutBaseNames) {
+  BodyLinearVelocityMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "obj.box1.box.lin_vel_b_rt_w_in_b"}));
+}
+
+TEST(BodyLinearVelocityMatcherTest, DoesNotMatchUnrelatedPatterns) {
+  BodyLinearVelocityMatcher matcher;
+  // Wrong prefix (not obj.)
+  EXPECT_FALSE(matcher.matches({
+      .name = "sensor.imu.pelvis.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Wrong suffix
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.box1.bodies.box.lin_vel_b_rt_w_in_w",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Missing bodies segment (only one alphanumeric after obj.)
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.box1.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BodyLinearVelocityMatcherTest, CreatesInputForMatchedBody) {
+  BodyLinearVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box1.sphere.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u);
+}
+
+TEST(BodyLinearVelocityMatcherTest, CreatesInputsForMultipleBodies) {
+  BodyLinearVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box1.square.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box2.circle.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+}
+
+TEST(BodyLinearVelocityMatcherTest, DoesNotMatchBodyLinearVelocityWhenBaseNameMatches) {
+  BodyLinearVelocityMatcher matcher;
+  // When the tensor name matches the base_names pattern it should be rejected.
+  Match match{
+      .name = "obj.robot1.base_link.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  };
+  EXPECT_FALSE(matcher.matches(match));
+}
+
+// ---------------  BodyAngularVelocityMatcher tests --------------------------------
+
+TEST(BodyAngularVelocityMatcherTest, MatchesBodyAngularVelocityPattern) {
+  BodyAngularVelocityMatcher matcher;
+  Match match{
+      .name = "obj.box1.box.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  };
+  EXPECT_TRUE(matcher.matches(match));
+}
+
+TEST(BodyAngularVelocityMatcherTest, MatchesBodyAngularVelocityPatternWithoutBaseNames) {
+  BodyAngularVelocityMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "obj.box1.box.ang_vel_b_rt_w_in_b"}));
+}
+
+TEST(BodyAngularVelocityMatcherTest, DoesNotMatchUnrelatedPatterns) {
+  BodyAngularVelocityMatcher matcher;
+  // Wrong prefix (not obj.)
+  EXPECT_FALSE(matcher.matches({
+      .name = "sensor.imu.pelvis.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Wrong suffix
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.box1.bodies.box.ang_vel_b_rt_w_in_w",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Missing bodies segment (only one alphanumeric after obj.)
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.box1.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BodyAngularVelocityMatcherTest, CreatesInputForMatchedBody) {
+  BodyAngularVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box1.sphere.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u);
+}
+
+TEST(BodyAngularVelocityMatcherTest, CreatesInputsForMultipleBodies) {
+  BodyAngularVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box1.square.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.box2.circle.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+}
+
+TEST(BodyAngularVelocityMatcherTest, DoesNotMatchBodyAngularVelocityWhenBaseNameMatches) {
+  BodyAngularVelocityMatcher matcher;
+  Match match{
+      .name = "obj.robot1.base_link.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  };
+  EXPECT_FALSE(matcher.matches(match));
 }
 
 }  // namespace exploy::control

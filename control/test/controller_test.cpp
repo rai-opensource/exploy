@@ -113,7 +113,10 @@ class CustomInput : public Input {
  public:
   CustomInput(const std::string& key, const std::string& command_name,
               CustomInterface* custom_interface)
-      : key_(key), command_name_(command_name), custom_interface_(*custom_interface) {}
+      : Input("CustomInput"),
+        key_(key),
+        command_name_(command_name),
+        custom_interface_(*custom_interface) {}
 
   bool init(RobotStateInterface& /*state*/, CommandInterface& /*command*/) override {
     return custom_interface_.initExtensibleCommand(command_name_);
@@ -139,7 +142,7 @@ class CustomInput : public Input {
 class CustomMatcher : public Matcher {
  public:
   explicit CustomMatcher(CustomInterface* custom_interface)
-      : custom_interface_(*custom_interface) {}
+      : Matcher("CustomMatcher"), custom_interface_(*custom_interface) {}
 
   bool matches(const Match& maybe_match) override {
     // Use regex pattern like other matchers to extract name
@@ -214,6 +217,8 @@ class OnnxControllerTest : public ::testing::Test {
   void ExpectInitBody() {
     EXPECT_CALL(state_mock_, initBodyPositionW("box")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initBodyOrientationW("box")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(true));
   }
 
   void ExpectInitCommands() {
@@ -265,6 +270,10 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, imuOrientationW("torso")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, bodyPositionW("box")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, bodyLinearVelocityB("box"))
+        .WillRepeatedly(Return(kLinearVelocityData));
+    EXPECT_CALL(state_mock_, bodyAngularVelocityB("box"))
+        .WillRepeatedly(Return(kAngularVelocityData));
     EXPECT_CALL(state_mock_, heightScan("trail", _, _, _))
         .WillRepeatedly(Return(std::make_optional(kTrailScanData.get())));
     EXPECT_CALL(state_mock_, heightScan("one", _, _, _))

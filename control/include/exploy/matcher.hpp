@@ -54,6 +54,7 @@ struct GroupMatch {
  */
 class Matcher {
  public:
+  explicit Matcher(const std::string& name) : name_(name) {}
   virtual ~Matcher() = default;
 
   /**
@@ -78,6 +79,21 @@ class Matcher {
    */
   virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
 
+  /**
+   * @brief Reset the matcher by clearing all found matches.
+   */
+  virtual void reset() { found_matches_.clear(); }
+
+  /**
+   * @brief Get the name of this matcher.
+   *
+   * @return Name of the matcher.
+   */
+  const std::string& getName() const { return name_; }
+
+ private:
+  std::string name_;  ///< Name of this matcher.
+
  protected:
   std::unordered_map<std::string, Match> found_matches_;  ///< Storage for matched tensors.
 };
@@ -90,6 +106,7 @@ class Matcher {
  */
 class GroupMatcher {
  public:
+  explicit GroupMatcher(const std::string& name) : name_(name) {}
   virtual ~GroupMatcher() = default;
 
   /**
@@ -126,6 +143,21 @@ class GroupMatcher {
     }
   }
 
+  /**
+   * @brief Reset the matcher by clearing all found matches.
+   */
+  virtual void reset() { found_matches_.clear(); }
+
+  /**
+   * @brief Get the name of this matcher.
+   *
+   * @return Name of the matcher.
+   */
+  const std::string& getName() const { return name_; }
+
+ private:
+  std::string name_;  ///< Name of this matcher.
+
  protected:
   std::unordered_map<std::string, GroupMatch> found_matches_;  ///< Storage for matched groups.
 };
@@ -139,6 +171,7 @@ class GroupMatcher {
  */
 class JointMatcher : public GroupMatcher {
  public:
+  JointMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 
@@ -156,6 +189,7 @@ class JointMatcher : public GroupMatcher {
  */
 class BasePositionMatcher : public Matcher {
  public:
+  BasePositionMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -168,6 +202,7 @@ class BasePositionMatcher : public Matcher {
  */
 class BaseOrientationMatcher : public Matcher {
  public:
+  BaseOrientationMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -179,6 +214,7 @@ class BaseOrientationMatcher : public Matcher {
  */
 class BaseLinearVelocityMatcher : public Matcher {
  public:
+  BaseLinearVelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -190,6 +226,7 @@ class BaseLinearVelocityMatcher : public Matcher {
  */
 class BaseAngularVelocityMatcher : public Matcher {
  public:
+  BaseAngularVelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -204,6 +241,7 @@ class BaseAngularVelocityMatcher : public Matcher {
  */
 class JointTargetMatcher : public GroupMatcher {
  public:
+  JointTargetMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
@@ -215,6 +253,7 @@ class JointTargetMatcher : public GroupMatcher {
  */
 class SE2VelocityMatcher : public Matcher {
  public:
+  SE2VelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
@@ -229,6 +268,7 @@ class SE2VelocityMatcher : public Matcher {
  */
 class HeightScanMatcher : public GroupMatcher {
  public:
+  HeightScanMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 
@@ -245,6 +285,7 @@ class HeightScanMatcher : public GroupMatcher {
  */
 class SphericalImageMatcher : public GroupMatcher {
  public:
+  SphericalImageMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 
@@ -261,6 +302,7 @@ class SphericalImageMatcher : public GroupMatcher {
  */
 class PinholeImageMatcher : public GroupMatcher {
  public:
+  PinholeImageMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 
@@ -276,6 +318,7 @@ class PinholeImageMatcher : public GroupMatcher {
  */
 class IMUAngularVelocityMatcher : public Matcher {
  public:
+  IMUAngularVelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -288,6 +331,7 @@ class IMUAngularVelocityMatcher : public Matcher {
  */
 class IMULinearVelocityMatcher : public Matcher {
  public:
+  IMULinearVelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -300,6 +344,7 @@ class IMULinearVelocityMatcher : public Matcher {
  */
 class IMUOrientationMatcher : public Matcher {
  public:
+  IMUOrientationMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -313,6 +358,7 @@ class IMUOrientationMatcher : public Matcher {
  */
 class CommandSE3PoseMatcher : public Matcher {
  public:
+  CommandSE3PoseMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -324,6 +370,7 @@ class CommandSE3PoseMatcher : public Matcher {
  */
 class CommandSE2VelocityMatcher : public Matcher {
  public:
+  CommandSE2VelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -335,6 +382,7 @@ class CommandSE2VelocityMatcher : public Matcher {
  */
 class CommandBooleanMatcher : public Matcher {
  public:
+  CommandBooleanMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -346,6 +394,7 @@ class CommandBooleanMatcher : public Matcher {
  */
 class CommandFloatMatcher : public Matcher {
  public:
+  CommandFloatMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -359,6 +408,7 @@ class CommandFloatMatcher : public Matcher {
  */
 class CommandJointPositionMatcher : public Matcher {
  public:
+  CommandJointPositionMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -372,6 +422,7 @@ class CommandJointPositionMatcher : public Matcher {
  */
 class BodyPositionMatcher : public Matcher {
  public:
+  BodyPositionMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -384,6 +435,33 @@ class BodyPositionMatcher : public Matcher {
  */
 class BodyOrientationMatcher : public Matcher {
  public:
+  BodyOrientationMatcher();
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+/**
+ * @brief Matcher for rigid body linear velocity input tensors.
+ *
+ * Matches patterns for body linear velocity data and creates BodyLinearVelocityInput
+ * components.
+ */
+class BodyLinearVelocityMatcher : public Matcher {
+ public:
+  BodyLinearVelocityMatcher();
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+};
+
+/**
+ * @brief Matcher for rigid body angular velocity input tensors.
+ *
+ * Matches patterns for body angular velocity data and creates BodyAngularVelocityInput
+ * components.
+ */
+class BodyAngularVelocityMatcher : public Matcher {
+ public:
+  BodyAngularVelocityMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
@@ -398,6 +476,7 @@ class BodyOrientationMatcher : public Matcher {
  */
 class MemoryMatcher : public GroupMatcher {
  public:
+  MemoryMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
@@ -409,6 +488,7 @@ class MemoryMatcher : public GroupMatcher {
  */
 class StepCountMatcher : public Matcher {
  public:
+  StepCountMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };

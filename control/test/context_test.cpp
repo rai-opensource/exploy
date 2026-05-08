@@ -21,6 +21,7 @@ using ::testing::Return;
 // Mock Matcher for testing
 class MockMatcher : public Matcher {
  public:
+  MockMatcher() : Matcher("MockMatcher") {}
   MOCK_METHOD(bool, matches, (const Match& maybe_match), (override));
   MOCK_METHOD((std::vector<std::unique_ptr<Input>>), createInputs, (), (const, override));
   MOCK_METHOD((std::vector<std::unique_ptr<Output>>), createOutputs, (), (const, override));
@@ -29,6 +30,7 @@ class MockMatcher : public Matcher {
 // Mock GroupMatcher for testing
 class MockGroupMatcher : public GroupMatcher {
  public:
+  MockGroupMatcher() : GroupMatcher("MockGroupMatcher") {}
   MOCK_METHOD(bool, matches, (const Match& maybe_match), (override));
   MOCK_METHOD((std::vector<std::unique_ptr<Input>>), createInputs, (), (const, override));
   MOCK_METHOD((std::vector<std::unique_ptr<Output>>), createOutputs, (), (const, override));
@@ -37,7 +39,8 @@ class MockGroupMatcher : public GroupMatcher {
 // Simple test matcher that always matches a specific pattern
 class SimpleTestMatcher : public Matcher {
  public:
-  explicit SimpleTestMatcher(std::string pattern) : pattern_(std::move(pattern)) {}
+  explicit SimpleTestMatcher(std::string pattern)
+      : Matcher("SimpleTestMatcher"), pattern_(std::move(pattern)) {}
 
   bool matches(const Match& maybe_match) override {
     if (maybe_match.name.find(pattern_) != std::string::npos) {
@@ -125,6 +128,13 @@ TEST_F(OnnxContextTest, CreateContext_CreatesInputsFromGroupMatchers) {
 }
 
 // ========== Integration Tests ==========
+
+TEST_F(OnnxContextTest, CreateContext_ErrorOnMultipleMatchersForSameTensor) {
+  // Two matchers with overlapping patterns — both claim the same tensor.
+  context_.registerMatcher(std::make_unique<SimpleTestMatcher>("joint"));
+  context_.registerMatcher(std::make_unique<SimpleTestMatcher>("joint"));
+  EXPECT_FALSE(context_.createContext(runtime_, false));
+}
 
 TEST_F(OnnxContextTest, Integration_RealMatchersWithTestModel) {
   context_.registerGroupMatcher(std::make_unique<JointMatcher>());

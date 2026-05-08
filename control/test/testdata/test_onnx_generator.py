@@ -43,8 +43,10 @@ INPUT_NAMES = [
     "sensor.ray_caster.trail.b",
     "sensor.pinhole_image.one.depth",
     # body
-    "obj.box1.bodies.box.pos_b_rt_w_in_w",
-    "obj.box1.bodies.box.w_Q_b",
+    "obj.box1.box.pos_b_rt_w_in_w",
+    "obj.box1.box.w_Q_b",
+    "obj.box1.box.lin_vel_b_rt_w_in_b",
+    "obj.box1.box.ang_vel_b_rt_w_in_b",
     # memory
     "memory.output.joint_targets.jt1.pos.in",
     # step count
@@ -98,6 +100,8 @@ class FullTestModel(torch.nn.Module):
         depth_image,
         body_pos,
         body_quat,
+        body_lin_vel,
+        body_ang_vel,
         memory,
         step_count,
         custom_extensible_data,
@@ -265,6 +269,8 @@ def create_dummy_inputs() -> tuple:
     # Body inputs
     body_pos = torch.rand((1, 3), dtype=torch.float32)
     body_quat = torch.rand((1, 4), dtype=torch.float32)
+    body_lin_vel = torch.rand((1, 3), dtype=torch.float32)
+    body_ang_vel = torch.rand((1, 3), dtype=torch.float32)
 
     # Memory and state
     memory = torch.rand((1, 2), dtype=torch.float32)
@@ -309,6 +315,8 @@ def create_dummy_inputs() -> tuple:
         # body
         body_pos,
         body_quat,
+        body_lin_vel,
+        body_ang_vel,
         # memory
         memory,
         # step count

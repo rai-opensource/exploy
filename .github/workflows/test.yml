@@ -32,7 +32,7 @@ jobs:
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.9.5
         with:
-          pixi-version: latest
+          pixi-version: v0.67.2
           frozen: true
           cache: false
 
@@ -50,7 +50,7 @@ jobs:
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.9.5
         with:
-          pixi-version: latest
+          pixi-version: v0.67.2
           frozen: true
           cache: false
 
@@ -71,7 +71,7 @@ jobs:
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.9.5
         with:
-          pixi-version: latest
+          pixi-version: v0.67.2
           frozen: true
           cache: false
 

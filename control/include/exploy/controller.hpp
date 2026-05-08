@@ -37,10 +37,18 @@ class OnnxRLController {
    * This function only parses the configuration needed to interface with the ONNX model. Call
    * init() to fully initialize the controller.
    *
+   * If called more than once (e.g. to reload a model), default matchers are registered only on
+   * the first call where register_default_matchers is true; custom matchers added via context()
+   * are preserved across calls.
+   *
    * @param onnx_model_path Path to the ONNX model file.
+   * @param register_default_matchers If true (default), all built-in matchers (including
+   * StepCountMatcher) are registered the first time create() is called with this parameter set to
+   * true. Passing false disables all built-in matchers for that call; only matchers added via
+   * context() will be used, and a later call with true can still register the built-in matchers.
    * @return True if parsing succeeds, false otherwise.
    */
-  bool create(const std::string& onnx_model_path);
+  bool create(const std::string& onnx_model_path, bool register_default_matchers = true);
   /**
    * @brief Initialize the controller.
    *
@@ -71,6 +79,8 @@ class OnnxRLController {
   OnnxRuntime onnx_model_{};
   RobotStateInterface& state_;
   CommandInterface& command_;
+
+  bool default_matchers_registered_{false};
 
   // Data collection.
   DataCollectionInterface& data_collection_;

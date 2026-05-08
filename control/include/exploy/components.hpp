@@ -17,6 +17,7 @@ namespace exploy::control {
  * input tensors. Subclasses implement specific data sources (joints, IMU, cameras, etc.).
  */
 struct Input {
+  explicit Input(const std::string& name) : name_(name) {}
   virtual ~Input() = default;
 
   /**
@@ -42,6 +43,15 @@ struct Input {
    */
   virtual bool read(OnnxRuntime& runtime, RobotStateInterface& state,
                     CommandInterface& command) = 0;
+
+  /**
+   * @brief Get the name of this component.
+   * @return Name of this component.
+   */
+  virtual const std::string& getName() const { return name_; }
+
+ private:
+  std::string name_;  ///< Name of this component.
 };
 
 /**
@@ -52,6 +62,7 @@ struct Input {
  * velocity commands, memory buffers, etc.).
  */
 struct Output {
+  explicit Output(const std::string& name) : name_(name) {}
   virtual ~Output() = default;
 
   /**
@@ -77,6 +88,15 @@ struct Output {
    */
   virtual bool write(OnnxRuntime& runtime, RobotStateInterface& state,
                      CommandInterface& command) = 0;
+
+  /**
+   * @brief Get the name of this component.
+   * @return Name of this component.
+   */
+  virtual const std::string& getName() const { return name_; }
+
+ private:
+  std::string name_;  ///< Name of this component.
 };
 
 /**
@@ -423,6 +443,54 @@ class BodyPositionInput : public Input {
    * @param body_name Name of the rigid body to read position from.
    */
   BodyPositionInput(const std::string& key, const std::string& body_name);
+
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
+
+ private:
+  std::string key_;        ///< ONNX input tensor name.
+  std::string body_name_;  ///< Rigid body name.
+};
+
+/**
+ * @brief Input component that reads linear velocity of a specific rigid body.
+ *
+ * Reads the linear velocity of a named rigid body as a 3D vector (vx, vy, vz)
+ * and copies it to the ONNX input buffer.
+ */
+class BodyLinearVelocityInput : public Input {
+ public:
+  /**
+   * @brief Construct a body linear velocity input component.
+   *
+   * @param key ONNX input tensor name (e.g., "obj.object.box.lin_vel_b_rt_w_in_b").
+   * @param body_name Name of the rigid body to read linear velocity from.
+   */
+  BodyLinearVelocityInput(const std::string& key, const std::string& body_name);
+
+  bool init(RobotStateInterface& state, CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
+
+ private:
+  std::string key_;        ///< ONNX input tensor name.
+  std::string body_name_;  ///< Rigid body name.
+};
+
+/**
+ * @brief Input component that reads angular velocity of a specific rigid body.
+ *
+ * Reads the angular velocity of a named rigid body as a 3D vector (wx, wy, wz)
+ * and copies it to the ONNX input buffer.
+ */
+class BodyAngularVelocityInput : public Input {
+ public:
+  /**
+   * @brief Construct a body angular velocity input component.
+   *
+   * @param key ONNX input tensor name (e.g., "obj.object.box.ang_vel_b_rt_w_in_b").
+   * @param body_name Name of the rigid body to read angular velocity from.
+   */
+  BodyAngularVelocityInput(const std::string& key, const std::string& body_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;

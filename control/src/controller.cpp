@@ -12,34 +12,37 @@ namespace exploy::control {
 
 OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface& command,
                                    DataCollectionInterface& data_collection)
-    : state_(state), command_(command), data_collection_(data_collection) {
-  // Register all matchers
-  context_.registerMatcher(std::make_unique<BasePositionMatcher>());
-  context_.registerMatcher(std::make_unique<BaseOrientationMatcher>());
-  context_.registerMatcher(std::make_unique<BaseLinearVelocityMatcher>());
-  context_.registerMatcher(std::make_unique<BaseAngularVelocityMatcher>());
-  context_.registerMatcher(std::make_unique<SE2VelocityMatcher>());
-  context_.registerMatcher(std::make_unique<IMULinearVelocityMatcher>());
-  context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
-  context_.registerMatcher(std::make_unique<IMUOrientationMatcher>());
-  context_.registerMatcher(std::make_unique<BodyPositionMatcher>());
-  context_.registerMatcher(std::make_unique<BodyOrientationMatcher>());
-  context_.registerMatcher(std::make_unique<CommandSE3PoseMatcher>());
-  context_.registerMatcher(std::make_unique<CommandSE2VelocityMatcher>());
-  context_.registerMatcher(std::make_unique<CommandBooleanMatcher>());
-  context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
-  context_.registerMatcher(std::make_unique<CommandJointPositionMatcher>());
-  context_.registerMatcher(std::make_unique<StepCountMatcher>());
-  // Register all group matchers
-  context_.registerGroupMatcher(std::make_unique<JointMatcher>());
-  context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());
-  context_.registerGroupMatcher(std::make_unique<HeightScanMatcher>());
-  context_.registerGroupMatcher(std::make_unique<SphericalImageMatcher>());
-  context_.registerGroupMatcher(std::make_unique<PinholeImageMatcher>());
-  context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());
-}
+    : state_(state), command_(command), data_collection_(data_collection) {}
 
-bool OnnxRLController::create(const std::string& onnx_model_path) {
+bool OnnxRLController::create(const std::string& onnx_model_path, bool register_default_matchers) {
+  if (!default_matchers_registered_ && register_default_matchers) {
+    default_matchers_registered_ = true;
+    context_.registerMatcher(std::make_unique<StepCountMatcher>());
+    context_.registerMatcher(std::make_unique<BasePositionMatcher>());
+    context_.registerMatcher(std::make_unique<BaseOrientationMatcher>());
+    context_.registerMatcher(std::make_unique<BaseLinearVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<BaseAngularVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<IMULinearVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<IMUOrientationMatcher>());
+    context_.registerMatcher(std::make_unique<BodyPositionMatcher>());
+    context_.registerMatcher(std::make_unique<BodyOrientationMatcher>());
+    context_.registerMatcher(std::make_unique<BodyLinearVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<BodyAngularVelocityMatcher>());
+    context_.registerMatcher(std::make_unique<CommandSE3PoseMatcher>());
+    context_.registerMatcher(std::make_unique<CommandSE2VelocityMatcher>());
+    context_.registerMatcher(std::make_unique<CommandBooleanMatcher>());
+    context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
+    context_.registerMatcher(std::make_unique<CommandJointPositionMatcher>());
+    context_.registerMatcher(std::make_unique<SE2VelocityMatcher>());
+    context_.registerGroupMatcher(std::make_unique<JointMatcher>());
+    context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());
+    context_.registerGroupMatcher(std::make_unique<HeightScanMatcher>());
+    context_.registerGroupMatcher(std::make_unique<SphericalImageMatcher>());
+    context_.registerGroupMatcher(std::make_unique<PinholeImageMatcher>());
+    context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());
+  }
+
   if (!onnx_model_.initialize(onnx_model_path)) {
     LOG_STREAM(ERROR, "Error creating OnnxEvaluator from policy: " << onnx_model_path);
     return false;

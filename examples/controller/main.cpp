@@ -64,10 +64,11 @@ class NoOpDataCollection : public exploy::control::DataCollectionInterface {
 
 class CustomBodyPositionMatcher : public exploy::control::Matcher {
  public:
+  CustomBodyPositionMatcher() : Matcher("CustomBodyPositionMatcher") {}
+
   bool matches(const exploy::control::Match& maybe_match) override {
     std::smatch match;
-    const std::regex pattern(
-        R"(obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)");
+    const std::regex pattern(R"(custom.obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)");
     if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
       found_matches_[match[2].str()] = maybe_match;
       return true;
@@ -130,8 +131,7 @@ int main(int argc, char** argv) {
 
   // Create a CommandInterface.
   exploy::control::examples::FixedCommandInterface command(
-      exploy::control::examples::FixedCommandConfig{
-          .se2_velocity{args.vx, args.vy, args.omega}});
+      exploy::control::examples::FixedCommandConfig{.se2_velocity{args.vx, args.vy, args.omega}});
 
   // Create a DataCollectionInterface.
   NoOpDataCollection data_collection;

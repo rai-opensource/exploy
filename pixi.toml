@@ -433,6 +433,7 @@ networkx = "==3.3"
 markupsafe = "==2.1.3"
 packaging = "==23.0"
 pillow = "==11.3.0"
+psutil = "==5.9.8"
 pytorch = { version = "==2.7.0", build = "*cuda*" }
 python = "3.11.*"
 pyyaml = "==6.0.2"
