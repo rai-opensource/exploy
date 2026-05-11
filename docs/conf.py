@@ -208,9 +208,10 @@ suppress_warnings = ["myst.xref_missing"]
 # Links that are valid but not yet publicly available (e.g. unreleased paths on GitHub)
 linkcheck_ignore = []
 
-# GitHub renders anchors client-side, so Sphinx linkcheck cannot verify them.
+# GitHub and PyTorch render anchors client-side, so Sphinx linkcheck cannot verify them.
 linkcheck_anchors_ignore_for_url = [
     r"https://github\.com/",
+    r"https://docs\.pytorch\.org/",
 ]
 
 # Note: Eigen uses Doxygen, not Sphinx, so intersphinx won't work.
