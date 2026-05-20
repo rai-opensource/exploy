@@ -7,10 +7,24 @@
 #include "exploy/data_collection_interface.hpp"
 #include "exploy/onnx_runtime.hpp"
 #include "exploy/state_interface.hpp"
+#include "exploy/worker.hpp"
 
+#include <memory>
 #include <string>
 
 namespace exploy::control {
+
+/**
+ * @brief Selects the ONNX inference execution strategy.
+ *
+ * Pass this enum to `OnnxRLController::init()` to choose between:
+ * - `SYNC`  — inference blocks the calling thread
+ * - `ASYNC` — inference runs on a background thread
+ */
+enum class WorkerMode {
+  SYNC,   ///< Run inference synchronously on the calling thread.
+  ASYNC,  ///< Run inference on a background thread (see AsyncWorker).
+};
 
 /**
  * @class OnnxRLController
@@ -53,9 +67,10 @@ class OnnxRLController {
    * @brief Initialize the controller.
    *
    * @param enable_data_collection Whether to enable data collection.
+   * @param mode Whether to run the ONNX inference synchronously or asynchronously.
    * @return True if initialization succeeds, false otherwise.
    */
-  bool init(bool enable_data_collection);
+  bool init(bool enable_data_collection, WorkerMode mode = WorkerMode::SYNC);
   /**
    * @brief Reset the controller.
    */
@@ -75,6 +90,9 @@ class OnnxRLController {
   bool initCommands();
   bool initSensors();
 
+  bool readInputs();
+  bool writeOutputs();
+
   OnnxContext context_{};
   OnnxRuntime onnx_model_{};
   RobotStateInterface& state_;
@@ -84,7 +102,12 @@ class OnnxRLController {
 
   // Data collection.
   DataCollectionInterface& data_collection_;
+  // Written by the work_fn (possibly on a background thread) before work_finished_
+  // is set under the worker's mutex. Read on the main thread only after observing
+  // work_finished_ under that same mutex — no atomic needed.
   double inference_duration_s_{};
+
+  std::unique_ptr<Worker> worker_{nullptr};
 };
 
 }  // namespace exploy::control

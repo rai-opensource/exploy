@@ -267,6 +267,7 @@ if (!controller.create("/path/to/policy.onnx")) {
 
 // 5. Initialise all components (calls init*() on state/command/data interfaces).
 //    Pass true to enable data collection during the run.
+//    The second argument selects the execution strategy (default: WorkerMode::SYNC).
 if (!controller.init(/*enable_data_collection=*/true)) {
     std::cerr << "Controller initialisation failed\n";
     return 1;
@@ -278,13 +279,69 @@ maps every ONNX tensor to a concrete `Input` or `Output` using the built-in
 matchers. `controller.init()` then calls the corresponding `init*()` methods on
 your state and command interfaces, one per matched tensor.
 
-Pass `register_default_matchers = false` as the second argument to `create()` if
-you want to supply the complete set of matchers yourself and skip the built-ins:
+### Choosing a worker mode
+
+`init()` accepts an optional `WorkerMode` argument that controls how inference
+is scheduled relative to the calling thread:
+
+| Mode | Behaviour |
+|------|----------|
+| `WorkerMode::SYNC` *(default)* | `read → infer → write` all block the calling thread each cycle. Simple and deterministic. |
+| `WorkerMode::ASYNC` | `read` and `write` run on the calling thread; inference is offloaded to a background thread. Allows the control loop to continue while the GPU/CPU is busy. |
+
+#### `WorkerMode::SYNC` timing
+
+All three steps execute on the calling thread. The cycle blocks until inference
+completes before the next cycle begins.
+
+```text
+  main  ╔══════╦═══════════════╦═══════╗          ╔══════╦═══════════════╦═══════╗
+        ║ read ║     work      ║ write ║  (idle)  ║ read ║     work      ║ write ║  ···
+        ╚══════╩═══════════════╩═══════╝          ╚══════╩═══════════════╩═══════╝
+         ◄────────── cycle N ─────────►           ◄───────── cycle N+1 ─────────►
+```
+
+#### `WorkerMode::ASYNC` timing
+
+`read` and `write` run on the calling thread; `work` is offloaded to a dedicated
+background thread. The result of cycle N is written at the start of cycle N+1,
+so the main thread is never blocked by inference.
+
+```text
+  main  ╔══════╗                         ╔═══════╦══════╗                    ╔═══════╗
+        ║ read ║  · · · · · · · · · · ·  ║ write ║ read ║  · · · · · · · · · ║ write ║  ···
+        ╚══╤═══╝                         ╚══╤════╩══╤═══╝                    ╚═══╤═══╝
+           │                                │       │                            │
+ worker    ╚════════ work ══════════════════╝       ╚═══════ work ═══════════════╝
+            ◄──────────── cycle N ───────►◄───────────── cycle N+1 ─────────►
+```
+
+#### `WorkerMode::ASYNC` — overrun
+
+If inference is still running when the next cycle boundary arrives, the cycle is
+skipped and `update()` returns `true`. Write and the following read resume on the
+next call once work has finished.
+
+```text
+  main  ╔══════╗                ╎  (skip)  ╎  ╔═══════╦══════╗
+        ║ read ║  · · · · · · · ╎          ╎  ║ write ║ read ║  ···
+        ╚══╤═══╝                ╎          ╎  ╚═══════╩══╤═══╝
+           │                                   │         │
+ worker    ╚══════════════════════ work ═══════╝         ╚═══ work ═══
+```
 
 ```cpp
-controller.context().registerMatcher(std::make_unique<MyMatcher>());
-controller.create("/path/to/policy.onnx", /*register_default_matchers=*/false);
+// Run inference on a background thread:
+if (!controller.init(/*enable_data_collection=*/true, WorkerMode::ASYNC)) {
+    std::cerr << "Controller initialisation failed\n";
+    return 1;
+}
 ```
+
+With `WorkerMode::ASYNC`, an overrun (inference not finished when the next cycle
+starts) is handled gracefully: the cycle is skipped and `update()` returns
+`true`. Use the `model/inference/duration_s` data source to monitor latency and
+detect persistent overruns.
 
 ---
 
@@ -336,6 +393,14 @@ If your model uses a different naming scheme you can register additional matcher
 before calling `controller.create()`. Each tensor must be claimed by **exactly
 one** matcher — if a custom matcher's pattern overlaps with a built-in (or with
 another custom matcher), `create()` returns an error.
+
+Pass `register_default_matchers = false` as the second argument to `create()` if
+you want to supply the complete set of matchers yourself and skip the built-ins:
+
+```cpp
+controller.context().registerMatcher(std::make_unique<MyMatcher>());
+controller.create("/path/to/policy.onnx", /*register_default_matchers=*/false);
+```
 
 ```cpp
 #include "matcher.hpp"

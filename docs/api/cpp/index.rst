@@ -133,6 +133,27 @@ Metadata structures for component configuration.
 .. doxygenstruct:: exploy::control::metadata::PinholeImageMetadata
    :members:
 
+Workers
+-------
+
+Execution strategies for the read → inference → write pipeline.
+Select a strategy via :cpp:enum:`exploy::control::WorkerMode` when calling
+``OnnxRLController::init()``.
+
+.. doxygenenum:: exploy::control::WorkerMode
+
+.. doxygenclass:: exploy::control::Worker
+   :members:
+   :undoc-members:
+
+.. doxygenclass:: exploy::control::SyncWorker
+   :members:
+   :undoc-members:
+
+.. doxygenclass:: exploy::control::AsyncWorker
+   :members:
+   :undoc-members:
+
 Matchers
 --------
 

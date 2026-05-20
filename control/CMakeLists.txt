@@ -42,6 +42,7 @@ add_library(exploy SHARED
     src/onnx_runtime.cpp
     src/components.cpp
     src/matcher.cpp
+    src/worker.cpp
 )
 
 # Create an alias target for symmetry between the build tree and install tree.
@@ -175,6 +176,7 @@ if(BUILD_TESTING)
       test/logging_test.cpp
       test/metadata_test.cpp
       test/onnx_runtime_test.cpp
+      test/worker_test.cpp
       "${GEN_OUTPUT}"
   )
   target_compile_definitions(${PROJECT_NAME}_test PRIVATE

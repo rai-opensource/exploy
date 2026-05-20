@@ -54,7 +54,7 @@ bool OnnxRLController::create(const std::string& onnx_model_path, bool register_
   return true;
 }
 
-bool OnnxRLController::init(bool enable_data_collection) {
+bool OnnxRLController::init(bool enable_data_collection, WorkerMode mode) {
   if (!onnx_model_.isInitialized()) {
     LOG_STREAM(ERROR, "ONNX model is not initialized.");
     return false;
@@ -71,6 +71,35 @@ bool OnnxRLController::init(bool enable_data_collection) {
       LOG_STREAM(ERROR, "Error initializing output.");
       return false;
     }
+  }
+
+  auto rate = static_cast<double>(context_.updateRate());
+  if (rate <= 0) {
+    LOG_STREAM(ERROR, "Invalid update rate: " << rate << " Hz. Must be > 0.");
+    return false;
+  }
+  if (mode == WorkerMode::ASYNC) {
+    worker_ = std::make_unique<AsyncWorker>(rate);
+  } else {
+    worker_ = std::make_unique<SyncWorker>(rate);
+  }
+  auto success = worker_->setCallbacks(
+      [this]() {
+        return readInputs();
+      },
+      [this]() {
+        auto start = std::chrono::high_resolution_clock::now();
+        bool success = onnx_model_.evaluate();
+        auto end = std::chrono::high_resolution_clock::now();
+        inference_duration_s_ = std::chrono::duration<double>(end - start).count();
+        return success;
+      },
+      [this]() {
+        return writeOutputs();
+      });
+  if (!success) {
+    LOG(ERROR, "Failed to set worker callbacks.");
+    return false;
   }
 
   if (enable_data_collection) {
@@ -103,30 +132,32 @@ bool OnnxRLController::init(bool enable_data_collection) {
 
 void OnnxRLController::reset() {
   onnx_model_.resetBuffers();
+  if (worker_) worker_->reset();
 }
 
-bool OnnxRLController::update(uint64_t time_us) {
+bool OnnxRLController::readInputs() {
   for (const auto& input : context_.getInputs()) {
     if (!input->read(onnx_model_, state_, command_)) {
       LOG_STREAM(ERROR, "Failed to read input");
       return false;
     }
   }
+  return true;
+}
 
-  auto start_time = std::chrono::high_resolution_clock::now();
-  if (!onnx_model_.evaluate()) {
-    LOG_STREAM(ERROR, "Policy evaluation failed.");
-    return false;
-  }
-  auto end_time = std::chrono::high_resolution_clock::now();
-  inference_duration_s_ = std::chrono::duration<double>(end_time - start_time).count();
-
+bool OnnxRLController::writeOutputs() {
   for (const auto& output : context_.getOutputs()) {
     if (!output->write(onnx_model_, state_, command_)) {
       LOG_STREAM(ERROR, "Failed to write output");
       return false;
     }
   }
+  return true;
+}
+
+bool OnnxRLController::update(uint64_t time_us) {
+  if (!worker_) return false;
+  if (!worker_->update(time_us)) return false;
 
   if (!data_collection_.collectData(time_us)) {
     LOG(WARN, "Data collection failed.");
