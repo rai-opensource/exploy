@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+import numpy as np
 import onnx
 import torch
 
@@ -368,9 +369,8 @@ class SimpleTestModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, float_input, int_input, bool_input):
-        # Simple pass-through model that just forwards inputs to outputs
-        float_output = float_input * 2.0  # Simple transformation
+    def forward(self, float_input, int_input, bool_input, init_float_input):
+        float_output = float_input * 2.0 + init_float_input
         int_output = int_input + 1  # Simple transformation
         bool_output = torch.logical_not(bool_input)  # Simple transformation
 
@@ -387,14 +387,23 @@ def export_simple_model(data_dir: str):
     float_input = torch.tensor([[1.5, 2.5, 3.5]], dtype=torch.float32)
     int_input = torch.tensor([[10, 20, 30]], dtype=torch.int32)
     bool_input = torch.tensor([[True, False, True]], dtype=torch.bool)
+    # Default values for the overridable initializer baked into the exported model.
+    default_init_float_input = np.zeros((1, 3), dtype=np.float32)
+    init_float_input = torch.from_numpy(default_init_float_input)
 
     torch.onnx.export(
         simple_model,
-        (float_input, int_input, bool_input),
+        (float_input, int_input, bool_input, init_float_input),
         output_path_simple,
-        input_names=["float_input", "int_input", "bool_input"],
+        input_names=["float_input", "int_input", "bool_input", "init_float_input"],
         output_names=["float_output", "int_output", "bool_output"],
     )
+
+    onnx_model = onnx.load(output_path_simple)
+    onnx_model.graph.initializer.append(
+        onnx.numpy_helper.from_array(default_init_float_input, name="init_float_input")
+    )
+    onnx.save(onnx_model, output_path_simple)
 
     # Add simple metadata to the simple test model
     simple_metadata = {

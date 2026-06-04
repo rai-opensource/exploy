@@ -173,7 +173,7 @@ class OnnxRuntime {
   Ort::RunOptions run_options_{nullptr};
 
   struct TensorData {
-    std::size_t size;
+    std::size_t size{0};
     std::vector<std::vector<int64_t>> shapes;
     std::vector<const char*> names;
     std::vector<Ort::Value> tensors;
@@ -183,6 +183,10 @@ class OnnxRuntime {
 
   TensorData input_;
   TensorData output_;
+
+  // Number of inputs without an overridable initializer.
+  std::size_t non_initializer_input_count_{0};
+  bool use_initializers_{true};
 
   std::unordered_map<std::string, int> input_names_to_index_{};
   std::unordered_map<std::string, int> output_names_to_index_{};

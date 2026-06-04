@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <span>
 
@@ -79,6 +80,7 @@ TEST_F(OnnxRuntimeTest, InputTensorNames) {
   EXPECT_TRUE(input_names.contains("float_input"));
   EXPECT_TRUE(input_names.contains("int_input"));
   EXPECT_TRUE(input_names.contains("bool_input"));
+  EXPECT_TRUE(input_names.contains("init_float_input"));
 }
 
 TEST_F(OnnxRuntimeTest, OutputTensorNames) {
@@ -398,6 +400,124 @@ TEST_F(OnnxRuntimeTest, CopyOutputToInputTypeMismatch) {
 
   // Test copying bool output to float input (should fail due to type mismatch)
   EXPECT_FALSE(runtime.copyOutputToInput("float_output", "bool_input"));
+}
+
+TEST_F(OnnxRuntimeTest, FirstRunUsesInitializerDefaults) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+  runtime.resetBuffers();
+
+  auto float_input = runtime.inputBuffer<float>("float_input");
+  ASSERT_TRUE(float_input.has_value());
+  float_input.value()[0] = 1.5f;
+  float_input.value()[1] = 2.5f;
+  float_input.value()[2] = 3.5f;
+
+  // Populate the ``init_float_input`` buffer with non-zero values that would clearly
+  // differ from the baked-in defaults [0, 0, 0]. The first run must IGNORE these because
+  // ``init_float_input`` is an overridable initializer.
+  auto init_float_input = runtime.inputBuffer<float>("init_float_input");
+  ASSERT_TRUE(init_float_input.has_value());
+  init_float_input.value()[0] = 100.0f;
+  init_float_input.value()[1] = 200.0f;
+  init_float_input.value()[2] = 300.0f;
+
+  ASSERT_TRUE(runtime.evaluate());
+
+  // float_output = float_input * 2 + 0 (init_float_input defaults to zeros).
+  auto float_output = runtime.outputBuffer<float>("float_output");
+  ASSERT_TRUE(float_output.has_value());
+  EXPECT_FLOAT_EQ(float_output.value()[0], 3.0f);
+  EXPECT_FLOAT_EQ(float_output.value()[1], 5.0f);
+  EXPECT_FLOAT_EQ(float_output.value()[2], 7.0f);
+}
+
+TEST_F(OnnxRuntimeTest, SubsequentRunsUseInitializerBuffer) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+  runtime.resetBuffers();
+
+  auto float_input = runtime.inputBuffer<float>("float_input");
+  ASSERT_TRUE(float_input.has_value());
+  float_input.value()[0] = 1.5f;
+  float_input.value()[1] = 2.5f;
+  float_input.value()[2] = 3.5f;
+
+  auto init_float_input = runtime.inputBuffer<float>("init_float_input");
+  ASSERT_TRUE(init_float_input.has_value());
+
+  // First run: defaults [0, 0, 0] used regardless of buffer contents.
+  std::ranges::fill(init_float_input.value(), 999.0f);
+  ASSERT_TRUE(runtime.evaluate());
+
+  auto float_output = runtime.outputBuffer<float>("float_output");
+  ASSERT_TRUE(float_output.has_value());
+  EXPECT_FLOAT_EQ(float_output.value()[0], 3.0f);  // 1.5 * 2 + 0
+  EXPECT_FLOAT_EQ(float_output.value()[1], 5.0f);  // 2.5 * 2 + 0
+  EXPECT_FLOAT_EQ(float_output.value()[2], 7.0f);  // 3.5 * 2 + 0
+
+  // Second run: now the buffer values must override the defaults.
+  init_float_input.value()[0] = 10.0f;
+  init_float_input.value()[1] = 20.0f;
+  init_float_input.value()[2] = 30.0f;
+  ASSERT_TRUE(runtime.evaluate());
+
+  EXPECT_FLOAT_EQ(float_output.value()[0], 13.0f);  // 1.5 * 2 + 10
+  EXPECT_FLOAT_EQ(float_output.value()[1], 25.0f);  // 2.5 * 2 + 20
+  EXPECT_FLOAT_EQ(float_output.value()[2], 37.0f);  // 3.5 * 2 + 30
+
+  // Third run: confirm the buffer keeps overriding (still not falling back).
+  init_float_input.value()[0] = -1.0f;
+  init_float_input.value()[1] = -2.0f;
+  init_float_input.value()[2] = -3.0f;
+  ASSERT_TRUE(runtime.evaluate());
+
+  EXPECT_FLOAT_EQ(float_output.value()[0], 2.0f);  // 1.5 * 2 - 1
+  EXPECT_FLOAT_EQ(float_output.value()[1], 3.0f);  // 2.5 * 2 - 2
+  EXPECT_FLOAT_EQ(float_output.value()[2], 4.0f);  // 3.5 * 2 - 3
+}
+
+TEST_F(OnnxRuntimeTest, ResetBuffersReArmsInitializerDefaults) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+  runtime.resetBuffers();
+
+  auto float_input = runtime.inputBuffer<float>("float_input");
+  auto init_float_input = runtime.inputBuffer<float>("init_float_input");
+  ASSERT_TRUE(float_input.has_value());
+  ASSERT_TRUE(init_float_input.has_value());
+
+  float_input.value()[0] = 1.5f;
+  float_input.value()[1] = 2.5f;
+  float_input.value()[2] = 3.5f;
+
+  // Run #1 uses defaults.
+  ASSERT_TRUE(runtime.evaluate());
+  // Run #2 uses the buffer.
+  init_float_input.value()[0] = 10.0f;
+  init_float_input.value()[1] = 20.0f;
+  init_float_input.value()[2] = 30.0f;
+  ASSERT_TRUE(runtime.evaluate());
+  auto float_output = runtime.outputBuffer<float>("float_output");
+  ASSERT_TRUE(float_output.has_value());
+  EXPECT_FLOAT_EQ(float_output.value()[0], 13.0f);  // 1.5 * 2 + 10
+
+  // After resetBuffers(), the next evaluate() must again fall back to the model's
+  // initializer defaults, regardless of buffer contents.
+  runtime.resetBuffers();
+  // resetBuffers() also zeroes the buffers, so set non-zero values to prove they are
+  // ignored on the post-reset run. Restore float_input as well (also zeroed by reset).
+  float_input.value()[0] = 1.5f;
+  float_input.value()[1] = 2.5f;
+  float_input.value()[2] = 3.5f;
+  init_float_input.value()[0] = 999.0f;
+  init_float_input.value()[1] = 999.0f;
+  init_float_input.value()[2] = 999.0f;
+
+  ASSERT_TRUE(runtime.evaluate());
+  EXPECT_FLOAT_EQ(float_output.value()[0], 3.0f);  // 1.5 * 2 + 0
+  EXPECT_FLOAT_EQ(float_output.value()[1], 5.0f);  // 2.5 * 2 + 0
+  EXPECT_FLOAT_EQ(float_output.value()[2], 7.0f);  // 3.5 * 2 + 0
 }
 
 }  // namespace exploy::control

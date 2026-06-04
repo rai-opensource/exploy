@@ -14,6 +14,46 @@ namespace exploy::control {
 
 namespace {
 
+enum class TensorKind { Input, Output, Initializer };
+
+std::size_t getTensorCount(const Ort::Session& session, TensorKind kind) {
+  switch (kind) {
+    case TensorKind::Input:
+      return session.GetInputCount();
+    case TensorKind::Output:
+      return session.GetOutputCount();
+    case TensorKind::Initializer:
+      return session.GetOverridableInitializerCount();
+  }
+  return 0;
+}
+
+Ort::AllocatedStringPtr getTensorNameAllocated(Ort::Session& session,
+                                               Ort::AllocatorWithDefaultOptions& allocator,
+                                               TensorKind kind, std::size_t index) {
+  switch (kind) {
+    case TensorKind::Input:
+      return session.GetInputNameAllocated(index, allocator);
+    case TensorKind::Output:
+      return session.GetOutputNameAllocated(index, allocator);
+    case TensorKind::Initializer:
+      return session.GetOverridableInitializerNameAllocated(index, allocator);
+  }
+  return Ort::AllocatedStringPtr{nullptr, Ort::detail::AllocatedFree{allocator}};
+}
+
+Ort::TypeInfo getTensorTypeInfo(Ort::Session& session, TensorKind kind, std::size_t index) {
+  switch (kind) {
+    case TensorKind::Input:
+      return session.GetInputTypeInfo(index);
+    case TensorKind::Output:
+      return session.GetOutputTypeInfo(index);
+    case TensorKind::Initializer:
+      return session.GetOverridableInitializerTypeInfo(index);
+  }
+  return Ort::TypeInfo{nullptr};
+}
+
 void resetTensorBuffer(Ort::Value& tensor, ONNXTensorElementDataType data_type) {
   const auto count = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
   switch (data_type) {
@@ -36,34 +76,35 @@ void resetTensorBuffer(Ort::Value& tensor, ONNXTensorElementDataType data_type) 
 }
 
 template <typename TensorDataType>
-void initializeTensorData(TensorDataType& tensor_data, std::unique_ptr<Ort::Session>& session,
-                          Ort::AllocatorWithDefaultOptions& allocator,
-                          std::unordered_map<std::string, int>& names_to_index, bool is_input) {
-  tensor_data.size = is_input ? session->GetInputCount() : session->GetOutputCount();
+void appendTensorData(TensorDataType& tensor_data, std::unique_ptr<Ort::Session>& session,
+                      Ort::AllocatorWithDefaultOptions& allocator,
+                      std::unordered_map<std::string, int>& names_to_index, TensorKind kind) {
+  const std::size_t count = getTensorCount(*session, kind);
 
-  tensor_data.names.reserve(tensor_data.size);
-  tensor_data.shapes.reserve(tensor_data.size);
-  tensor_data.data_types.reserve(tensor_data.size);
-  tensor_data.tensors.reserve(tensor_data.size);
-  tensor_data.allocated_names.reserve(tensor_data.size);
+  const std::size_t new_size = tensor_data.size + count;
+  tensor_data.names.reserve(new_size);
+  tensor_data.shapes.reserve(new_size);
+  tensor_data.data_types.reserve(new_size);
+  tensor_data.tensors.reserve(new_size);
+  tensor_data.allocated_names.reserve(new_size);
 
-  for (std::size_t n = 0; n < tensor_data.size; n++) {
-    auto name_ptr = is_input ? session->GetInputNameAllocated(n, allocator)
-                             : session->GetOutputNameAllocated(n, allocator);
-    tensor_data.allocated_names.push_back(std::move(name_ptr));
+  for (std::size_t n = 0; n < count; n++) {
+    tensor_data.allocated_names.push_back(getTensorNameAllocated(*session, allocator, kind, n));
     tensor_data.names.push_back(tensor_data.allocated_names.back().get());
 
-    auto type_info = is_input ? session->GetInputTypeInfo(n) : session->GetOutputTypeInfo(n);
+    auto type_info = getTensorTypeInfo(*session, kind, n);
     auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
-
     tensor_data.shapes.push_back(tensor_info.GetShape());
     tensor_data.data_types.push_back(tensor_info.GetElementType());
 
-    tensor_data.tensors.push_back(Ort::Value::CreateTensor(allocator, tensor_data.shapes[n].data(),
-                                                           tensor_data.shapes[n].size(),
-                                                           tensor_data.data_types[n]));
+    tensor_data.tensors.push_back(
+        Ort::Value::CreateTensor(allocator, tensor_data.shapes.back().data(),
+                                 tensor_data.shapes.back().size(), tensor_data.data_types.back()));
 
-    names_to_index[std::string(tensor_data.names.back())] = n;
+    resetTensorBuffer(tensor_data.tensors.back(), tensor_data.data_types.back());
+
+    names_to_index[std::string(tensor_data.names.back())] = static_cast<int>(tensor_data.size);
+    tensor_data.size++;
   }
 }
 
@@ -113,22 +154,37 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
       break;
   }
 
-  initializeTensorData(input_, session_, allocator_, input_names_to_index_, /*is_input=*/true);
-  initializeTensorData(output_, session_, allocator_, output_names_to_index_, /*is_input=*/false);
+  input_ = TensorData{};
+  output_ = TensorData{};
+  input_names_to_index_.clear();
+  output_names_to_index_.clear();
+  non_initializer_input_count_ = 0;
 
+  // Append initializer-backed inputs after regular inputs so that we can optionally let ONNX
+  // Runtime use the model's default values for them after a reset.
+  appendTensorData(input_, session_, allocator_, input_names_to_index_, TensorKind::Input);
+  appendTensorData(input_, session_, allocator_, input_names_to_index_, TensorKind::Initializer);
+  appendTensorData(output_, session_, allocator_, output_names_to_index_, TensorKind::Output);
+  non_initializer_input_count_ = getTensorCount(*session_, TensorKind::Input);
+  use_initializers_ = true;
   metadata_ = session_->GetModelMetadata();
 
   return true;
 }
 
 bool OnnxRuntime::evaluate() {
+  // If use_initializers_ is true, we pass only the leading non-initializer inputs to let ONNX
+  // Runtime use the model's default values for the rest. After the first run, we always pass all
+  // inputs and ignore the model defaults.
+  const std::size_t input_count = use_initializers_ ? non_initializer_input_count_ : input_.size;
   try {
-    session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_.size,
+    session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_count,
                   output_.names.data(), output_.tensors.data(), output_.size);
   } catch (const Ort::Exception& e) {
     LOG_STREAM(ERROR, "ONNX Runtime evaluation failed: " << e.what());
     return false;
   }
+  use_initializers_ = false;
   return true;
 }
 
@@ -144,6 +200,7 @@ void OnnxRuntime::resetBuffers() {
   for (std::size_t n = 0; n < output_.size; n++) {
     resetTensorBuffer(output_.tensors[n], output_.data_types[n]);
   }
+  use_initializers_ = true;
 }
 
 std::unordered_set<std::string> OnnxRuntime::inputNames() const {
