@@ -1,0 +1,36 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
+name: Setup pixi
+description: >-
+  Set up pixi using the repository-pinned action and pixi binary versions.
+  This is the single source of truth for the pixi tooling versions used across
+  all workflows.
+
+inputs:
+  frozen:
+    description: Fail if the lock file is out of date.
+    required: false
+    default: "true"
+  cache:
+    description: Cache the pixi environments.
+    required: false
+    default: "false"
+  environments:
+    description: Space-separated environments to install. Installs all if empty.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pixi
+      uses: prefix-dev/setup-pixi@v0.9.6
+      with:
+        # Pin pixi: 0.71.x changed virtual-package/system-requirements platform
+        # matching and breaks GPU env installs on the runner. v0.70.2 is the
+        # oldest release that reads the current lock (format v7) and predates
+        # that regression.
+        pixi-version: v0.70.2
+        frozen: ${{ inputs.frozen }}
+        cache: ${{ inputs.cache }}
+        environments: ${{ inputs.environments }}
