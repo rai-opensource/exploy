@@ -9,34 +9,33 @@
 
 namespace exploy::control {
 
-/**
- * @brief Configuration for SE2 velocity commands.
- */
-struct SE2VelocityConfig {
-  std::optional<SE2VelocityRanges> ranges{};
+/// @brief Arguments for CommandInterface::initSe2Velocity and CommandInterface::se2Velocity.
+struct Se2VelocityCommandInfo {
+  std::string command_name;                   ///< The name of the command.
+  std::optional<SE2VelocityRanges> ranges{};  ///< Optional ranges for the commanded se(2) velocity.
 };
 
-/**
- * @brief Configuration for SE3 pose commands.
- */
-struct SE3PoseConfig {
-  // Currently no configuration options, but this struct is defined for consistency and future
-  // extensibility.
+/// @brief Arguments for CommandInterface::initSe3Pose and CommandInterface::se3Pose.
+struct Se3PoseCommandInfo {
+  std::string command_name;  ///< The name of the command.
 };
 
-/**
- * @brief Configuration for boolean selector commands.
- */
-struct BooleanSelectorConfig {
-  // Currently no configuration options, but this struct is defined for consistency and future
-  // extensibility.
+/// @brief Arguments for CommandInterface::initBooleanSelector and
+/// CommandInterface::booleanSelector.
+struct BooleanSelectorCommandInfo {
+  std::string command_name;  ///< The name of the command.
 };
 
-/**
- * @brief Configuration for float scalar commands.
- */
-struct FloatScalarConfig {
-  std::optional<Range> range{};
+/// @brief Arguments for CommandInterface::initFloatValue and CommandInterface::floatValue.
+struct FloatValueCommandInfo {
+  std::string command_name;      ///< The name of the command.
+  std::optional<Range> range{};  ///< Optional range for the commanded float scalar.
+};
+
+/// @brief Arguments for CommandInterface::initJointPosition and CommandInterface::jointPosition.
+struct JointPositionCommandInfo {
+  std::string command_name;  ///< The name of the command.
+  std::string joint_name;    ///< The name of the joint.
 };
 
 /**
@@ -53,23 +52,21 @@ class CommandInterface {
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param command_name The name of the command.
-   * @param config The configuration for the commanded se2 velocity.
+   * @param info The command info, including the command name and optional ranges.
    * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initSe2Velocity(const std::string& command_name,
-                               const SE2VelocityConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initSe2Velocity() not implemented for command: " << command_name);
+  virtual bool initSe2Velocity(const Se2VelocityCommandInfo& info) {
+    LOG_STREAM(ERROR, "initSe2Velocity() not implemented for command: " << info.command_name);
     return false;
   }
   /**
    * @brief Get commanded se2 velocity.
    *
-   * @param command_name The name of the command.
+   * @param info The command info, including the command name.
    * @return The commanded se2 velocity (lin x, lin y, ang z).
    */
-  virtual std::optional<SE2Velocity> se2Velocity(const std::string& command_name) {
-    LOG_STREAM(ERROR, "se2Velocity() not implemented for command: " << command_name);
+  virtual std::optional<SE2Velocity> se2Velocity(const Se2VelocityCommandInfo& info) {
+    LOG_STREAM(ERROR, "se2Velocity() not implemented for command: " << info.command_name);
     return std::nullopt;
   }
   /**
@@ -77,22 +74,21 @@ class CommandInterface {
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param command_name The name of the command.
-   * @param config The configuration for the commanded SE3 pose.
+   * @param info The command info, including the command name.
    * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initSe3Pose(const std::string& command_name, const SE3PoseConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initSe3Pose() not implemented for command: " << command_name);
+  virtual bool initSe3Pose(const Se3PoseCommandInfo& info) {
+    LOG_STREAM(ERROR, "initSe3Pose() not implemented for command: " << info.command_name);
     return false;
   }
   /**
    * @brief Get commanded SE3 some pose.
    *
-   * @param command_name The name of the command.
+   * @param info The command info, including the command name.
    * @return The commanded SE3 pose.
    */
-  virtual std::optional<SE3Pose> se3Pose(const std::string& command_name) const {
-    LOG_STREAM(ERROR, "se3Pose() not implemented for command: " << command_name);
+  virtual std::optional<SE3Pose> se3Pose(const Se3PoseCommandInfo& info) const {
+    LOG_STREAM(ERROR, "se3Pose() not implemented for command: " << info.command_name);
     return std::nullopt;
   }
   /**
@@ -100,23 +96,21 @@ class CommandInterface {
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param command_name The name of the command.
-   * @param config The configuration for the commanded boolean selector.
+   * @param info The command info, including the command name.
    * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initBooleanSelector(const std::string& command_name,
-                                   const BooleanSelectorConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initBooleanSelector() not implemented for command: " << command_name);
+  virtual bool initBooleanSelector(const BooleanSelectorCommandInfo& info) {
+    LOG_STREAM(ERROR, "initBooleanSelector() not implemented for command: " << info.command_name);
     return false;
   }
   /**
    * @brief Get commanded boolean selector.
    *
-   * @param command_name The name of the command.
+   * @param info The command info, including the command name.
    * @return The commanded bool.
    */
-  virtual std::optional<bool> booleanSelector(const std::string& command_name) const {
-    LOG_STREAM(ERROR, "booleanSelector() not implemented for command: " << command_name);
+  virtual std::optional<bool> booleanSelector(const BooleanSelectorCommandInfo& info) const {
+    LOG_STREAM(ERROR, "booleanSelector() not implemented for command: " << info.command_name);
     return std::nullopt;
   }
   /**
@@ -124,23 +118,21 @@ class CommandInterface {
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param command_name The name of the command.
-   * @param config The configuration for the commanded float scalar.
+   * @param info The command info, including the command name and optional range.
    * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initFloatValue(const std::string& command_name,
-                              const FloatScalarConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << command_name);
+  virtual bool initFloatValue(const FloatValueCommandInfo& info) {
+    LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << info.command_name);
     return false;
   }
   /**
    * @brief Get commanded float value.
    *
-   * @param command_name The name of the command.
+   * @param info The command info, including the command name.
    * @return The commanded float.
    */
-  virtual std::optional<float> floatValue(const std::string& command_name) const {
-    LOG_STREAM(ERROR, "floatValue() not implemented for command: " << command_name);
+  virtual std::optional<float> floatValue(const FloatValueCommandInfo& info) const {
+    LOG_STREAM(ERROR, "floatValue() not implemented for command: " << info.command_name);
     return std::nullopt;
   }
   /**
@@ -148,26 +140,23 @@ class CommandInterface {
    *
    * Called once per joint during initialization (usually non real-time).
    *
-   * @param command_name The name of the command.
-   * @param joint_name The name of the joint.
+   * @param info The command info, including the command name and joint name.
    * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initJointPosition(const std::string& command_name, const std::string& joint_name) {
+  virtual bool initJointPosition(const JointPositionCommandInfo& info) {
     LOG_STREAM(ERROR, "initJointPosition() not implemented for command: "
-                          << command_name << ", joint: " << joint_name);
+                          << info.command_name << ", joint: " << info.joint_name);
     return false;
   }
   /**
    * @brief Get the commanded position for a single joint.
    *
-   * @param command_name The name of the command.
-   * @param joint_name The name of the joint.
+   * @param info The command info, including the command name and joint name.
    * @return The commanded joint position, or std::nullopt if unavailable.
    */
-  virtual std::optional<float> jointPosition(const std::string& command_name,
-                                             const std::string& joint_name) const {
-    LOG_STREAM(ERROR, "jointPosition() not implemented for command: " << command_name
-                                                                      << ", joint: " << joint_name);
+  virtual std::optional<float> jointPosition(const JointPositionCommandInfo& info) const {
+    LOG_STREAM(ERROR, "jointPosition() not implemented for command: "
+                          << info.command_name << ", joint: " << info.joint_name);
     return std::nullopt;
   }
 };

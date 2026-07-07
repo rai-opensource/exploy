@@ -70,12 +70,12 @@ IMULinearVelocityInput::IMULinearVelocityInput(const std::string& key, const std
     : Input("IMULinearVelocityInput"), key_(key), imu_name_(imu_name) {}
 
 bool IMULinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initImuLinearVelocityImu(imu_name_);
+  return state.initImuLinearVelocityImu({.imu_name = imu_name_});
 }
 
 bool IMULinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                   CommandInterface&) {
-  auto maybe_linvel = state.imuLinearVelocityImu(imu_name_);
+  auto maybe_linvel = state.imuLinearVelocityImu({.imu_name = imu_name_});
   if (!maybe_linvel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -89,12 +89,12 @@ IMUAngularVelocityInput::IMUAngularVelocityInput(const std::string& key,
     : Input("IMUAngularVelocityInput"), key_(key), imu_name_(imu_name) {}
 
 bool IMUAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initImuAngularVelocityImu(imu_name_);
+  return state.initImuAngularVelocityImu({.imu_name = imu_name_});
 }
 
 bool IMUAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                    CommandInterface&) {
-  auto maybe_angvel = state.imuAngularVelocityImu(imu_name_);
+  auto maybe_angvel = state.imuAngularVelocityImu({.imu_name = imu_name_});
   if (!maybe_angvel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -106,12 +106,12 @@ IMUOrientationInput::IMUOrientationInput(const std::string& key, const std::stri
     : Input("IMUOrientationInput"), key_(key), imu_name_(imu_name) {}
 
 bool IMUOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initImuOrientationW(imu_name_);
+  return state.initImuOrientationW({.imu_name = imu_name_});
 }
 
 bool IMUOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                CommandInterface&) {
-  auto maybe_quaternion = state.imuOrientationW(imu_name_);
+  auto maybe_quaternion = state.imuOrientationW({.imu_name = imu_name_});
   if (!maybe_quaternion.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -120,13 +120,18 @@ bool IMUOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
 }
 
 // Implementation of JointPositionInput methods
-JointPositionInput::JointPositionInput(const std::string& key,
+JointPositionInput::JointPositionInput(const std::string& key, const std::string& articulation_name,
                                        const std::vector<std::string>& joint_names)
-    : Input("JointPositionInput"), key_(key), joint_names_(joint_names) {}
+    : Input("JointPositionInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      joint_names_(joint_names) {}
 
 bool JointPositionInput::init(RobotStateInterface& state, CommandInterface&) {
   for (const auto& joint_name : joint_names_) {
-    state.initJointPosition(joint_name);
+    if (!state.initJointPosition(
+            {.articulation_name = articulation_name_, .joint_name = joint_name}))
+      return false;
   }
   return true;
 }
@@ -135,7 +140,8 @@ bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, 
   std::vector<double> positions;
   if (joint_names_.empty()) return false;
   for (const auto& joint_name : joint_names_) {
-    auto maybe_pos = state.jointPosition(joint_name);
+    auto maybe_pos =
+        state.jointPosition({.articulation_name = articulation_name_, .joint_name = joint_name});
     if (!maybe_pos.has_value()) return false;
     positions.push_back(maybe_pos.value());
   }
@@ -146,13 +152,18 @@ bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, 
 }
 
 // Implementation of JointVelocityInput methods
-JointVelocityInput::JointVelocityInput(const std::string& key,
+JointVelocityInput::JointVelocityInput(const std::string& key, const std::string& articulation_name,
                                        const std::vector<std::string>& joint_names)
-    : Input("JointVelocityInput"), key_(key), joint_names_(joint_names) {}
+    : Input("JointVelocityInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      joint_names_(joint_names) {}
 
 bool JointVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   for (const auto& joint_name : joint_names_) {
-    state.initJointVelocity(joint_name);
+    if (!state.initJointVelocity(
+            {.articulation_name = articulation_name_, .joint_name = joint_name}))
+      return false;
   }
   return true;
 }
@@ -160,7 +171,8 @@ bool JointVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
 bool JointVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   std::vector<double> velocities;
   for (const auto& joint_name : joint_names_) {
-    auto maybe_vel = state.jointVelocity(joint_name);
+    auto maybe_vel =
+        state.jointVelocity({.articulation_name = articulation_name_, .joint_name = joint_name});
     if (!maybe_vel.has_value()) return false;
     velocities.push_back(maybe_vel.value());
   }
@@ -171,15 +183,15 @@ bool JointVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state, 
 }
 
 // Implementation of BasePositionInput methods
-BasePositionInput::BasePositionInput(const std::string& key)
-    : Input("BasePositionInput"), key_(key) {}
+BasePositionInput::BasePositionInput(const std::string& key, const std::string& articulation_name)
+    : Input("BasePositionInput"), key_(key), articulation_name_(articulation_name) {}
 
 bool BasePositionInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBasePosW();
+  return state.initBasePosW({.articulation_name = articulation_name_});
 }
 
 bool BasePositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_pos = state.basePosW();
+  auto maybe_pos = state.basePosW({.articulation_name = articulation_name_});
   if (!maybe_pos.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -188,16 +200,17 @@ bool BasePositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, C
 }
 
 // Implementation of BaseOrientationInput methods
-BaseOrientationInput::BaseOrientationInput(const std::string& key)
-    : Input("BaseOrientationInput"), key_(key) {}
+BaseOrientationInput::BaseOrientationInput(const std::string& key,
+                                           const std::string& articulation_name)
+    : Input("BaseOrientationInput"), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBaseQuatW();
+  return state.initBaseQuatW({.articulation_name = articulation_name_});
 }
 
 bool BaseOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                 CommandInterface&) {
-  auto maybe_quat = state.baseQuatW();
+  auto maybe_quat = state.baseQuatW({.articulation_name = articulation_name_});
   if (!maybe_quat.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -206,16 +219,17 @@ bool BaseOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state
 }
 
 // Implementation of BaseLinearVelocityInput methods
-BaseLinearVelocityInput::BaseLinearVelocityInput(const std::string& key)
-    : Input("BaseLinearVelocityInput"), key_(key) {}
+BaseLinearVelocityInput::BaseLinearVelocityInput(const std::string& key,
+                                                 const std::string& articulation_name)
+    : Input("BaseLinearVelocityInput"), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseLinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBaseLinVelB();
+  return state.initBaseLinVelB({.articulation_name = articulation_name_});
 }
 
 bool BaseLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                    CommandInterface&) {
-  auto maybe_vel = state.baseLinVelB();
+  auto maybe_vel = state.baseLinVelB({.articulation_name = articulation_name_});
   if (!maybe_vel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -224,16 +238,17 @@ bool BaseLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& st
 }
 
 // Implementation of BaseAngularVelocityInput methods
-BaseAngularVelocityInput::BaseAngularVelocityInput(const std::string& key)
-    : Input("BaseAngularVelocityInput"), key_(key) {}
+BaseAngularVelocityInput::BaseAngularVelocityInput(const std::string& key,
+                                                   const std::string& articulation_name)
+    : Input("BaseAngularVelocityInput"), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBaseAngVelB();
+  return state.initBaseAngVelB({.articulation_name = articulation_name_});
 }
 
 bool BaseAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                     CommandInterface&) {
-  auto maybe_vel = state.baseAngVelB();
+  auto maybe_vel = state.baseAngVelB({.articulation_name = articulation_name_});
   if (!maybe_vel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -244,16 +259,19 @@ bool BaseAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& s
 // Implementation of JointTargetOutput methods
 JointTargetOutput::JointTargetOutput(const std::string& pos_key, const std::string& vel_key,
                                      const std::string& eff_key,
+                                     const std::string& articulation_name,
                                      const metadata::JointOutputMetadata& metadata)
     : Output("JointTargetOutput"),
       pos_key_(pos_key),
       vel_key_(vel_key),
       eff_key_(eff_key),
+      articulation_name_(articulation_name),
       metadata_(metadata) {}
 
 bool JointTargetOutput::init(RobotStateInterface& state, CommandInterface&) {
   for (const auto& joint_name : metadata_.names) {
-    if (!state.initJointOutput(joint_name)) return false;
+    if (!state.initJointOutput({.articulation_name = articulation_name_, .joint_name = joint_name}))
+      return false;
   }
   return true;
 }
@@ -271,27 +289,37 @@ bool JointTargetOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
   for (size_t i = 0; i < metadata_.names.size(); ++i) {
     const auto& joint_name = metadata_.names.at(i);
 
-    if (!state.setJointPosition(joint_name, maybe_pos_buffer.value()[i])) {
+    if (!state.setJointPosition({.articulation_name = articulation_name_,
+                                 .joint_name = joint_name,
+                                 .position = maybe_pos_buffer.value()[i]})) {
       LOG_STREAM(ERROR, fmt::format("Failed to set position of joint '{}'", joint_name));
       return false;
     }
 
-    if (!state.setJointVelocity(joint_name, maybe_vel_buffer.value()[i])) {
+    if (!state.setJointVelocity({.articulation_name = articulation_name_,
+                                 .joint_name = joint_name,
+                                 .velocity = maybe_vel_buffer.value()[i]})) {
       LOG_STREAM(ERROR, fmt::format("Failed to set velocity of joint '{}'", joint_name));
       return false;
     }
 
-    if (!state.setJointEffort(joint_name, maybe_eff_buffer.value()[i])) {
+    if (!state.setJointEffort({.articulation_name = articulation_name_,
+                               .joint_name = joint_name,
+                               .effort = maybe_eff_buffer.value()[i]})) {
       LOG_STREAM(ERROR, fmt::format("Failed to set effort of joint '{}'", joint_name));
       return false;
     }
 
-    if (!state.setJointPGain(joint_name, metadata_.stiffness.at(i))) {
+    if (!state.setJointPGain({.articulation_name = articulation_name_,
+                              .joint_name = joint_name,
+                              .p_gain = metadata_.stiffness.at(i)})) {
       LOG_STREAM(ERROR, fmt::format("Failed to set p-gain of joint '{}'", joint_name));
       return false;
     }
 
-    if (!state.setJointDGain(joint_name, metadata_.damping.at(i))) {
+    if (!state.setJointDGain({.articulation_name = articulation_name_,
+                              .joint_name = joint_name,
+                              .d_gain = metadata_.damping.at(i)})) {
       LOG_STREAM(ERROR, fmt::format("Failed to set d-gain of joint '{}'", joint_name));
       return false;
     }
@@ -304,7 +332,7 @@ SE2VelocityOutput::SE2VelocityOutput(const std::string& key,
     : Output("SE2VelocityOutput"), key_(key), metadata_(metadata) {}
 
 bool SE2VelocityOutput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initSe2Velocity(metadata_.target_frame);
+  return state.initSe2Velocity({.frame_name = metadata_.target_frame});
 }
 
 bool SE2VelocityOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
@@ -318,7 +346,7 @@ bool SE2VelocityOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
   const double vy = buffer[1];
   const double wz = buffer[2];
 
-  if (!state.setSe2Velocity(metadata_.target_frame, {vx, vy, wz})) {
+  if (!state.setSe2Velocity({.frame_name = metadata_.target_frame, .velocity = {vx, vy, wz}})) {
     constexpr auto msg = "Failed to set se(2) target velocity of frame '{}'";
     LOG_STREAM(ERROR, fmt::format(msg, metadata_.target_frame));
     return false;
@@ -333,49 +361,47 @@ HeightScanInput::HeightScanInput(const std::string& key, const std::string& sens
                                  const metadata::HeightScanMetadata& metadata)
     : Input("HeightScanInput"),
       key_(key),
-      sensor_name_(sensor_name),
-      layer_names_(layer_names),
-      metadata_(metadata) {}
+      articulation_name_(metadata.articulation_name),
+      scan_info_{
+          .sensor_name = sensor_name,
+          .pattern =
+              HeightScanPattern{
+                  .size = Eigen::Vector2d(metadata.size_x, metadata.size_y),
+                  .resolution = metadata.resolution,
+                  .offset = Eigen::Vector2d(metadata.offset_x, metadata.offset_y),
+              },
+          .layer_names = layer_names,
+      } {}
 
 bool HeightScanInput::init(RobotStateInterface& state, CommandInterface&) {
-  HeightScanConfig config = HeightScanConfig{
-      .pattern =
-          HeightScanConfig::Pattern{
-              .size = Eigen::Vector2d(metadata_.size_x, metadata_.size_y),
-              .resolution = metadata_.resolution,
-              .offset = Eigen::Vector2d(metadata_.offset_x, metadata_.offset_y),
-          },
-      .layer_names = layer_names_,
-  };
-  if (!state.initBasePosW()) {
+  if (!state.initBasePosW({.articulation_name = articulation_name_})) {
     LOG_STREAM(ERROR, "Failed to initialize base position for HeightScanInput");
     return false;
   };
-  if (!state.initBaseQuatW()) {
+  if (!state.initBaseQuatW({.articulation_name = articulation_name_})) {
     LOG_STREAM(ERROR, "Failed to initialize base orientation for HeightScanInput");
     return false;
   };
-  return state.initHeightScan(sensor_name_, config);
+  return state.initHeightScan(scan_info_);
 }
 
 bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_base_pos = state.basePosW();
+  auto maybe_base_pos = state.basePosW({.articulation_name = articulation_name_});
   if (!maybe_base_pos.has_value()) {
     LOG_STREAM(ERROR, "Failed to get base position for HeightScanInput");
     return false;
   }
-  auto maybe_base_quat = state.baseQuatW();
+  auto maybe_base_quat = state.baseQuatW({.articulation_name = articulation_name_});
   if (!maybe_base_quat.has_value()) {
     LOG_STREAM(ERROR, "Failed to get base orientation for HeightScanInput");
     return false;
   }
-  auto maybe_scan =
-      state.heightScan(sensor_name_, layer_names_, maybe_base_pos.value(), maybe_base_quat.value());
+  auto maybe_scan = state.heightScan(scan_info_, maybe_base_pos.value(), maybe_base_quat.value());
   if (!maybe_scan.has_value()) {
     LOG_STREAM(ERROR, "Failed to get height scan data for HeightScanInput");
     return false;
   }
-  for (const auto& layer_name : layer_names_) {
+  for (const auto& layer_name : scan_info_.layer_names) {
     auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, layer_name));
     if (!maybe_buffer.has_value()) {
       LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, layer_name));
@@ -392,29 +418,28 @@ SphericalImageInput::SphericalImageInput(const std::string& key, const std::stri
                                          const metadata::SphericalImageMetadata& metadata)
     : Input("SphericalImageInput"),
       key_(key),
-      sensor_name_(sensor_name),
-      channel_names_(channel_names),
-      metadata_(metadata) {}
+      info_{
+          .sensor_name = sensor_name,
+          .v_res = static_cast<int>(metadata.v_res),
+          .h_res = static_cast<int>(metadata.h_res),
+          .v_fov_min_deg = metadata.v_fov_min_deg,
+          .v_fov_max_deg = metadata.v_fov_max_deg,
+          .unobserved_value = metadata.unobserved_value,
+          .channel_names = channel_names,
+      } {}
 
 bool SphericalImageInput::init(RobotStateInterface& state, CommandInterface&) {
-  SphericalImageConfig config;
-  config.v_res = static_cast<int>(metadata_.v_res);
-  config.h_res = static_cast<int>(metadata_.h_res);
-  config.v_fov_min_deg = metadata_.v_fov_min_deg;
-  config.v_fov_max_deg = metadata_.v_fov_max_deg;
-  config.unobserved_value = metadata_.unobserved_value;
-  config.channel_names = channel_names_;
-  return state.initSphericalImage(sensor_name_, config);
+  return state.initSphericalImage(info_);
 }
 
 bool SphericalImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                CommandInterface&) {
-  auto maybe_image = state.sphericalImage(sensor_name_, channel_names_);
+  auto maybe_image = state.sphericalImage(info_);
   if (!maybe_image.has_value()) {
     LOG_STREAM(ERROR, "Failed to get spherical image data for SphericalImageInput");
     return false;
   }
-  for (const auto& channel_name : channel_names_) {
+  for (const auto& channel_name : info_.channel_names) {
     auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, channel_name));
     if (!maybe_buffer.has_value()) {
       LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, channel_name));
@@ -431,29 +456,28 @@ PinholeImageInput::PinholeImageInput(const std::string& key, const std::string& 
                                      const metadata::PinholeImageMetadata& metadata)
     : Input("PinholeImageInput"),
       key_(key),
-      sensor_name_(sensor_name),
-      channel_names_(channel_names),
-      metadata_(metadata) {}
+      info_{
+          .sensor_name = sensor_name,
+          .width = metadata.width,
+          .height = metadata.height,
+          .fx = metadata.fx,
+          .fy = metadata.fy,
+          .cx = metadata.cx,
+          .cy = metadata.cy,
+          .channel_names = channel_names,
+      } {}
 
 bool PinholeImageInput::init(RobotStateInterface& state, CommandInterface&) {
-  PinholeImageConfig config;
-  config.width = metadata_.width;
-  config.height = metadata_.height;
-  config.fx = metadata_.fx;
-  config.fy = metadata_.fy;
-  config.cx = metadata_.cx;
-  config.cy = metadata_.cy;
-  config.channel_names = channel_names_;
-  return state.initPinholeImage(sensor_name_, config);
+  return state.initPinholeImage(info_);
 }
 
 bool PinholeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_image = state.pinholeImage(sensor_name_, channel_names_);
+  auto maybe_image = state.pinholeImage(info_);
   if (!maybe_image.has_value()) {
     LOG_STREAM(ERROR, "Failed to get pinhole image data for PinholeImageInput");
     return false;
   }
-  for (const auto& channel_name : channel_names_) {
+  for (const auto& channel_name : info_.channel_names) {
     auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, channel_name));
     if (!maybe_buffer.has_value()) {
       LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, channel_name));
@@ -469,12 +493,12 @@ CommandSE3PoseInput::CommandSE3PoseInput(const std::string& key, const std::stri
     : Input("CommandSE3PoseInput"), key_(key), command_name_(command_name) {}
 
 bool CommandSE3PoseInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initSe3Pose(command_name_, SE3PoseConfig{});
+  return command.initSe3Pose({.command_name = command_name_});
 }
 
 bool CommandSE3PoseInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                                CommandInterface& command) {
-  auto maybe_pose = command.se3Pose(command_name_);
+  auto maybe_pose = command.se3Pose({.command_name = command_name_});
   if (!maybe_pose.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -492,14 +516,12 @@ CommandSE2VelocityInput::CommandSE2VelocityInput(
       metadata_(metadata) {}
 
 bool CommandSE2VelocityInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  SE2VelocityConfig config;
-  config.ranges = metadata_.ranges;
-  return command.initSe2Velocity(command_name_, config);
+  return command.initSe2Velocity({.command_name = command_name_, .ranges = metadata_.ranges});
 }
 
 bool CommandSE2VelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                                    CommandInterface& command) {
-  auto maybe_pose = command.se2Velocity(command_name_);
+  auto maybe_pose = command.se2Velocity({.command_name = command_name_});
   if (!maybe_pose.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -512,12 +534,12 @@ CommandBooleanInput::CommandBooleanInput(const std::string& key, const std::stri
     : Input("CommandBooleanInput"), key_(key), command_name_(command_name) {}
 
 bool CommandBooleanInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initBooleanSelector(command_name_, BooleanSelectorConfig{});
+  return command.initBooleanSelector({.command_name = command_name_});
 }
 
 bool CommandBooleanInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                                CommandInterface& command) {
-  auto maybe_bool = command.booleanSelector(command_name_);
+  auto maybe_bool = command.booleanSelector({.command_name = command_name_});
   if (!maybe_bool.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<bool>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -541,7 +563,8 @@ bool CommandJointPositionInput::init(RobotStateInterface& /*state*/, CommandInte
     return false;
   }
   for (const auto& joint_name : metadata_.joint_names) {
-    if (!command.initJointPosition(command_name_, joint_name)) return false;
+    if (!command.initJointPosition({.command_name = command_name_, .joint_name = joint_name}))
+      return false;
   }
   return true;
 }
@@ -558,7 +581,8 @@ bool CommandJointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& 
     return false;
   }
   for (std::size_t i = 0; i < metadata_.joint_names.size(); ++i) {
-    auto maybe_pos = command.jointPosition(command_name_, metadata_.joint_names[i]);
+    auto maybe_pos = command.jointPosition(
+        {.command_name = command_name_, .joint_name = metadata_.joint_names[i]});
     if (!maybe_pos.has_value()) return false;
     buffer[i] = maybe_pos.value();
   }
@@ -571,12 +595,12 @@ CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& 
     : Input("CommandFloatInput"), key_(key), command_name_(command_name), metadata_(metadata) {}
 
 bool CommandFloatInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initFloatValue(command_name_, FloatScalarConfig{.range = metadata_.range});
+  return command.initFloatValue({.command_name = command_name_, .range = metadata_.range});
 }
 
 bool CommandFloatInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                              CommandInterface& command) {
-  auto maybe_float = command.floatValue(command_name_);
+  auto maybe_float = command.floatValue({.command_name = command_name_});
   if (!maybe_float.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -585,14 +609,20 @@ bool CommandFloatInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*
 }
 
 // Implementation of methods for body components.
-BodyPositionInput::BodyPositionInput(const std::string& key, const std::string& body_name)
-    : Input("BodyPositionInput"), key_(key), body_name_(body_name) {}
+BodyPositionInput::BodyPositionInput(const std::string& key, const std::string& articulation_name,
+                                     const std::string& body_name)
+    : Input("BodyPositionInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      body_name_(body_name) {}
 
 bool BodyPositionInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBodyPositionW(body_name_);
+  return state.initBodyPositionW(
+      {.articulation_name = articulation_name_, .body_name = body_name_});
 }
 bool BodyPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_pos = state.bodyPositionW(body_name_);
+  auto maybe_pos =
+      state.bodyPositionW({.articulation_name = articulation_name_, .body_name = body_name_});
   if (!maybe_pos.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -600,16 +630,23 @@ bool BodyPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, C
   return true;
 }
 
-BodyOrientationInput::BodyOrientationInput(const std::string& key, const std::string& body_name)
-    : Input("BodyOrientationInput"), key_(key), body_name_(body_name) {}
+BodyOrientationInput::BodyOrientationInput(const std::string& key,
+                                           const std::string& articulation_name,
+                                           const std::string& body_name)
+    : Input("BodyOrientationInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      body_name_(body_name) {}
 
 bool BodyOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBodyOrientationW(body_name_);
+  return state.initBodyOrientationW(
+      {.articulation_name = articulation_name_, .body_name = body_name_});
 }
 
 bool BodyOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                 CommandInterface&) {
-  auto maybe_quaternion = state.bodyOrientationW(body_name_);
+  auto maybe_quaternion =
+      state.bodyOrientationW({.articulation_name = articulation_name_, .body_name = body_name_});
   if (!maybe_quaternion.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -618,16 +655,22 @@ bool BodyOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state
 }
 
 BodyLinearVelocityInput::BodyLinearVelocityInput(const std::string& key,
+                                                 const std::string& articulation_name,
                                                  const std::string& body_name)
-    : Input("BodyLinearVelocityInput"), key_(key), body_name_(body_name) {}
+    : Input("BodyLinearVelocityInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      body_name_(body_name) {}
 
 bool BodyLinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBodyLinearVelocityB(body_name_);
+  return state.initBodyLinearVelocityB(
+      {.articulation_name = articulation_name_, .body_name = body_name_});
 }
 
 bool BodyLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                    CommandInterface&) {
-  auto maybe_vel = state.bodyLinearVelocityB(body_name_);
+  auto maybe_vel =
+      state.bodyLinearVelocityB({.articulation_name = articulation_name_, .body_name = body_name_});
   if (!maybe_vel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
@@ -636,16 +679,22 @@ bool BodyLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& st
 }
 
 BodyAngularVelocityInput::BodyAngularVelocityInput(const std::string& key,
+                                                   const std::string& articulation_name,
                                                    const std::string& body_name)
-    : Input("BodyAngularVelocityInput"), key_(key), body_name_(body_name) {}
+    : Input("BodyAngularVelocityInput"),
+      key_(key),
+      articulation_name_(articulation_name),
+      body_name_(body_name) {}
 
 bool BodyAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
-  return state.initBodyAngularVelocityB(body_name_);
+  return state.initBodyAngularVelocityB(
+      {.articulation_name = articulation_name_, .body_name = body_name_});
 }
 
 bool BodyAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
                                     CommandInterface&) {
-  auto maybe_vel = state.bodyAngularVelocityB(body_name_);
+  auto maybe_vel = state.bodyAngularVelocityB(
+      {.articulation_name = articulation_name_, .body_name = body_name_});
   if (!maybe_vel.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;

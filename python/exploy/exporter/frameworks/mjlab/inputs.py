@@ -8,12 +8,6 @@ from mjlab.tasks.velocity.mdp import UniformVelocityCommand
 
 from exploy.exporter.core.context_manager import ContextManager, Group, Input
 
-# Maps MuJoCo builtin sensor types to ONNX quantity name suffixes.
-_IMU_SENSOR_QUANTITIES: dict[str, str] = {
-    "gyro": "ang_vel_b_rt_w_in_b",
-    "velocimeter": "lin_vel_b_rt_w_in_b",
-}
-
 OBJ_PREFIX = "obj"
 SENSOR_PREFIX = "sensor"
 CMD_PREFIX = "cmd"
@@ -158,9 +152,12 @@ def add_sensor_inputs(
     """
     for sensor_name, sensor in sensors.items():
         if type(sensor) is RayCastSensor:
-            pattern_cfg = sensor.cfg.pattern_cfg
+            pattern_cfg = sensor.cfg.pattern
+            frames = sensor.cfg.frame
+            frame = frames[0] if isinstance(frames, tuple) else frames
             metadata = {
                 "pattern_type": "grid_pattern",
+                "articulation_name": frame.entity,
                 "offset_x": sensor.cfg.offset.pos[0],
                 "offset_y": sensor.cfg.offset.pos[1],
                 "resolution": pattern_cfg.resolution,

@@ -48,8 +48,12 @@ INPUT_NAMES = [
     "obj.box1.box.w_Q_b",
     "obj.box1.box.lin_vel_b_rt_w_in_b",
     "obj.box1.box.ang_vel_b_rt_w_in_b",
+    "obj.box2.box.pos_b_rt_w_in_w",
+    "obj.box2.box.w_Q_b",
+    "obj.box2.box.lin_vel_b_rt_w_in_b",
+    "obj.box2.box.ang_vel_b_rt_w_in_b",
     # memory
-    "memory.output.joint_targets.jt1.pos.in",
+    "memory.output.joint_targets.robot1.pos.in",
     # step count
     "ctx.step_count",
     # custom extensible data for testing
@@ -57,12 +61,12 @@ INPUT_NAMES = [
 ]
 
 OUTPUT_NAMES = [
-    "output.joint_targets.jt1.pos",
-    "output.joint_targets.jt1.vel",
-    "output.joint_targets.jt1.effort",
+    "output.joint_targets.robot1.pos",
+    "output.joint_targets.robot1.vel",
+    "output.joint_targets.robot1.effort",
     "output.se2_velocity.vel",
     "actions",
-    "memory.output.joint_targets.jt1.pos.out",
+    "memory.output.joint_targets.robot1.pos.out",
 ]
 
 
@@ -103,6 +107,10 @@ class FullTestModel(torch.nn.Module):
         body_quat,
         body_lin_vel,
         body_ang_vel,
+        body2_pos,
+        body2_quat,
+        body2_lin_vel,
+        body2_ang_vel,
         memory,
         step_count,
         custom_extensible_data,
@@ -138,7 +146,7 @@ class FullTestModel(torch.nn.Module):
 def get_output_metadata() -> dict:
     """Returns metadata for model outputs."""
     return {
-        "output.joint_targets.jt1": {
+        "output.joint_targets.robot1": {
             "names": ["j1", "j2"],
             "stiffness": [1.0, 2.0],
             "damping": [0.1, 0.2],
@@ -154,6 +162,7 @@ def get_sensor_metadata() -> dict:
     return {
         "sensor.ray_caster.one": {
             "pattern_type": "grid_pattern",
+            "articulation_name": "robot1",
             "resolution": 0.1,
             "size_x": 1.6,
             "size_y": 1.0,
@@ -162,6 +171,7 @@ def get_sensor_metadata() -> dict:
         },
         "sensor.ray_caster.two": {
             "pattern_type": "grid_pattern",
+            "articulation_name": "robot1",
             "resolution": 0.1,
             "size_x": 1.6,
             "size_y": 1.0,
@@ -185,6 +195,7 @@ def get_sensor_metadata() -> dict:
         },
         "sensor.ray_caster.trail": {
             "pattern_type": "grid_pattern",
+            "articulation_name": "robot1",
             "resolution": 0.1,
             "size_x": 1.6,
             "size_y": 1.0,
@@ -272,6 +283,10 @@ def create_dummy_inputs() -> tuple:
     body_quat = torch.rand((1, 4), dtype=torch.float32)
     body_lin_vel = torch.rand((1, 3), dtype=torch.float32)
     body_ang_vel = torch.rand((1, 3), dtype=torch.float32)
+    body2_pos = torch.rand((1, 3), dtype=torch.float32)
+    body2_quat = torch.rand((1, 4), dtype=torch.float32)
+    body2_lin_vel = torch.rand((1, 3), dtype=torch.float32)
+    body2_ang_vel = torch.rand((1, 3), dtype=torch.float32)
 
     # Memory and state
     memory = torch.rand((1, 2), dtype=torch.float32)
@@ -318,6 +333,10 @@ def create_dummy_inputs() -> tuple:
         body_quat,
         body_lin_vel,
         body_ang_vel,
+        body2_pos,
+        body2_quat,
+        body2_lin_vel,
+        body2_ang_vel,
         # memory
         memory,
         # step count

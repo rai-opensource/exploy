@@ -36,166 +36,199 @@ class OnnxComponentsTest : public ::testing::Test {
 TEST_F(OnnxComponentsTest, JointPositionInput_InitAndRead) {
   // Arrange
   std::vector<std::string> joint_names = {"joint1", "joint2", "joint3"};
-  JointPositionInput joint_input("obj.robot1.joints.pos", joint_names);
+  JointPositionInput joint_input("obj.robot1.joints.pos", "robot1", joint_names);
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initJointPosition("joint1")).WillOnce(Return(true));
-  EXPECT_CALL(state_mock_, initJointPosition("joint2")).WillOnce(Return(true));
-  EXPECT_CALL(state_mock_, initJointPosition("joint3")).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "joint1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "joint2")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "joint3")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(joint_input.init(state_mock_, command_mock_));
 
   // Test read functionality (interface calls, even without ONNX buffer)
-  EXPECT_CALL(state_mock_, jointPosition("joint1")).WillOnce(Return(1.5));
-  EXPECT_CALL(state_mock_, jointPosition("joint2")).WillOnce(Return(2.0));
-  EXPECT_CALL(state_mock_, jointPosition("joint3")).WillOnce(Return(0.5));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "joint1")))
+      .WillOnce(Return(1.5));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "joint2")))
+      .WillOnce(Return(2.0));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "joint3")))
+      .WillOnce(Return(0.5));
 
   // Read should call the interface methods even if ONNX buffer doesn't exist
   ASSERT_TRUE(joint_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitAndRead) {
-  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w");
+  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w", "robot1");
 
   // Test successful initialization
-  EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBasePosW(ArticulationIs<BasePosWInfo>("robot1")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(base_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Vector3d expected_pos(1.0, 2.0, 3.0);
-  EXPECT_CALL(state_mock_, basePosW()).WillOnce(Return(expected_pos));
+  EXPECT_CALL(state_mock_, basePosW(ArticulationIs<BasePosWInfo>("robot1")))
+      .WillOnce(Return(expected_pos));
 
   ASSERT_TRUE(base_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BasePositionInput_InitFailure) {
-  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w");
-  EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(false));
+  BasePositionInput base_input("obj.robot1.base_name.pos_b_rt_w_in_w", "robot1");
+  EXPECT_CALL(state_mock_, initBasePosW(ArticulationIs<BasePosWInfo>("robot1")))
+      .WillOnce(Return(false));
   EXPECT_FALSE(base_input.init(state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BaseOrientationInput_InitAndRead) {
-  BaseOrientationInput base_input("obj.robot1.base_name.w_Q_b");
+  BaseOrientationInput base_input("obj.robot1.base_name.w_Q_b", "robot1");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBaseQuatW()).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBaseQuatW(ArticulationIs<BaseQuatWInfo>("robot1")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(base_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Quaterniond expected_quat(1.0, 0.0, 0.0, 0.0);
-  EXPECT_CALL(state_mock_, baseQuatW()).WillOnce(Return(expected_quat));
+  EXPECT_CALL(state_mock_, baseQuatW(ArticulationIs<BaseQuatWInfo>("robot1")))
+      .WillOnce(Return(expected_quat));
 
   ASSERT_TRUE(base_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BaseLinearVelocityInput_InitAndRead) {
-  BaseLinearVelocityInput base_input("obj.robot1.base_name.lin_vel_b_rt_w_in_b");
+  BaseLinearVelocityInput base_input("obj.robot1.base_name.lin_vel_b_rt_w_in_b", "robot1");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBaseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot1")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(base_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Vector3d expected_vel(0.5, 0.0, 0.0);
-  EXPECT_CALL(state_mock_, baseLinVelB()).WillOnce(Return(expected_vel));
+  EXPECT_CALL(state_mock_, baseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot1")))
+      .WillOnce(Return(expected_vel));
 
   ASSERT_TRUE(base_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BaseAngularVelocityInput_InitAndRead) {
-  BaseAngularVelocityInput base_input("obj.robot1.base_name.ang_vel_b_rt_w_in_b");
+  BaseAngularVelocityInput base_input("obj.robot1.base_name.ang_vel_b_rt_w_in_b", "robot1");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBaseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot1")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(base_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Vector3d expected_ang_vel(0.0, 0.0, 0.1);
-  EXPECT_CALL(state_mock_, baseAngVelB()).WillOnce(Return(expected_ang_vel));
+  EXPECT_CALL(state_mock_, baseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot1")))
+      .WillOnce(Return(expected_ang_vel));
 
   ASSERT_TRUE(base_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, JointVelocityInput_InitAndRead) {
   std::vector<std::string> joint_names = {"joint1", "joint2", "joint3"};
-  JointVelocityInput joint_input("obj.robot1.joints.vel", joint_names);
+  JointVelocityInput joint_input("obj.robot1.joints.vel", "robot1", joint_names);
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initJointVelocity("joint1")).WillOnce(Return(true));
-  EXPECT_CALL(state_mock_, initJointVelocity("joint2")).WillOnce(Return(true));
-  EXPECT_CALL(state_mock_, initJointVelocity("joint3")).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "joint1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "joint2")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "joint3")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(joint_input.init(state_mock_, command_mock_));
 
   // Test read functionality
-  EXPECT_CALL(state_mock_, jointVelocity("joint1")).WillOnce(Return(0.5));
-  EXPECT_CALL(state_mock_, jointVelocity("joint2")).WillOnce(Return(-0.3));
-  EXPECT_CALL(state_mock_, jointVelocity("joint3")).WillOnce(Return(0.1));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "joint1")))
+      .WillOnce(Return(0.5));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "joint2")))
+      .WillOnce(Return(-0.3));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "joint3")))
+      .WillOnce(Return(0.1));
 
   ASSERT_TRUE(joint_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyOrientationInput_InitAndRead) {
-  BodyOrientationInput body_input("obj.box1.box.w_Q_b", "test_body");
+  BodyOrientationInput body_input("obj.box1.box.w_Q_b", "box1", "test_body");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBodyOrientationW("test_body")).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBodyOrientationW(BodyIs<BodyOrientationWInfo>("box1", "test_body")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(body_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Quaterniond expected_quat(0.707, 0.0, 0.0, 0.707);
-  EXPECT_CALL(state_mock_, bodyOrientationW("test_body")).WillOnce(Return(expected_quat));
+  EXPECT_CALL(state_mock_, bodyOrientationW(BodyIs<BodyOrientationWInfo>("box1", "test_body")))
+      .WillOnce(Return(expected_quat));
 
   EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_InitAndRead) {
-  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box1", "box");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_, initBodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(body_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Vector3d expected_vel(1.0, 0.5, 0.0);
-  EXPECT_CALL(state_mock_, bodyLinearVelocityB("box")).WillOnce(Return(expected_vel));
+  EXPECT_CALL(state_mock_, bodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(expected_vel));
 
   EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_InitFailure) {
-  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
-  EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(false));
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box1", "box");
+  EXPECT_CALL(state_mock_, initBodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(false));
   EXPECT_FALSE(body_input.init(state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyLinearVelocityInput_ReadFailsWhenStateReturnsNullopt) {
-  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box");
-  EXPECT_CALL(state_mock_, bodyLinearVelocityB("box")).WillOnce(Return(std::nullopt));
+  BodyLinearVelocityInput body_input("obj.box1.box.lin_vel_b_rt_w_in_b", "box1", "box");
+  EXPECT_CALL(state_mock_, bodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(std::nullopt));
   EXPECT_FALSE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_InitAndRead) {
-  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box1", "box");
 
   // Test initialization
-  EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(true));
+  EXPECT_CALL(state_mock_,
+              initBodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(body_input.init(state_mock_, command_mock_));
 
   // Test read functionality
   Eigen::Vector3d expected_ang_vel(0.0, 0.1, 0.2);
-  EXPECT_CALL(state_mock_, bodyAngularVelocityB("box")).WillOnce(Return(expected_ang_vel));
+  EXPECT_CALL(state_mock_, bodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(expected_ang_vel));
 
   EXPECT_TRUE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_InitFailure) {
-  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
-  EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(false));
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box1", "box");
+  EXPECT_CALL(state_mock_,
+              initBodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(false));
   EXPECT_FALSE(body_input.init(state_mock_, command_mock_));
 }
 
 TEST_F(OnnxComponentsTest, BodyAngularVelocityInput_ReadFailsWhenStateReturnsNullopt) {
-  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box");
-  EXPECT_CALL(state_mock_, bodyAngularVelocityB("box")).WillOnce(Return(std::nullopt));
+  BodyAngularVelocityInput body_input("obj.box1.box.ang_vel_b_rt_w_in_b", "box1", "box");
+  EXPECT_CALL(state_mock_, bodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
+      .WillOnce(Return(std::nullopt));
   EXPECT_FALSE(body_input.read(runtime, state_mock_, command_mock_));
 }
 
@@ -228,10 +261,10 @@ TEST_F(OnnxComponentsTest, StepCountInput_WithRealRuntime) {
 // Integration test for MemoryOutput
 TEST_F(OnnxComponentsTest, MemoryOutput_WithRealRuntime) {
   // Arrange
-  MemoryOutput memory_output("output.joint_targets.jt1.pos");
+  MemoryOutput memory_output("output.joint_targets.robot1.pos");
 
   // Set initial memory data
-  auto buffer = runtime.inputBuffer<float>("memory.output.joint_targets.jt1.pos.in");
+  auto buffer = runtime.inputBuffer<float>("memory.output.joint_targets.robot1.pos.in");
   ASSERT_TRUE(buffer.has_value()) << "memory input should exist in test model";
 
   // Set some test values in the input buffer
@@ -269,12 +302,16 @@ TEST_F(OnnxComponentsTest, CommandJointPositionInput_InitAndRead) {
   meta.joint_names = {"j1", "j2"};
   CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
 
-  EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(true));
-  EXPECT_CALL(command_mock_, initJointPosition("arm", "j2")).WillOnce(Return(true));
+  EXPECT_CALL(command_mock_, initJointPosition(JointPositionCommandIs("arm", "j1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(command_mock_, initJointPosition(JointPositionCommandIs("arm", "j2")))
+      .WillOnce(Return(true));
   EXPECT_TRUE(input.init(state_mock_, command_mock_));
 
-  EXPECT_CALL(command_mock_, jointPosition("arm", "j1")).WillOnce(Return(std::make_optional(0.1f)));
-  EXPECT_CALL(command_mock_, jointPosition("arm", "j2")).WillOnce(Return(std::make_optional(0.2f)));
+  EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j1")))
+      .WillOnce(Return(std::make_optional(0.1f)));
+  EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j2")))
+      .WillOnce(Return(std::make_optional(0.2f)));
   EXPECT_TRUE(input.read(runtime, state_mock_, command_mock_));
 
   auto buffer = runtime.inputBuffer<float>("cmd.joint_pos.arm");
@@ -295,7 +332,8 @@ TEST_F(OnnxComponentsTest, CommandJointPositionInput_InitFailsWhenOneJointFails)
   meta.joint_names = {"j1", "j2"};
   CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
 
-  EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(false));
+  EXPECT_CALL(command_mock_, initJointPosition(JointPositionCommandIs("arm", "j1")))
+      .WillOnce(Return(false));
   EXPECT_FALSE(input.init(state_mock_, command_mock_));
 }
 
@@ -304,8 +342,10 @@ TEST_F(OnnxComponentsTest, CommandJointPositionInput_ReadFailsWhenJointUnavailab
   meta.joint_names = {"j1", "j2"};
   CommandJointPositionInput input("cmd.joint_pos.arm", "arm", meta);
 
-  EXPECT_CALL(command_mock_, jointPosition("arm", "j1")).WillOnce(Return(std::make_optional(0.1f)));
-  EXPECT_CALL(command_mock_, jointPosition("arm", "j2")).WillOnce(Return(std::nullopt));
+  EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j1")))
+      .WillOnce(Return(std::make_optional(0.1f)));
+  EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j2")))
+      .WillOnce(Return(std::nullopt));
   EXPECT_FALSE(input.read(runtime, state_mock_, command_mock_));
 }
 
@@ -409,6 +449,169 @@ TEST(CommandJointPositionMatcherTest, MatchesMultipleCommands) {
 
   auto inputs = matcher.createInputs();
   ASSERT_EQ(inputs.size(), 2u);
+}
+
+// ---------------  Base*Matcher tests --------------------------------
+
+TEST(BasePositionMatcherTest, MatchesPairFromBaseNames) {
+  BasePositionMatcher matcher;
+  EXPECT_TRUE(matcher.matches({
+      .name = "obj.robot1.base_link.pos_b_rt_w_in_w",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BasePositionMatcherTest, DoesNotMatchWhenBaseNamesEmpty) {
+  BasePositionMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "obj.robot1.base_link.pos_b_rt_w_in_w"}));
+}
+
+TEST(BasePositionMatcherTest, DoesNotMatchWhenPairNotInBaseNames) {
+  BasePositionMatcher matcher;
+  // Articulation name in tensor doesn't match any registered articulation.
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.other.base_link.pos_b_rt_w_in_w",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Base name in tensor doesn't match the articulation's registered base.
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.robot1.torso.pos_b_rt_w_in_w",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+  // Wrong field suffix.
+  EXPECT_FALSE(matcher.matches({
+      .name = "obj.robot1.base_link.w_Q_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BasePositionMatcherTest, PropagatesCorrectArticulationWithMultipleArticulations) {
+  // Two articulations registered, each with its own base name.
+  std::unordered_map<std::string, std::string> base_names = {{"robot1", "base_link"},
+                                                             {"robot2", "torso"}};
+  BasePositionMatcher matcher;
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.robot1.base_link.pos_b_rt_w_in_w",
+      .base_names = base_names,
+  }));
+  ASSERT_TRUE(matcher.matches({
+      .name = "obj.robot2.torso.pos_b_rt_w_in_w",
+      .base_names = base_names,
+  }));
+  // Cross-pair tensors must be rejected (robot1 is not paired with torso).
+  ASSERT_FALSE(matcher.matches({
+      .name = "obj.robot1.torso.pos_b_rt_w_in_w",
+      .base_names = base_names,
+  }));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+
+  // Verify each input was constructed with the correct articulation name by
+  // observing the init() call on a mock state interface.
+  StrictMock<MockRobotStateInterface> state;
+  MockCommandInterface command;
+  EXPECT_CALL(state, initBasePosW(ArticulationIs<BasePosWInfo>("robot1"))).WillOnce(Return(true));
+  EXPECT_CALL(state, initBasePosW(ArticulationIs<BasePosWInfo>("robot2"))).WillOnce(Return(true));
+  for (auto& input : inputs) EXPECT_TRUE(input->init(state, command));
+}
+
+TEST(BaseOrientationMatcherTest, MatchesPairFromBaseNames) {
+  BaseOrientationMatcher matcher;
+  EXPECT_TRUE(matcher.matches({
+      .name = "obj.robot1.base_link.w_Q_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BaseOrientationMatcherTest, DoesNotMatchWhenBaseNamesEmpty) {
+  BaseOrientationMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "obj.robot1.base_link.w_Q_b"}));
+}
+
+TEST(BaseOrientationMatcherTest, PropagatesCorrectArticulationWithMultipleArticulations) {
+  std::unordered_map<std::string, std::string> base_names = {{"robot1", "base_link"},
+                                                             {"robot2", "torso"}};
+  BaseOrientationMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "obj.robot1.base_link.w_Q_b", .base_names = base_names}));
+  ASSERT_TRUE(matcher.matches({.name = "obj.robot2.torso.w_Q_b", .base_names = base_names}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+
+  StrictMock<MockRobotStateInterface> state;
+  MockCommandInterface command;
+  EXPECT_CALL(state, initBaseQuatW(ArticulationIs<BaseQuatWInfo>("robot1"))).WillOnce(Return(true));
+  EXPECT_CALL(state, initBaseQuatW(ArticulationIs<BaseQuatWInfo>("robot2"))).WillOnce(Return(true));
+  for (auto& input : inputs) EXPECT_TRUE(input->init(state, command));
+}
+
+TEST(BaseLinearVelocityMatcherTest, MatchesPairFromBaseNames) {
+  BaseLinearVelocityMatcher matcher;
+  EXPECT_TRUE(matcher.matches({
+      .name = "obj.robot1.base_link.lin_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BaseLinearVelocityMatcherTest, DoesNotMatchWhenBaseNamesEmpty) {
+  BaseLinearVelocityMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "obj.robot1.base_link.lin_vel_b_rt_w_in_b"}));
+}
+
+TEST(BaseLinearVelocityMatcherTest, PropagatesCorrectArticulationWithMultipleArticulations) {
+  std::unordered_map<std::string, std::string> base_names = {{"robot1", "base_link"},
+                                                             {"robot2", "torso"}};
+  BaseLinearVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "obj.robot1.base_link.lin_vel_b_rt_w_in_b", .base_names = base_names}));
+  ASSERT_TRUE(
+      matcher.matches({.name = "obj.robot2.torso.lin_vel_b_rt_w_in_b", .base_names = base_names}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+
+  StrictMock<MockRobotStateInterface> state;
+  MockCommandInterface command;
+  EXPECT_CALL(state, initBaseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state, initBaseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot2")))
+      .WillOnce(Return(true));
+  for (auto& input : inputs) EXPECT_TRUE(input->init(state, command));
+}
+
+TEST(BaseAngularVelocityMatcherTest, MatchesPairFromBaseNames) {
+  BaseAngularVelocityMatcher matcher;
+  EXPECT_TRUE(matcher.matches({
+      .name = "obj.robot1.base_link.ang_vel_b_rt_w_in_b",
+      .base_names = {{"robot1", "base_link"}},
+  }));
+}
+
+TEST(BaseAngularVelocityMatcherTest, DoesNotMatchWhenBaseNamesEmpty) {
+  BaseAngularVelocityMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "obj.robot1.base_link.ang_vel_b_rt_w_in_b"}));
+}
+
+TEST(BaseAngularVelocityMatcherTest, PropagatesCorrectArticulationWithMultipleArticulations) {
+  std::unordered_map<std::string, std::string> base_names = {{"robot1", "base_link"},
+                                                             {"robot2", "torso"}};
+  BaseAngularVelocityMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "obj.robot1.base_link.ang_vel_b_rt_w_in_b", .base_names = base_names}));
+  ASSERT_TRUE(
+      matcher.matches({.name = "obj.robot2.torso.ang_vel_b_rt_w_in_b", .base_names = base_names}));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 2u);
+
+  StrictMock<MockRobotStateInterface> state;
+  MockCommandInterface command;
+  EXPECT_CALL(state, initBaseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state, initBaseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot2")))
+      .WillOnce(Return(true));
+  for (auto& input : inputs) EXPECT_TRUE(input->init(state, command));
 }
 
 // ---------------  BodyLinearVelocityMatcher tests --------------------------------

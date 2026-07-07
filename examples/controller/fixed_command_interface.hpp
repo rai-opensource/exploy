@@ -30,12 +30,9 @@ class FixedCommandInterface : public CommandInterface {
   explicit FixedCommandInterface(FixedCommandConfig config = {}) : config_(std::move(config)) {}
 
 
-  bool initSe2Velocity(const std::string& /*command_name*/,
-                       const SE2VelocityConfig& /*config*/) override {
-    return true;
-  }
+  bool initSe2Velocity(const Se2VelocityCommandInfo& /*info*/) override { return true; }
 
-  std::optional<SE2Velocity> se2Velocity(const std::string& /*command_name*/) override {
+  std::optional<SE2Velocity> se2Velocity(const Se2VelocityCommandInfo& /*info*/) override {
     return config_.se2_velocity;
   }
 

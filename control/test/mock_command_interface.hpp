@@ -8,26 +8,26 @@ namespace exploy::control {
 
 class MockCommandInterface : public CommandInterface {
  public:
-  MOCK_METHOD(bool, initSe2Velocity,
-              (const std::string& command_name, const SE2VelocityConfig& config), (override));
-  MOCK_METHOD(std::optional<SE2Velocity>, se2Velocity, (const std::string& command_name),
+  MOCK_METHOD(bool, initSe2Velocity, (const Se2VelocityCommandInfo& info), (override));
+  MOCK_METHOD(std::optional<SE2Velocity>, se2Velocity, (const Se2VelocityCommandInfo& info),
               (override));
-  MOCK_METHOD(bool, initSe3Pose, (const std::string& command_name, const SE3PoseConfig& config),
-              (override));
-  MOCK_METHOD(std::optional<SE3Pose>, se3Pose, (const std::string& command_name),
+  MOCK_METHOD(bool, initSe3Pose, (const Se3PoseCommandInfo& info), (override));
+  MOCK_METHOD(std::optional<SE3Pose>, se3Pose, (const Se3PoseCommandInfo& info), (const, override));
+  MOCK_METHOD(bool, initBooleanSelector, (const BooleanSelectorCommandInfo& info), (override));
+  MOCK_METHOD(std::optional<bool>, booleanSelector, (const BooleanSelectorCommandInfo& info),
+              (const override));
+  MOCK_METHOD(bool, initFloatValue, (const FloatValueCommandInfo& info), (override));
+  MOCK_METHOD(std::optional<float>, floatValue, (const FloatValueCommandInfo& info),
+              (const override));
+  MOCK_METHOD(bool, initJointPosition, (const JointPositionCommandInfo& info), (override));
+  MOCK_METHOD(std::optional<float>, jointPosition, (const JointPositionCommandInfo& info),
               (const, override));
-  MOCK_METHOD(bool, initBooleanSelector,
-              (const std::string& command_name, const BooleanSelectorConfig& config), (override));
-  MOCK_METHOD(std::optional<bool>, booleanSelector, (const std::string& command_name),
-              (const override));
-  MOCK_METHOD(bool, initFloatValue,
-              (const std::string& command_name, const FloatScalarConfig& config), (override));
-  MOCK_METHOD(std::optional<float>, floatValue, (const std::string& command_name),
-              (const override));
-  MOCK_METHOD(bool, initJointPosition,
-              (const std::string& command_name, const std::string& joint_name), (override));
-  MOCK_METHOD(std::optional<float>, jointPosition,
-              (const std::string& command_name, const std::string& joint_name), (const, override));
 };
+
+/// @brief Matcher for a JointPositionCommandInfo with the given command and joint name.
+inline auto JointPositionCommandIs(const std::string& command_name, const std::string& joint_name) {
+  return ::testing::AllOf(::testing::Field(&JointPositionCommandInfo::command_name, command_name),
+                          ::testing::Field(&JointPositionCommandInfo::joint_name, joint_name));
+}
 
 }  // namespace exploy::control

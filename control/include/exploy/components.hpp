@@ -112,15 +112,18 @@ class JointPositionInput : public Input {
    * @brief Construct a joint position input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.joints.pos").
+   * @param articulation_name Name of the articulation the joints belong to.
    * @param joint_names Vector of joint names to read, in buffer order.
    */
-  JointPositionInput(const std::string& key, const std::vector<std::string>& joint_names);
+  JointPositionInput(const std::string& key, const std::string& articulation_name,
+                     const std::vector<std::string>& joint_names);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;                       ///< ONNX input tensor name.
+  std::string articulation_name_;         ///< Articulation name.
   std::vector<std::string> joint_names_;  ///< Joint names to read.
 };
 
@@ -137,15 +140,18 @@ class JointVelocityInput : public Input {
    * @brief Construct a joint velocity input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.joints.vel").
+   * @param articulation_name Name of the articulation the joints belong to.
    * @param joint_names Vector of joint names to read, in buffer order.
    */
-  JointVelocityInput(const std::string& key, const std::vector<std::string>& joint_names);
+  JointVelocityInput(const std::string& key, const std::string& articulation_name,
+                     const std::vector<std::string>& joint_names);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;                       ///< ONNX input tensor name.
+  std::string articulation_name_;         ///< Articulation name.
   std::vector<std::string> joint_names_;  ///< Joint names to read.
 };
 
@@ -161,14 +167,16 @@ class BasePositionInput : public Input {
    * @brief Construct a base position input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.base.pos").
+   * @param articulation_name Name of the articulation.
    */
-  BasePositionInput(const std::string& key);
+  BasePositionInput(const std::string& key, const std::string& articulation_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;  ///< ONNX input tensor name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
 };
 
 /**
@@ -183,14 +191,16 @@ class BaseOrientationInput : public Input {
    * @brief Construct a base orientation input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.base.quat").
+   * @param articulation_name Name of the articulation.
    */
-  BaseOrientationInput(const std::string& key);
+  BaseOrientationInput(const std::string& key, const std::string& articulation_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;  ///< ONNX input tensor name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
 };
 
 /**
@@ -205,14 +215,16 @@ class BaseLinearVelocityInput : public Input {
    * @brief Construct a base linear velocity input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.base.lin_vel").
+   * @param articulation_name Name of the articulation.
    */
-  BaseLinearVelocityInput(const std::string& key);
+  BaseLinearVelocityInput(const std::string& key, const std::string& articulation_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;  ///< ONNX input tensor name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
 };
 
 /**
@@ -227,14 +239,16 @@ class BaseAngularVelocityInput : public Input {
    * @brief Construct a base angular velocity input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.base.ang_vel").
+   * @param articulation_name Name of the articulation.
    */
-  BaseAngularVelocityInput(const std::string& key);
+  BaseAngularVelocityInput(const std::string& key, const std::string& articulation_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;  ///< ONNX input tensor name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
 };
 
 /**
@@ -334,10 +348,9 @@ class HeightScanInput : public Input {
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;                              ///< ONNX input tensor base name.
-  std::string sensor_name_;                      ///< Height scan sensor name.
-  std::unordered_set<std::string> layer_names_;  ///< Layer names to read.
-  metadata::HeightScanMetadata metadata_;        ///< Height scan configuration.
+  std::string key_;                ///< ONNX input tensor base name.
+  std::string articulation_name_;  ///< Articulation providing the base frame for the scan.
+  HeightScanInfo scan_info_;       ///< Cached scan info (sensor, pattern, layers).
 };
 
 /**
@@ -366,10 +379,8 @@ class SphericalImageInput : public Input {
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;                                ///< ONNX input tensor base name.
-  std::string sensor_name_;                        ///< Spherical image sensor name.
-  std::unordered_set<std::string> channel_names_;  ///< Channel names to read.
-  metadata::SphericalImageMetadata metadata_;      ///< Spherical image configuration.
+  std::string key_;          ///< ONNX input tensor base name.
+  SphericalImageInfo info_;  ///< Cached spherical image info (sensor, intrinsics, channels).
 };
 
 /**
@@ -398,10 +409,8 @@ class PinholeImageInput : public Input {
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;                                ///< ONNX input tensor base name.
-  std::string sensor_name_;                        ///< Pinhole image sensor name.
-  std::unordered_set<std::string> channel_names_;  ///< Channel names to read.
-  metadata::PinholeImageMetadata metadata_;        ///< Pinhole image configuration.
+  std::string key_;        ///< ONNX input tensor base name.
+  PinholeImageInfo info_;  ///< Cached pinhole image info (sensor, intrinsics, channels).
 };
 
 /**
@@ -416,16 +425,19 @@ class BodyOrientationInput : public Input {
    * @brief Construct a body orientation input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.body.quat").
+   * @param articulation_name Name of the articulation the body belongs to.
    * @param body_name Name of the rigid body to read orientation from.
    */
-  BodyOrientationInput(const std::string& key, const std::string& body_name);
+  BodyOrientationInput(const std::string& key, const std::string& articulation_name,
+                       const std::string& body_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;        ///< ONNX input tensor name.
-  std::string body_name_;  ///< Rigid body name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
+  std::string body_name_;          ///< Rigid body name.
 };
 
 /**
@@ -440,16 +452,19 @@ class BodyPositionInput : public Input {
    * @brief Construct a body position input component.
    *
    * @param key ONNX input tensor name (e.g., "robot.body.pos").
+   * @param articulation_name Name of the articulation the body belongs to.
    * @param body_name Name of the rigid body to read position from.
    */
-  BodyPositionInput(const std::string& key, const std::string& body_name);
+  BodyPositionInput(const std::string& key, const std::string& articulation_name,
+                    const std::string& body_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;        ///< ONNX input tensor name.
-  std::string body_name_;  ///< Rigid body name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
+  std::string body_name_;          ///< Rigid body name.
 };
 
 /**
@@ -464,16 +479,19 @@ class BodyLinearVelocityInput : public Input {
    * @brief Construct a body linear velocity input component.
    *
    * @param key ONNX input tensor name (e.g., "obj.object.box.lin_vel_b_rt_w_in_b").
+   * @param articulation_name Name of the articulation the body belongs to.
    * @param body_name Name of the rigid body to read linear velocity from.
    */
-  BodyLinearVelocityInput(const std::string& key, const std::string& body_name);
+  BodyLinearVelocityInput(const std::string& key, const std::string& articulation_name,
+                          const std::string& body_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;        ///< ONNX input tensor name.
-  std::string body_name_;  ///< Rigid body name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
+  std::string body_name_;          ///< Rigid body name.
 };
 
 /**
@@ -488,16 +506,19 @@ class BodyAngularVelocityInput : public Input {
    * @brief Construct a body angular velocity input component.
    *
    * @param key ONNX input tensor name (e.g., "obj.object.box.ang_vel_b_rt_w_in_b").
+   * @param articulation_name Name of the articulation the body belongs to.
    * @param body_name Name of the rigid body to read angular velocity from.
    */
-  BodyAngularVelocityInput(const std::string& key, const std::string& body_name);
+  BodyAngularVelocityInput(const std::string& key, const std::string& articulation_name,
+                           const std::string& body_name);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;        ///< ONNX input tensor name.
-  std::string body_name_;  ///< Rigid body name.
+  std::string key_;                ///< ONNX input tensor name.
+  std::string articulation_name_;  ///< Articulation name.
+  std::string body_name_;          ///< Rigid body name.
 };
 
 /**
@@ -665,10 +686,12 @@ class JointTargetOutput : public Output {
    * @param pos_key ONNX output tensor name for target positions.
    * @param vel_key ONNX output tensor name for target velocities.
    * @param eff_key ONNX output tensor name for target efforts (feedforward torques).
+   * @param articulation_name Name of the articulation to write joint targets to.
    * @param metadata Joint output metadata containing joint names, stiffness, and damping.
    */
   JointTargetOutput(const std::string& pos_key, const std::string& vel_key,
-                    const std::string& eff_key, const metadata::JointOutputMetadata& metadata);
+                    const std::string& eff_key, const std::string& articulation_name,
+                    const metadata::JointOutputMetadata& metadata);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool write(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
@@ -677,6 +700,7 @@ class JointTargetOutput : public Output {
   std::string pos_key_;                     ///< ONNX output tensor name for positions.
   std::string vel_key_;                     ///< ONNX output tensor name for velocities.
   std::string eff_key_;                     ///< ONNX output tensor name for efforts.
+  std::string articulation_name_;           ///< Articulation name.
   metadata::JointOutputMetadata metadata_;  ///< Joint output configuration.
 };
 

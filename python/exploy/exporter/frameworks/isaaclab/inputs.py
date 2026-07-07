@@ -8,6 +8,7 @@ from isaaclab.sensors import RayCaster, SensorBase
 from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg, PatternBaseCfg
 
 from exploy.exporter.core.context_manager import ContextManager, Group, Input
+from exploy.exporter.frameworks.isaaclab import utils
 
 OBJ_PREFIX = "obj"
 SENSOR_PREFIX = "sensor"
@@ -263,6 +264,9 @@ def add_sensor_inputs(
                         name=f"{SENSOR_PREFIX}.ray_caster.{sensor_name_in_source}",
                         metadata={
                             "pattern_type": "grid_pattern",
+                            "articulation_name": utils.prim_path_to_articulation_name(
+                                prim_path=sensor.cfg.prim_path
+                            ),
                             "offset_x": sensor.cfg.offset.pos[0],
                             "offset_y": sensor.cfg.offset.pos[1],
                             "resolution": pattern_cfg.resolution,

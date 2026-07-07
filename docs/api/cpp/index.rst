@@ -64,6 +64,107 @@ Data Collection Interface
    :members:
    :undoc-members:
 
+Interface Info Structs
+----------------------
+
+Every public :cpp:class:`~exploy::control::CommandInterface` and
+:cpp:class:`~exploy::control::RobotStateInterface` method takes a dedicated info
+struct instead of loose parameters. This keeps call sites and overrides stable as
+new fields are added over time.
+
+Command Interface
+~~~~~~~~~~~~~~~~~
+
+.. doxygenstruct:: exploy::control::Se2VelocityCommandInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::Se3PoseCommandInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BooleanSelectorCommandInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::FloatValueCommandInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::JointPositionCommandInfo
+   :members:
+
+State Interface
+~~~~~~~~~~~~~~~
+
+.. doxygenstruct:: exploy::control::BasePosWInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BaseQuatWInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BaseLinVelBInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BaseAngVelBInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::JointPositionInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::JointVelocityInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::JointEffortInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::JointOutputInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SetJointPositionInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SetJointVelocityInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SetJointEffortInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SetJointPGainInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SetJointDGainInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::Se2VelocityInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::ImuLinearVelocityImuInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::ImuAngularVelocityImuInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::ImuOrientationWInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BodyPositionWInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BodyOrientationWInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BodyLinearVelocityBInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::BodyAngularVelocityBInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::HeightScanInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::SphericalImageInfo
+   :members:
+
+.. doxygenstruct:: exploy::control::PinholeImageInfo
+   :members:
+
 Components
 ----------
 
@@ -102,9 +203,6 @@ Configuration
 -------------
 
 .. doxygenstruct:: exploy::control::OnnxRuntimeOptions
-   :members:
-
-.. doxygenstruct:: exploy::control::SE2VelocityConfig
    :members:
 
 .. doxygenstruct:: exploy::control::SE2VelocityRanges

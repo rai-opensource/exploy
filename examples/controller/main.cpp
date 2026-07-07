@@ -36,6 +36,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "exploy/components.hpp"
@@ -68,9 +69,10 @@ class CustomBodyPositionMatcher : public exploy::control::Matcher {
 
   bool matches(const exploy::control::Match& maybe_match) override {
     std::smatch match;
-    const std::regex pattern(R"(custom.obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)");
-    if (std::regex_match(maybe_match.name, match, pattern) && match.size() > 2) {
-      found_matches_[match[2].str()] = maybe_match;
+    if (std::regex_match(maybe_match.name, match, kPattern) && match.size() > 2) {
+      // Key by the full tensor name so identical body names across different
+      // articulations don't overwrite each other.
+      found_matches_[maybe_match.name] = maybe_match;
       return true;
     }
     return false;
@@ -78,12 +80,19 @@ class CustomBodyPositionMatcher : public exploy::control::Matcher {
 
   std::vector<std::unique_ptr<exploy::control::Input>> createInputs() const override {
     std::vector<std::unique_ptr<exploy::control::Input>> inputs;
-    for (const auto& [body_name, found_match] : found_matches_) {
-      inputs.push_back(
-          std::make_unique<exploy::control::BodyPositionInput>(found_match.name, body_name));
+    for (const auto& [tensor_name, found_match] : found_matches_) {
+      // Re-derive the articulation and body names from the tensor name (the key).
+      std::smatch match;
+      if (!std::regex_match(tensor_name, match, kPattern) || match.size() <= 2) continue;
+      inputs.push_back(std::make_unique<exploy::control::BodyPositionInput>(
+          found_match.name, match[1].str(), match[2].str()));
     }
     return inputs;
   }
+
+ private:
+  static inline const std::regex kPattern{
+      R"(custom.obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)"};
 };
 
 [[nodiscard]] std::optional<Args> parseArgs(int argc, char** argv) {

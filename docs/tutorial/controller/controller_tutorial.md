@@ -79,42 +79,45 @@ class MyHardwareStateInterface : public exploy::control::RobotStateInterface {
  public:
   // ── Initialisation (called once, non-real-time) ─────────────────────────
 
-  bool initImuAngularVelocityImu(const std::string& /*imu_name*/) override {
+  bool initImuAngularVelocityImu(
+      const exploy::control::ImuAngularVelocityImuInfo& /*info*/) override {
     // Subscribe to IMU topic or open device handle.
     return true;
   }
 
-  bool initJointPosition(const std::string& joint_name) override {
+  bool initJointPosition(const exploy::control::JointPositionInfo& info) override {
     // Map joint_name to its encoder channel.
-    encoder_channels_[joint_name] = lookupChannel(joint_name);
+    encoder_channels_[info.joint_name] = lookupChannel(info.joint_name);
     return true;
   }
 
-  bool initJointOutput(const std::string& joint_name) override {
+  bool initJointOutput(const exploy::control::JointOutputInfo& info) override {
     // Map joint_name to its actuator channel.
-    actuator_channels_[joint_name] = lookupActuator(joint_name);
+    actuator_channels_[info.joint_name] = lookupActuator(info.joint_name);
     return true;
   }
 
   // ── Getters (called every cycle, real-time) ──────────────────────────────
 
-  std::optional<exploy::control::AngularVelocity> imuAngularVelocityImu(const std::string& imu_name) const override {
+  std::optional<exploy::control::AngularVelocity> imuAngularVelocityImu(
+      const exploy::control::ImuAngularVelocityImuInfo& info) const override {
     // Read from IMU driver.
-    return imu_driver_.angularVelocity(imu_name);
+    return imu_driver_.angularVelocity(info.imu_name);
   }
 
-  std::optional<double> jointPosition(const std::string& joint_name) const override {
-    auto it = encoder_channels_.find(joint_name);
+  std::optional<double> jointPosition(
+      const exploy::control::JointPositionInfo& info) const override {
+    auto it = encoder_channels_.find(info.joint_name);
     if (it == encoder_channels_.end()) return std::nullopt;
     return encoder_driver_.read(it->second);
   }
 
   // ── Setters (called every cycle, real-time) ──────────────────────────────
 
-  bool setJointPosition(const std::string& joint_name, double position) override {
-    auto it = actuator_channels_.find(joint_name);
+  bool setJointPosition(const exploy::control::SetJointPositionInfo& info) override {
+    auto it = actuator_channels_.find(info.joint_name);
     if (it == actuator_channels_.end()) return false;
-    actuator_driver_.write(it->second, position);
+    actuator_driver_.write(it->second, info.position);
     return true;
   }
 
@@ -142,16 +145,17 @@ class MySimStateInterface : public exploy::control::RobotStateInterface {
   explicit MySimStateInterface(SimArticulation& articulation)
       : articulation_(articulation) {}
 
-  bool initJointPosition(const std::string& joint_name) override {
-    return articulation_.hasJoint(joint_name);
+  bool initJointPosition(const exploy::control::JointPositionInfo& info) override {
+    return articulation_.hasJoint(info.joint_name);
   }
 
-  std::optional<double> jointPosition(const std::string& joint_name) const override {
-    return articulation_.getJointPosition(joint_name);
+  std::optional<double> jointPosition(
+      const exploy::control::JointPositionInfo& info) const override {
+    return articulation_.getJointPosition(info.joint_name);
   }
 
-  bool setJointPosition(const std::string& joint_name, double position) override {
-    articulation_.setJointPositionTarget(joint_name, position);
+  bool setJointPosition(const exploy::control::SetJointPositionInfo& info) override {
+    articulation_.setJointPositionTarget(info.joint_name, info.position);
     return true;
   }
 
@@ -176,15 +180,15 @@ Like `RobotStateInterface`, it uses the same `init*()` / getter pattern:
 
 class MyJoystickCommandInterface : public exploy::control::CommandInterface {
  public:
-  bool initSe2Velocity(const std::string& /*command_name*/,
-                       const exploy::control::SE2VelocityConfig& /*cfg*/) override {
+  bool initSe2Velocity(
+      const exploy::control::Se2VelocityCommandInfo& /*info*/) override {
     // Subscribe to joystick topic or open device.
     return joystick_.open("/dev/input/js0");
   }
 
   std::optional<exploy::control::SE2Velocity> se2Velocity(
-      const std::string& /*command_name*/) override {
-    // Read latest joystick state; apply any scaling specified in cfg.ranges.
+      const exploy::control::Se2VelocityCommandInfo& /*info*/) override {
+    // Read latest joystick state; apply any scaling specified in info.ranges.
     auto [vx, vy, omega] = joystick_.readAxes();
     return exploy::control::SE2Velocity{vx, vy, omega};
   }
@@ -407,15 +411,15 @@ controller.create("/path/to/policy.onnx", /*register_default_matchers=*/false);
 
 class CustomBodyPositionMatcher : public exploy::control::Matcher {
  public:
-  CustomBodyPositionMatcher(): Matcher("CustomBodyPositionMatcher") {}
+  CustomBodyPositionMatcher() : Matcher("CustomBodyPositionMatcher") {}
 
   bool matches(const exploy::control::Match& maybe_match) override {
     // Match tensors of the form obj.<articulation>.<body>.pos_b_rt_w_in_w.
     std::smatch m;
-    static const std::regex pattern(
-        R"(obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)");
-    if (std::regex_match(maybe_match.name, m, pattern) && m.size() > 2) {
-      found_matches_[m[2].str()] = maybe_match;
+    if (std::regex_match(maybe_match.name, m, kPattern) && m.size() > 2) {
+      // Key by the full tensor name so identical body names across different
+      // articulations don't overwrite each other.
+      found_matches_[maybe_match.name] = maybe_match;
       return true;
     }
     return false;
@@ -423,11 +427,22 @@ class CustomBodyPositionMatcher : public exploy::control::Matcher {
 
   std::vector<std::unique_ptr<exploy::control::Input>> createInputs() const override {
     std::vector<std::unique_ptr<exploy::control::Input>> inputs;
-    for (const auto& [body_name, found_match] : found_matches_)
-      inputs.push_back(
-          std::make_unique<exploy::control::BodyPositionInput>(found_match.name, body_name));
+    for (const auto& [tensor_name, found_match] : found_matches_) {
+      // Re-derive the articulation and body names from the tensor name (the key)
+      // instead of assuming the key is the body name.
+      std::smatch m;
+      if (!std::regex_match(tensor_name, m, kPattern) || m.size() <= 2) continue;
+      const std::string articulation_name = m[1].str();
+      const std::string body_name = m[2].str();
+      inputs.push_back(std::make_unique<exploy::control::BodyPositionInput>(
+          found_match.name, articulation_name, body_name));
+    }
     return inputs;
   }
+
+ private:
+  static inline const std::regex kPattern{
+      R"(obj\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.pos_b_rt_w_in_w)"};
 };
 
 // Register before create():

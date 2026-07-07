@@ -43,78 +43,78 @@ struct JointState {
  */
 class LoopbackRobotStateInterface : public RobotStateInterface {
  public:
-  bool initBasePosW() override { return true; }
-  bool initBaseQuatW() override { return true; }
+  bool initBasePosW(const BasePosWInfo& /*info*/) override { return true; }
+  bool initBaseQuatW(const BaseQuatWInfo& /*info*/) override { return true; }
 
-  std::optional<Position> basePosW() const override {
+  std::optional<Position> basePosW(const BasePosWInfo& /*info*/) const override {
     return Position{0.0, 0.0, 0.8};
   }
-  std::optional<Quaternion> baseQuatW() const override {
+  std::optional<Quaternion> baseQuatW(const BaseQuatWInfo& /*info*/) const override {
     return Quaternion::Identity();
   }
 
-  bool initBaseLinVelB() override { return true; }
-  bool initBaseAngVelB() override { return true; }
+  bool initBaseLinVelB(const BaseLinVelBInfo& /*info*/) override { return true; }
+  bool initBaseAngVelB(const BaseAngVelBInfo& /*info*/) override { return true; }
 
-  std::optional<LinearVelocity> baseLinVelB() const override {
+  std::optional<LinearVelocity> baseLinVelB(const BaseLinVelBInfo& /*info*/) const override {
     return LinearVelocity::Zero();
   }
-  std::optional<AngularVelocity> baseAngVelB() const override {
+  std::optional<AngularVelocity> baseAngVelB(const BaseAngVelBInfo& /*info*/) const override {
     return AngularVelocity::Zero();
   }
 
-  bool initJointPosition(const std::string& joint_name) override {
-    joint_states_.emplace(joint_name, JointState{});
+  bool initJointPosition(const JointPositionInfo& info) override {
+    joint_states_.emplace(info.joint_name, JointState{});
     return true;
   }
-  bool initJointVelocity(const std::string& joint_name) override {
-    joint_states_.emplace(joint_name, JointState{});
+  bool initJointVelocity(const JointVelocityInfo& info) override {
+    joint_states_.emplace(info.joint_name, JointState{});
     return true;
   }
-  bool initJointEffort(const std::string& joint_name) override {
-    joint_states_.emplace(joint_name, JointState{});
+  bool initJointEffort(const JointEffortInfo& info) override {
+    joint_states_.emplace(info.joint_name, JointState{});
     return true;
   }
-  bool initJointOutput(const std::string& /*joint_name*/) override {
+  bool initJointOutput(const JointOutputInfo& /*info*/) override {
     return true;
   }
 
-  std::optional<double> jointPosition(const std::string& joint_name) const override {
-    if (joint_states_.contains(joint_name)) {
-      return joint_states_.at(joint_name).position;
+  std::optional<double> jointPosition(const JointPositionInfo& info) const override {
+    if (joint_states_.contains(info.joint_name)) {
+      return joint_states_.at(info.joint_name).position;
     }
     return std::nullopt;
   }
-  std::optional<double> jointVelocity(const std::string& joint_name) const override {
-    if (joint_states_.contains(joint_name)) {
-      return joint_states_.at(joint_name).velocity;
+  std::optional<double> jointVelocity(const JointVelocityInfo& info) const override {
+    if (joint_states_.contains(info.joint_name)) {
+      return joint_states_.at(info.joint_name).velocity;
     }
     return std::nullopt;
   }
-  std::optional<double> jointEffort(const std::string& joint_name) const override {
-    if (joint_states_.contains(joint_name)) {
-      return joint_states_.at(joint_name).effort;
+  std::optional<double> jointEffort(const JointEffortInfo& info) const override {
+    if (joint_states_.contains(info.joint_name)) {
+      return joint_states_.at(info.joint_name).effort;
     }
     return std::nullopt;
   }
 
   /// Loopback: store the commanded position so it is returned next cycle.
-  bool setJointPosition(const std::string& joint_name, double position) override {
-    joint_states_[joint_name].position = position;
+  bool setJointPosition(const SetJointPositionInfo& info) override {
+    joint_states_[info.joint_name].position = info.position;
     return true;
   }
-  bool setJointVelocity(const std::string& joint_name, double velocity) override {
-    joint_states_[joint_name].velocity = velocity;
+  bool setJointVelocity(const SetJointVelocityInfo& info) override {
+    joint_states_[info.joint_name].velocity = info.velocity;
     return true;
   }
-  bool setJointEffort(const std::string& joint_name, double effort) override {
-    joint_states_[joint_name].effort = effort;
+  bool setJointEffort(const SetJointEffortInfo& info) override {
+    joint_states_[info.joint_name].effort = info.effort;
     return true;
   }
-  bool setJointPGain(const std::string& /*joint_name*/, double /*p_gain*/) override {
+  bool setJointPGain(const SetJointPGainInfo& /*info*/) override {
     return true;
   }
-  bool setJointDGain(const std::string& /*joint_name*/, double /*d_gain*/) override {
+  bool setJointDGain(const SetJointDGainInfo& /*info*/) override {
     return true;
   }
 
@@ -123,12 +123,12 @@ class LoopbackRobotStateInterface : public RobotStateInterface {
     return joint_states_;
   }
 
-  bool initSe2Velocity(const std::string& frame_name) override {
-    se2_velocities_.emplace(frame_name, SE2Velocity::Zero());
+  bool initSe2Velocity(const Se2VelocityInfo& info) override {
+    se2_velocities_.emplace(info.frame_name, SE2Velocity::Zero());
     return true;
   }
-  bool setSe2Velocity(const std::string& frame_name, const SE2Velocity& velocity) override {
-    se2_velocities_[frame_name] = velocity;
+  bool setSe2Velocity(const Se2VelocityInfo& info) override {
+    se2_velocities_[info.frame_name] = info.velocity;
     return true;
   }
 
@@ -137,59 +137,66 @@ class LoopbackRobotStateInterface : public RobotStateInterface {
     return se2_velocities_;
   }
 
-  bool initImuLinearVelocityImu(const std::string& /*imu_name*/) override { return true; }
+  bool initImuLinearVelocityImu(const ImuLinearVelocityImuInfo& /*info*/) override {
+    return true;
+  }
 
-  std::optional<LinearVelocity> imuLinearVelocityImu(const std::string& /*imu_name*/) const override {
+  std::optional<LinearVelocity> imuLinearVelocityImu(
+      const ImuLinearVelocityImuInfo& /*info*/) const override {
     return LinearVelocity::Zero();
   }
 
-  bool initImuAngularVelocityImu(const std::string& /*imu_name*/) override { return true; }
+  bool initImuAngularVelocityImu(const ImuAngularVelocityImuInfo& /*info*/) override {
+    return true;
+  }
 
-  std::optional<AngularVelocity> imuAngularVelocityImu(const std::string& /*imu_name*/) const override {
+  std::optional<AngularVelocity> imuAngularVelocityImu(
+      const ImuAngularVelocityImuInfo& /*info*/) const override {
     return AngularVelocity::Zero();
   }
 
-  bool initImuOrientationW(const std::string& /*imu_name*/) override { return true; }
+  bool initImuOrientationW(const ImuOrientationWInfo& /*info*/) override { return true; }
 
-  std::optional<Quaternion> imuOrientationW(const std::string& /*imu_name*/) const override {
+  std::optional<Quaternion> imuOrientationW(const ImuOrientationWInfo& /*info*/) const override {
     return Quaternion::Identity();
   }
 
-  bool initBodyPositionW(const std::string& /*body_name*/) override { return true; }
-  bool initBodyOrientationW(const std::string& /*body_name*/) override { return true; }
+  bool initBodyPositionW(const BodyPositionWInfo& /*info*/) override {
+    return true;
+  }
+  bool initBodyOrientationW(const BodyOrientationWInfo& /*info*/) override {
+    return true;
+  }
 
-  std::optional<Position> bodyPositionW(const std::string& /*body_name*/) const override {
+  std::optional<Position> bodyPositionW(const BodyPositionWInfo& /*info*/) const override {
     return Position{0.0, 0.0, 0.8};
   }
-  std::optional<Quaternion> bodyOrientationW(const std::string& /*body_name*/) const override {
+  std::optional<Quaternion> bodyOrientationW(const BodyOrientationWInfo& /*info*/) const override {
     return Quaternion::Identity();
   }
 
-  bool initHeightScan(const std::string& sensor_name,
-                      const HeightScanConfig& config) override {
+  bool initHeightScan(const HeightScanInfo& info) override {
     // Pre-allocate zero-filled layers sized by the grid formula.
-    const auto& p = config.pattern;
+    const auto& p = info.pattern;
     const std::size_t nx = static_cast<std::size_t>(std::round(p.size.x() / p.resolution)) + 1;
     const std::size_t ny = static_cast<std::size_t>(std::round(p.size.y() / p.resolution)) + 1;
     const std::size_t n = nx * ny;
 
     HeightScan scan;
-    for (const auto& layer : config.layer_names) {
+    for (const auto& layer : info.layer_names) {
       scan.float_layers[layer] = std::vector<float>(n, 0.0);
     }
-    height_scans_[sensor_name] = std::move(scan);
+    height_scans_[info.sensor_name] = std::move(scan);
     return true;
   }
 
-  std::optional<const HeightScan*> heightScan(
-      const std::string& sensor_name,
-      const std::unordered_set<std::string>& /*layer_names*/,
-      const Position& /*base_pos_w*/,
-      const Quaternion& /*base_quat_w*/) override {
-    if (!height_scans_.contains(sensor_name)) {
+  std::optional<const HeightScan*> heightScan(const HeightScanInfo& info,
+                                              const Position& /*base_pos_w*/,
+                                              const Quaternion& /*base_quat_w*/) override {
+    if (!height_scans_.contains(info.sensor_name)) {
       return std::nullopt;
     }
-    return &height_scans_.at(sensor_name);
+    return &height_scans_.at(info.sensor_name);
   }
 
  private:

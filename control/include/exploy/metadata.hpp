@@ -130,11 +130,13 @@ inline void from_json(const json& j, FloatCommandMetadata& cmd) {
  */
 struct HeightScanMetadata {
   std::string pattern_type{};  ///< Grid pattern type (e.g., "grid", "radial").
-  double resolution{};         ///< Grid resolution (spacing between points).
-  double size_x{};             ///< Grid size in x direction.
-  double size_y{};             ///< Grid size in y direction.
-  double offset_x{};           ///< Grid offset in x direction from base.
-  double offset_y{};           ///< Grid offset in y direction from base.
+  std::string
+      articulation_name{};  ///< Name of the articulation providing the base frame for the scan.
+  double resolution{};      ///< Grid resolution (spacing between points).
+  double size_x{};          ///< Grid size in x direction.
+  double size_y{};          ///< Grid size in y direction.
+  double offset_x{};        ///< Grid offset in x direction from base.
+  double offset_y{};        ///< Grid offset in y direction from base.
 };
 
 /**
@@ -148,6 +150,7 @@ inline void from_json(const json& j, HeightScanMetadata& hs) {
   j.at("resolution").get_to(hs.resolution);
   j.at("size_x").get_to(hs.size_x);
   j.at("size_y").get_to(hs.size_y);
+  hs.articulation_name = j.value("articulation_name", "");
   hs.offset_x = j.value("offset_x", 0.0);
   hs.offset_y = j.value("offset_y", 0.0);
 }

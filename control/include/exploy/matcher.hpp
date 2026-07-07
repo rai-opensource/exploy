@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "exploy/components.hpp"
@@ -80,9 +81,15 @@ class Matcher {
   virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
 
   /**
-   * @brief Reset the matcher by clearing all found matches.
+   * @brief Reset the matcher by clearing all found matches and any subclass state.
+   *
+   * Non-virtual: clears the base `found_matches_` storage and then dispatches to the
+   * virtual `reset()` hook.
    */
-  virtual void reset() { found_matches_.clear(); }
+  void resetMatcher() {
+    found_matches_.clear();
+    reset();
+  }
 
   /**
    * @brief Get the name of this matcher.
@@ -91,11 +98,19 @@ class Matcher {
    */
   const std::string& getName() const { return name_; }
 
+ protected:
+  /**
+   * @brief Hook for subclasses to clear any additional state during a reset.
+   *
+   * Called by `resetMatcher()` after `found_matches_` has been cleared. Default is
+   * a no-op; override only if the subclass stores extra side maps.
+   */
+  virtual void reset() {}
+
+  std::unordered_map<std::string, Match> found_matches_;  ///< Storage for matched tensors.
+
  private:
   std::string name_;  ///< Name of this matcher.
-
- protected:
-  std::unordered_map<std::string, Match> found_matches_;  ///< Storage for matched tensors.
 };
 
 /**
@@ -144,9 +159,15 @@ class GroupMatcher {
   }
 
   /**
-   * @brief Reset the matcher by clearing all found matches.
+   * @brief Reset the matcher by clearing all found matches and any subclass state.
+   *
+   * Non-virtual: clears the base `found_matches_` storage and then dispatches to the
+   * virtual `reset()` hook.
    */
-  virtual void reset() { found_matches_.clear(); }
+  void resetMatcher() {
+    found_matches_.clear();
+    reset();
+  }
 
   /**
    * @brief Get the name of this matcher.
@@ -155,11 +176,19 @@ class GroupMatcher {
    */
   const std::string& getName() const { return name_; }
 
+ protected:
+  /**
+   * @brief Hook for subclasses to clear any additional state during a reset.
+   *
+   * Called by `resetMatcher()` after `found_matches_` has been cleared. Default is
+   * a no-op; override only if the subclass stores extra side maps.
+   */
+  virtual void reset() {}
+
+  std::unordered_map<std::string, GroupMatch> found_matches_;  ///< Storage for matched groups.
+
  private:
   std::string name_;  ///< Name of this matcher.
-
- protected:
-  std::unordered_map<std::string, GroupMatch> found_matches_;  ///< Storage for matched groups.
 };
 
 // ---------------  Joint matchers --------------------------------
@@ -176,21 +205,46 @@ class JointMatcher : public GroupMatcher {
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 
  private:
+  void reset() override;
   const std::regex pattern_ =
-      std::regex(fmt::format("(obj\\.{}\\.joints)\\.(pos|vel)", kAlphanumeric));
+      std::regex(fmt::format("(obj\\.({})\\.joints)\\.(pos|vel)", kAlphanumeric));
+  /// Map from group name to the resolved articulation name.
+  std::unordered_map<std::string, std::string> articulation_names_;
+  /// Map from input tensor name to the resolved type ("pos" or "vel").
+  std::unordered_map<std::string, std::string> input_types_;
 };
 // ---------------------------------------------------------------
 
 // ---------------  Base matchers --------------------------------
 /**
+ * @brief Common base class for matchers operating on `obj.<articulation>.<base>.<field>`
+ * tensors.
+ *
+ * Stores the resolved articulation name for each matched tensor at match time so
+ * createInputs() can look it up directly without re-resolving against the regex.
+ */
+class BaseMatcher : public Matcher {
+ public:
+  BaseMatcher(const std::string& name, std::string field);
+  bool matches(const Match& maybe_match) override;
+
+ protected:
+  std::string field_;  ///< Field suffix (e.g. "pos_b_rt_w_in_w") this matcher targets.
+  /// Map from matched tensor name to the resolved articulation name.
+  std::unordered_map<std::string, std::string> articulation_names_;
+
+ private:
+  void reset() override;
+};
+
+/**
  * @brief Matcher for robot base position input tensors.
  *
  * Matches patterns for base position in world frame and creates BasePositionInput components.
  */
-class BasePositionMatcher : public Matcher {
+class BasePositionMatcher : public BaseMatcher {
  public:
   BasePositionMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -200,10 +254,9 @@ class BasePositionMatcher : public Matcher {
  * Matches patterns for base orientation (quaternion) in world frame and creates
  * BaseOrientationInput components.
  */
-class BaseOrientationMatcher : public Matcher {
+class BaseOrientationMatcher : public BaseMatcher {
  public:
   BaseOrientationMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -212,10 +265,9 @@ class BaseOrientationMatcher : public Matcher {
  *
  * Matches patterns for base linear velocity and creates BaseLinearVelocityInput components.
  */
-class BaseLinearVelocityMatcher : public Matcher {
+class BaseLinearVelocityMatcher : public BaseMatcher {
  public:
   BaseLinearVelocityMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -224,10 +276,9 @@ class BaseLinearVelocityMatcher : public Matcher {
  *
  * Matches patterns for base angular velocity and creates BaseAngularVelocityInput components.
  */
-class BaseAngularVelocityMatcher : public Matcher {
+class BaseAngularVelocityMatcher : public BaseMatcher {
  public:
   BaseAngularVelocityMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 // ---------------------------------------------------------------
@@ -244,6 +295,13 @@ class JointTargetMatcher : public GroupMatcher {
   JointTargetMatcher();
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Output>> createOutputs() const override;
+
+ private:
+  void reset() override;
+  const std::regex pattern_ =
+      std::regex(fmt::format("(output\\.joint_targets\\.({}))\\.(pos|vel|effort)", kAlphanumeric));
+  /// Map from group name to the resolved articulation name.
+  std::unordered_map<std::string, std::string> articulation_names_;
 };
 
 /**
@@ -261,20 +319,38 @@ class SE2VelocityMatcher : public Matcher {
 
 // ---------------  Sensor matchers ------------------------------
 /**
+ * @brief Common base class for sensor group matchers that key on
+ * `sensor.<kind>.<sensor_name>.<channel>`.
+ *
+ * Stores the resolved sensor name and the set of channel/layer names per group at
+ * match time so createInputs() can read them directly without re-running the regex.
+ */
+class SensorGroupMatcher : public GroupMatcher {
+ public:
+  SensorGroupMatcher(const std::string& name, std::regex pattern);
+  bool matches(const Match& maybe_match) override;
+
+ protected:
+  std::regex pattern_;  ///< Sensor pattern with capture groups: (group)(sensor_name)(channel).
+  /// Map from group name to the resolved sensor name.
+  std::unordered_map<std::string, std::string> sensor_names_;
+  /// Map from group name to the set of resolved channel/layer names.
+  std::unordered_map<std::string, std::unordered_set<std::string>> channel_names_;
+
+ private:
+  void reset() override;
+};
+
+/**
  * @brief Matcher for height scan sensor input tensors.
  *
  * Matches patterns for terrain height scan layers (height, r, g, b) and creates
  * HeightScanInput components with multi-layer support.
  */
-class HeightScanMatcher : public GroupMatcher {
+class HeightScanMatcher : public SensorGroupMatcher {
  public:
   HeightScanMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
-
- private:
-  const std::regex pattern_ =
-      std::regex(fmt::format("(sensor\\.ray_caster\\.({}))\\.(height|r|g|b)", kAlphanumeric));
 };
 
 /**
@@ -283,15 +359,10 @@ class HeightScanMatcher : public GroupMatcher {
  * Matches patterns for spherical image channels (e.g., range, risk) and creates
  * SphericalImageInput components with multi-channel support.
  */
-class SphericalImageMatcher : public GroupMatcher {
+class SphericalImageMatcher : public SensorGroupMatcher {
  public:
   SphericalImageMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
-
- private:
-  const std::regex pattern_ = std::regex(
-      fmt::format("(sensor\\.spherical_image\\.({}))\\.({})", kAlphanumeric, kAlphanumeric));
 };
 
 /**
@@ -300,15 +371,10 @@ class SphericalImageMatcher : public GroupMatcher {
  * Matches patterns for pinhole image channels (e.g., depth, risk) and creates
  * PinholeImageInput components with multi-channel support.
  */
-class PinholeImageMatcher : public GroupMatcher {
+class PinholeImageMatcher : public SensorGroupMatcher {
  public:
   PinholeImageMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
-
- private:
-  const std::regex pattern_ = std::regex(
-      fmt::format("(sensor\\.pinhole_image\\.({}))\\.({})", kAlphanumeric, kAlphanumeric));
 };
 
 /**
@@ -416,14 +482,34 @@ class CommandJointPositionMatcher : public Matcher {
 
 // ---------------  Body matchers --------------------------------
 /**
+ * @brief Common base class for matchers operating on `obj.<articulation>.<body>.<field>`
+ * tensors that are NOT registered base pairs.
+ *
+ * Stores the resolved (articulation, body) pair for each matched tensor at match time so
+ * createInputs() can read it directly.
+ */
+class BodyMatcher : public Matcher {
+ public:
+  BodyMatcher(const std::string& name, std::string field);
+  bool matches(const Match& maybe_match) override;
+
+ protected:
+  std::string field_;  ///< Field suffix (e.g. "pos_b_rt_w_in_w") this matcher targets.
+  /// Map from matched tensor name to the resolved (articulation, body) pair.
+  std::unordered_map<std::string, std::pair<std::string, std::string>> articulation_and_body_;
+
+ private:
+  void reset() override;
+};
+
+/**
  * @brief Matcher for rigid body position input tensors.
  *
  * Matches patterns for body position data and creates BodyPositionInput components.
  */
-class BodyPositionMatcher : public Matcher {
+class BodyPositionMatcher : public BodyMatcher {
  public:
   BodyPositionMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -433,10 +519,9 @@ class BodyPositionMatcher : public Matcher {
  * Matches patterns for body orientation (quaternion) data and creates BodyOrientationInput
  * components.
  */
-class BodyOrientationMatcher : public Matcher {
+class BodyOrientationMatcher : public BodyMatcher {
  public:
   BodyOrientationMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -446,10 +531,9 @@ class BodyOrientationMatcher : public Matcher {
  * Matches patterns for body linear velocity data and creates BodyLinearVelocityInput
  * components.
  */
-class BodyLinearVelocityMatcher : public Matcher {
+class BodyLinearVelocityMatcher : public BodyMatcher {
  public:
   BodyLinearVelocityMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
@@ -459,10 +543,9 @@ class BodyLinearVelocityMatcher : public Matcher {
  * Matches patterns for body angular velocity data and creates BodyAngularVelocityInput
  * components.
  */
-class BodyAngularVelocityMatcher : public Matcher {
+class BodyAngularVelocityMatcher : public BodyMatcher {
  public:
   BodyAngularVelocityMatcher();
-  bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 // ---------------------------------------------------------------

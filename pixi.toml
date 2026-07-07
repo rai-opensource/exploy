@@ -381,9 +381,6 @@ python = "*"
 python-build = "*"
 uv = "*"
 
-[feature.python-dev.pypi-dependencies]
-pytest-gitignore = "*"
-
 # ---------------
 # Feature: mjlab
 # ---------------
@@ -401,6 +398,10 @@ pytorch = "*"
 rich = ">=13.3.3"
 mjlab = "==1.2.0"
 scipy = "*"
+# mjlab 1.2.0 declares an open-ended `mujoco-warp>=3.5.0`, but MuJoCo Warp 3.9.1
+# removed `opt.ls_parallel`, which mjlab 1.2.0's Simulation still sets. Pin below
+# 3.9.1 (newest compatible is 3.9.0.1) to keep the two in sync.
+mujoco-warp = "<3.9.1"
 
 # -----------------
 # Feature: isaaclab

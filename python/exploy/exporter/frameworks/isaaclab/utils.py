@@ -75,6 +75,20 @@ def prim_path_to_body_expr(
     return body_expr
 
 
+def prim_path_to_articulation_name(
+    prim_path: str,
+) -> str:
+    """Convert a primitive path to an articulation name.
+
+    Args:
+        prim_path (str): The primitive path to convert.
+
+    Returns:
+        An articulation name corresponding to the primitive path.
+    """
+    return "/".join(prim_path.split("/")[:-1])
+
+
 def prim_path_to_articulation_and_body_ids(
     prim_path: str,
     articulations: dict[str, Articulation],
@@ -89,7 +103,7 @@ def prim_path_to_articulation_and_body_ids(
     """
     # Split the primitive path into articulation primitive path and body expression.
     body_expr = prim_path_to_body_expr(prim_path=prim_path)
-    articulation_prim_path = "/".join(prim_path.split("/")[:-1])
+    articulation_prim_path = prim_path_to_articulation_name(prim_path=prim_path)
 
     # Find the articulation associated with the primitive path. Raise if no articulation is found.
     articulation_dict = {

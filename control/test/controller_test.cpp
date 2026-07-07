@@ -183,56 +183,99 @@ class OnnxControllerTest : public ::testing::Test {
 
   void ExpectInitBase() {
     // base position and three height scans
-    EXPECT_CALL(state_mock_, initBasePosW()).Times(4).WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_, initBasePosW(ArticulationIs<BasePosWInfo>("robot1")))
+        .Times(4)
+        .WillRepeatedly(Return(true));
     // base quat and three height scans
-    EXPECT_CALL(state_mock_, initBaseQuatW()).Times(4).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBaseQuatW(ArticulationIs<BaseQuatWInfo>("robot1")))
+        .Times(4)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_, initBaseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot1")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBaseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot1")))
+        .WillOnce(Return(true));
   }
 
   void ExpectInitOutput() {
     // Joint outputs from the output joint targets
-    EXPECT_CALL(state_mock_, initJointOutput("j1")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointOutput("j2")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointOutput(JointIs<JointOutputInfo>("robot1", "j1")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointOutput(JointIs<JointOutputInfo>("robot1", "j2")))
+        .WillOnce(Return(true));
     // Joint position and velocity inputs
-    EXPECT_CALL(state_mock_, initJointPosition("j1")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointPosition("j2")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointPosition("j3")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointVelocity("j1")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointVelocity("j2")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initJointVelocity("j3")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "j1")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "j2")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointPosition(JointIs<JointPositionInfo>("robot1", "j3")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "j1")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "j2")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initJointVelocity(JointIs<JointVelocityInfo>("robot1", "j3")))
+        .WillOnce(Return(true));
 
-    EXPECT_CALL(state_mock_, initSe2Velocity("base_frame")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initSe2Velocity(FrameIs<Se2VelocityInfo>("base_frame")))
+        .WillOnce(Return(true));
   }
 
   void ExpectInitSensors() {
-    EXPECT_CALL(state_mock_, initHeightScan(_, _)).Times(3).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, initSphericalImage(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initPinholeImage(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initImuLinearVelocityImu("pelvis")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initImuAngularVelocityImu("pelvis")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initImuOrientationW("torso")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initHeightScan(_)).Times(3).WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_, initSphericalImage(_)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initPinholeImage(_)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initImuLinearVelocityImu(ImuIs<ImuLinearVelocityImuInfo>("pelvis")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initImuAngularVelocityImu(ImuIs<ImuAngularVelocityImuInfo>("pelvis")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initImuOrientationW(ImuIs<ImuOrientationWInfo>("torso")))
+        .WillOnce(Return(true));
   }
 
   void ExpectInitBody() {
-    EXPECT_CALL(state_mock_, initBodyPositionW("box")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initBodyOrientationW("box")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initBodyLinearVelocityB("box")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initBodyAngularVelocityB("box")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyPositionW(BodyIs<BodyPositionWInfo>("box1", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyOrientationW(BodyIs<BodyOrientationWInfo>("box1", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_,
+                initBodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_,
+                initBodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyPositionW(BodyIs<BodyPositionWInfo>("box2", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyOrientationW(BodyIs<BodyOrientationWInfo>("box2", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_,
+                initBodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box2", "box")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(state_mock_,
+                initBodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box2", "box")))
+        .WillOnce(Return(true));
   }
 
   void ExpectInitCommands() {
     // SE2 velocity commands from inputs - check range configuration
     EXPECT_CALL(command_mock_,
-                initSe2Velocity("vel", Field(&SE2VelocityConfig::ranges, Eq(std::nullopt))))
+                initSe2Velocity(AllOf(Field(&Se2VelocityCommandInfo::command_name, "vel"),
+                                      Field(&Se2VelocityCommandInfo::ranges, Eq(std::nullopt)))))
         .WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initSe2Velocity("vel_with_range", HasRanges(kRanges)))
+    EXPECT_CALL(command_mock_, initSe2Velocity(AllOf(
+                                   Field(&Se2VelocityCommandInfo::command_name, "vel_with_range"),
+                                   HasRanges(kRanges))))
         .WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initSe3Pose("pose", _)).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initBooleanSelector("selector", _)).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initFloatValue("value", _)).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initJointPosition("arm", "j1")).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initJointPosition("arm", "j2")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initSe3Pose(Field(&Se3PoseCommandInfo::command_name, "pose")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(command_mock_,
+                initBooleanSelector(Field(&BooleanSelectorCommandInfo::command_name, "selector")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initFloatValue(Field(&FloatValueCommandInfo::command_name, "value")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initJointPosition(JointPositionCommandIs("arm", "j1")))
+        .WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initJointPosition(JointPositionCommandIs("arm", "j2")))
+        .WillOnce(Return(true));
   }
 
   void ExpectInitCustom() {
@@ -240,67 +283,128 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectSetOutput() {
-    EXPECT_CALL(state_mock_, setJointPosition("j1", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointPosition("j2", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointVelocity("j1", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointVelocity("j2", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointEffort("j1", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointEffort("j2", _)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointPGain("j1", 1)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointPGain("j2", 2)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointDGain("j1", 0.1)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setJointDGain("j2", 0.2)).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, setSe2Velocity("base_frame", _)).WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointPosition(AllOf(Field(&SetJointPositionInfo::articulation_name, "robot1"),
+                                       Field(&SetJointPositionInfo::joint_name, "j1"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointPosition(AllOf(Field(&SetJointPositionInfo::articulation_name, "robot1"),
+                                       Field(&SetJointPositionInfo::joint_name, "j2"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointVelocity(AllOf(Field(&SetJointVelocityInfo::articulation_name, "robot1"),
+                                       Field(&SetJointVelocityInfo::joint_name, "j1"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointVelocity(AllOf(Field(&SetJointVelocityInfo::articulation_name, "robot1"),
+                                       Field(&SetJointVelocityInfo::joint_name, "j2"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointEffort(AllOf(Field(&SetJointEffortInfo::articulation_name, "robot1"),
+                                     Field(&SetJointEffortInfo::joint_name, "j1"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointEffort(AllOf(Field(&SetJointEffortInfo::articulation_name, "robot1"),
+                                     Field(&SetJointEffortInfo::joint_name, "j2"))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointPGain(AllOf(Field(&SetJointPGainInfo::articulation_name, "robot1"),
+                                    Field(&SetJointPGainInfo::joint_name, "j1"),
+                                    Field(&SetJointPGainInfo::p_gain, 1))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointPGain(AllOf(Field(&SetJointPGainInfo::articulation_name, "robot1"),
+                                    Field(&SetJointPGainInfo::joint_name, "j2"),
+                                    Field(&SetJointPGainInfo::p_gain, 2))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointDGain(AllOf(Field(&SetJointDGainInfo::articulation_name, "robot1"),
+                                    Field(&SetJointDGainInfo::joint_name, "j1"),
+                                    Field(&SetJointDGainInfo::d_gain, 0.1))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_,
+                setJointDGain(AllOf(Field(&SetJointDGainInfo::articulation_name, "robot1"),
+                                    Field(&SetJointDGainInfo::joint_name, "j2"),
+                                    Field(&SetJointDGainInfo::d_gain, 0.2))))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_, setSe2Velocity(Field(&Se2VelocityInfo::frame_name, "base_frame")))
+        .WillRepeatedly(Return(true));
   }
 
   void ExpectReadJointState() {
-    EXPECT_CALL(state_mock_, jointPosition("j1")).WillRepeatedly(Return(std::make_optional(0)));
-    EXPECT_CALL(state_mock_, jointPosition("j2")).WillRepeatedly(Return(std::make_optional(0)));
-    EXPECT_CALL(state_mock_, jointPosition("j3")).WillRepeatedly(Return(std::make_optional(0)));
-    EXPECT_CALL(state_mock_, jointVelocity("j1")).WillRepeatedly(Return(std::make_optional(0)));
-    EXPECT_CALL(state_mock_, jointVelocity("j2")).WillRepeatedly(Return(std::make_optional(0)));
-    EXPECT_CALL(state_mock_, jointVelocity("j3")).WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j1")))
+        .WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j2")))
+        .WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j3")))
+        .WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j1")))
+        .WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j2")))
+        .WillRepeatedly(Return(std::make_optional(0)));
+    EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j3")))
+        .WillRepeatedly(Return(std::make_optional(0)));
   }
 
   void ExpectReadState() {
-    EXPECT_CALL(state_mock_, imuLinearVelocityImu("pelvis"))
+    EXPECT_CALL(state_mock_, imuLinearVelocityImu(ImuIs<ImuLinearVelocityImuInfo>("pelvis")))
         .WillRepeatedly(Return(kLinearVelocityData));
-    EXPECT_CALL(state_mock_, imuAngularVelocityImu("pelvis"))
+    EXPECT_CALL(state_mock_, imuAngularVelocityImu(ImuIs<ImuAngularVelocityImuInfo>("pelvis")))
         .WillRepeatedly(Return(kAngularVelocityData));
-    EXPECT_CALL(state_mock_, imuOrientationW("torso")).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, bodyPositionW("box")).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, bodyLinearVelocityB("box"))
+    EXPECT_CALL(state_mock_, imuOrientationW(ImuIs<ImuOrientationWInfo>("torso")))
+        .WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, bodyPositionW(BodyIs<BodyPositionWInfo>("box1", "box")))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, bodyOrientationW(BodyIs<BodyOrientationWInfo>("box1", "box")))
+        .WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, bodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box1", "box")))
         .WillRepeatedly(Return(kLinearVelocityData));
-    EXPECT_CALL(state_mock_, bodyAngularVelocityB("box"))
+    EXPECT_CALL(state_mock_, bodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box1", "box")))
         .WillRepeatedly(Return(kAngularVelocityData));
-    EXPECT_CALL(state_mock_, heightScan("trail", _, _, _))
+    EXPECT_CALL(state_mock_, bodyPositionW(BodyIs<BodyPositionWInfo>("box2", "box")))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, bodyOrientationW(BodyIs<BodyOrientationWInfo>("box2", "box")))
+        .WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, bodyLinearVelocityB(BodyIs<BodyLinearVelocityBInfo>("box2", "box")))
+        .WillRepeatedly(Return(kLinearVelocityData));
+    EXPECT_CALL(state_mock_, bodyAngularVelocityB(BodyIs<BodyAngularVelocityBInfo>("box2", "box")))
+        .WillRepeatedly(Return(kAngularVelocityData));
+    EXPECT_CALL(state_mock_, heightScan(Field(&HeightScanInfo::sensor_name, "trail"), _, _))
         .WillRepeatedly(Return(std::make_optional(kTrailScanData.get())));
-    EXPECT_CALL(state_mock_, heightScan("one", _, _, _))
+    EXPECT_CALL(state_mock_, heightScan(Field(&HeightScanInfo::sensor_name, "one"), _, _))
         .WillRepeatedly(Return(std::make_optional(kHeightScanData.get())));
-    EXPECT_CALL(state_mock_, heightScan("two", _, _, _))
+    EXPECT_CALL(state_mock_, heightScan(Field(&HeightScanInfo::sensor_name, "two"), _, _))
         .WillRepeatedly(Return(std::make_optional(kHeightScanData.get())));
-    EXPECT_CALL(state_mock_, basePosW()).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(state_mock_, baseQuatW()).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, baseLinVelB()).WillRepeatedly(Return(kLinearVelocityData));
-    EXPECT_CALL(state_mock_, baseAngVelB()).WillRepeatedly(Return(kAngularVelocityData));
-    EXPECT_CALL(state_mock_, sphericalImage("one", _))
+    EXPECT_CALL(state_mock_, basePosW(ArticulationIs<BasePosWInfo>("robot1")))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, baseQuatW(ArticulationIs<BaseQuatWInfo>("robot1")))
+        .WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, baseLinVelB(ArticulationIs<BaseLinVelBInfo>("robot1")))
+        .WillRepeatedly(Return(kLinearVelocityData));
+    EXPECT_CALL(state_mock_, baseAngVelB(ArticulationIs<BaseAngVelBInfo>("robot1")))
+        .WillRepeatedly(Return(kAngularVelocityData));
+    EXPECT_CALL(state_mock_, sphericalImage(Field(&SphericalImageInfo::sensor_name, "one")))
         .WillRepeatedly(Return(std::make_optional(kSphericalImageData.get())));
-    EXPECT_CALL(state_mock_, pinholeImage("one", _))
+    EXPECT_CALL(state_mock_, pinholeImage(Field(&PinholeImageInfo::sensor_name, "one")))
         .WillRepeatedly(Return(std::make_optional(kPinholeImageData.get())));
   }
 
   void ExpectReadCommands() {
-    EXPECT_CALL(command_mock_, se2Velocity("vel")).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(command_mock_, se2Velocity("vel_with_range")).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(command_mock_, se3Pose("pose")).WillRepeatedly(Return(kSE3PoseData));
-    EXPECT_CALL(command_mock_, booleanSelector("selector"))
+    EXPECT_CALL(command_mock_, se2Velocity(Field(&Se2VelocityCommandInfo::command_name, "vel")))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_,
+                se2Velocity(Field(&Se2VelocityCommandInfo::command_name, "vel_with_range")))
+        .WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_, se3Pose(Field(&Se3PoseCommandInfo::command_name, "pose")))
+        .WillRepeatedly(Return(kSE3PoseData));
+    EXPECT_CALL(command_mock_,
+                booleanSelector(Field(&BooleanSelectorCommandInfo::command_name, "selector")))
         .WillRepeatedly(Return(std::make_optional(true)));
-    EXPECT_CALL(command_mock_, floatValue("value"))
+    EXPECT_CALL(command_mock_, floatValue(Field(&FloatValueCommandInfo::command_name, "value")))
         .WillRepeatedly(Return(std::make_optional(1.23f)));
-    EXPECT_CALL(command_mock_, jointPosition("arm", "j1"))
+    EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j1")))
         .WillRepeatedly(Return(std::make_optional(0.0f)));
-    EXPECT_CALL(command_mock_, jointPosition("arm", "j2"))
+    EXPECT_CALL(command_mock_, jointPosition(JointPositionCommandIs("arm", "j2")))
         .WillRepeatedly(Return(std::make_optional(0.0f)));
   }
 
@@ -363,12 +467,18 @@ TEST_F(OnnxControllerTest, ReadJointFailure) {
   ASSERT_TRUE(oc_.create(model_path));
   ASSERT_TRUE(oc_.init(false));
 
-  EXPECT_CALL(state_mock_, jointPosition("j1")).WillRepeatedly(Return(std::nullopt));
-  EXPECT_CALL(state_mock_, jointPosition("j2")).WillRepeatedly(Return(std::make_optional(0)));
-  EXPECT_CALL(state_mock_, jointPosition("j3")).WillRepeatedly(Return(std::make_optional(0)));
-  EXPECT_CALL(state_mock_, jointVelocity("j1")).WillRepeatedly(Return(std::make_optional(0)));
-  EXPECT_CALL(state_mock_, jointVelocity("j2")).WillRepeatedly(Return(std::make_optional(0)));
-  EXPECT_CALL(state_mock_, jointVelocity("j3")).WillRepeatedly(Return(std::make_optional(0)));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j1")))
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j2")))
+      .WillRepeatedly(Return(std::make_optional(0)));
+  EXPECT_CALL(state_mock_, jointPosition(JointIs<JointPositionInfo>("robot1", "j3")))
+      .WillRepeatedly(Return(std::make_optional(0)));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j1")))
+      .WillRepeatedly(Return(std::make_optional(0)));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j2")))
+      .WillRepeatedly(Return(std::make_optional(0)));
+  EXPECT_CALL(state_mock_, jointVelocity(JointIs<JointVelocityInfo>("robot1", "j3")))
+      .WillRepeatedly(Return(std::make_optional(0)));
 
   ExpectReadState();
   ExpectReadCommands();
@@ -395,13 +505,19 @@ TEST_F(OnnxControllerTest, WriteJointFailure) {
   ExpectReadCustom();
 
   // j1 write fails
-  EXPECT_CALL(state_mock_, setJointPosition("j1", _)).WillOnce(Return(false));
-  EXPECT_CALL(state_mock_, setJointPosition("j2", _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(state_mock_, setJointVelocity(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(state_mock_, setJointEffort(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(state_mock_, setJointPGain(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(state_mock_, setJointDGain(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(state_mock_, setSe2Velocity(_, _)).WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_,
+              setJointPosition(AllOf(Field(&SetJointPositionInfo::articulation_name, "robot1"),
+                                     Field(&SetJointPositionInfo::joint_name, "j1"))))
+      .WillOnce(Return(false));
+  EXPECT_CALL(state_mock_,
+              setJointPosition(AllOf(Field(&SetJointPositionInfo::articulation_name, "robot1"),
+                                     Field(&SetJointPositionInfo::joint_name, "j2"))))
+      .WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_, setJointVelocity(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_, setJointEffort(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_, setJointPGain(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_, setJointDGain(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(state_mock_, setSe2Velocity(_)).WillRepeatedly(Return(true));
 
   EXPECT_FALSE(oc_.update(0));
 }

@@ -55,8 +55,8 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   // Reset the components and matchers.
   inputs_.clear();
   outputs_.clear();
-  for (auto& m : matchers_) m->reset();
-  for (auto& m : group_matchers_) m->reset();
+  for (auto& m : matchers_) m->resetMatcher();
+  for (auto& m : group_matchers_) m->resetMatcher();
 
   // Check if ONNX model is properly loaded before accessing its properties
   if (!onnx_model.isInitialized()) {
