@@ -14,7 +14,8 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
                                    DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {}
 
-bool OnnxRLController::create(const std::string& onnx_model_path, bool register_default_matchers) {
+bool OnnxRLController::create(const std::string& onnx_model_path, bool register_default_matchers,
+                              const OnnxRuntimeOptions& options) {
   if (!default_matchers_registered_ && register_default_matchers) {
     default_matchers_registered_ = true;
     context_.registerMatcher(std::make_unique<StepCountMatcher>());
@@ -43,7 +44,7 @@ bool OnnxRLController::create(const std::string& onnx_model_path, bool register_
     context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());
   }
 
-  if (!onnx_model_.initialize(onnx_model_path)) {
+  if (!onnx_model_.initialize(onnx_model_path, options)) {
     LOG_STREAM(ERROR, "Error creating OnnxEvaluator from policy: " << onnx_model_path);
     return false;
   }

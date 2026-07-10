@@ -60,9 +60,11 @@ class OnnxRLController {
    * StepCountMatcher) are registered the first time create() is called with this parameter set to
    * true. Passing false disables all built-in matchers for that call; only matchers added via
    * context() will be used, and a later call with true can still register the built-in matchers.
+   * @param options Runtime options (e.g. execution provider) forwarded to the ONNX runtime.
    * @return True if parsing succeeds, false otherwise.
    */
-  bool create(const std::string& onnx_model_path, bool register_default_matchers = true);
+  bool create(const std::string& onnx_model_path, bool register_default_matchers = true,
+              const OnnxRuntimeOptions& options = {});
   /**
    * @brief Initialize the controller.
    *
