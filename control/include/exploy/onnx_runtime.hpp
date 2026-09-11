@@ -53,6 +53,20 @@ struct OnnxRuntimeOptions {
   ExecutionProvider provider = ExecutionProvider::CPU;
   // Optional path to save profiling data. If not set, profiling is disabled.
   std::optional<std::string> profiling_path = std::nullopt;
+  // Threads used to parallelize the execution of a single operator.
+  int intra_op_num_threads = 1;
+  // Threads used to run operators in parallel, only relevant for ORT_PARALLEL execution.
+  int inter_op_num_threads = 1;
+  // Whether operators of the graph run sequentially or in parallel.
+  ExecutionMode execution_mode = ORT_SEQUENTIAL;
+  // Graph level transformations applied when loading the model.
+  GraphOptimizationLevel graph_optimization_level = GraphOptimizationLevel::ORT_ENABLE_ALL;
+  // Reuse a precomputed memory layout across runs, requires static input shapes.
+  bool enable_mem_pattern = true;
+  // Flush denormal floating point values to zero to avoid slow denormal arithmetic.
+  bool denormal_as_zero = false;
+  // Let the thread pools busy-wait between runs, trading CPU load for lower wake-up latency.
+  bool allow_spinning = true;
 };
 
 /**

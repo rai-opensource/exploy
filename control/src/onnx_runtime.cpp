@@ -2,6 +2,8 @@
 #include "exploy/onnx_runtime.hpp"
 #include "exploy/logging_utils.hpp"
 
+#include <onnxruntime/core/session/onnxruntime_session_options_config_keys.h>
+
 #include <algorithm>
 #include <filesystem>
 #include <memory>
@@ -134,8 +136,17 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
   env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "OnnxRuntime");
   Ort::SessionOptions session_options;
 
-  session_options.SetIntraOpNumThreads(1);
-  session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+  session_options.SetIntraOpNumThreads(options.intra_op_num_threads);
+  session_options.SetInterOpNumThreads(options.inter_op_num_threads);
+  session_options.SetExecutionMode(options.execution_mode);
+  session_options.SetGraphOptimizationLevel(options.graph_optimization_level);
+  if (not options.enable_mem_pattern) session_options.DisableMemPattern();
+  session_options.AddConfigEntry(kOrtSessionOptionsConfigSetDenormalAsZero,
+                                 options.denormal_as_zero ? "1" : "0");
+  session_options.AddConfigEntry(kOrtSessionOptionsConfigAllowIntraOpSpinning,
+                                 options.allow_spinning ? "1" : "0");
+  session_options.AddConfigEntry(kOrtSessionOptionsConfigAllowInterOpSpinning,
+                                 options.allow_spinning ? "1" : "0");
   if (options.profiling_path.has_value())
     session_options.EnableProfiling(options.profiling_path.value().c_str());
 

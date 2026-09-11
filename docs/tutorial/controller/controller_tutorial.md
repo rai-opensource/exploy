@@ -283,6 +283,32 @@ maps every ONNX tensor to a concrete `Input` or `Output` using the built-in
 matchers. `controller.init()` then calls the corresponding `init*()` methods on
 your state and command interfaces, one per matched tensor.
 
+### Tuning the ONNX Runtime session
+
+`create()` accepts an optional `OnnxRuntimeOptions` that is forwarded to the ONNX
+Runtime session. Besides the execution provider and profiling path it exposes the
+session knobs that affect inference latency:
+
+```cpp
+exploy::control::OnnxRuntimeOptions options;
+options.intra_op_num_threads = 4;  // parallelize single operators across 4 threads
+
+controller.create("/path/to/policy.onnx", /*register_default_matchers=*/true, options);
+```
+
+| Option | Default | Notes |
+|--------|---------|-------|
+| `intra_op_num_threads` | `1` | Threads per operator. The main lever for large models; small policies (well below a millisecond per inference) usually run fastest single-threaded. |
+| `inter_op_num_threads` | `1` | Threads across operators, only used with `execution_mode = ORT_PARALLEL`. |
+| `execution_mode` | `ORT_SEQUENTIAL` | Run graph nodes sequentially or in parallel. |
+| `graph_optimization_level` | `ORT_ENABLE_ALL` | Lowering this is rarely useful; it mainly costs latency. |
+| `enable_mem_pattern` | `true` | Reuses a precomputed memory layout, requires static input shapes. |
+| `denormal_as_zero` | `false` | Flushes denormals to zero. |
+| `allow_spinning` | `true` | Busy-waiting thread pools; disabling it lowers CPU load but increases tail latency. |
+
+The best configuration is model and hardware dependent, so measure on the target
+platform rather than assuming a global setting.
+
 ### Choosing a worker mode
 
 `init()` accepts optional `WorkerOptions` that control how inference is scheduled
