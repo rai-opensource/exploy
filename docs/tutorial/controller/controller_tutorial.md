@@ -306,6 +306,24 @@ controller.create("/path/to/policy.onnx", /*register_default_matchers=*/true, op
 | `denormal_as_zero` | `false` | Flushes denormals to zero. |
 | `allow_spinning` | `true` | Busy-waiting thread pools; disabling it lowers CPU load but increases tail latency. |
 
+When `provider` is `ExecutionProvider::CUDA`, the nested `cuda` struct configures the CUDA execution provider:
+
+```cpp
+options.provider = exploy::control::OnnxRuntimeOptions::ExecutionProvider::CUDA;
+options.cuda.device_id = 0;
+options.cuda.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // faster session creation
+```
+
+| Option | Default | Notes |
+|--------|---------|-------|
+| `cuda.device_id` | `0` | GPU to run on. |
+| `cuda.cudnn_conv_algo_search` | `OrtCudnnConvAlgoSearchExhaustive` | Exhaustive benchmarking gives the fastest convolutions but slows down the first run; `Heuristic`/`Default` load faster. |
+| `cuda.do_copy_in_default_stream` | `true` | Copy in the compute stream; disabling it can overlap copies but is less safe. |
+| `cuda.arena_extend_strategy` | `0` | `0` extends the arena by the next power of two, `1` by the requested size. |
+| `cuda.gpu_mem_limit` | `SIZE_MAX` | Upper bound for the GPU memory arena in bytes. |
+
+If the CUDA provider cannot be enabled, `initialize()` logs a warning and falls back to CPU.
+
 The best configuration is model and hardware dependent, so measure on the target
 platform rather than assuming a global setting.
 

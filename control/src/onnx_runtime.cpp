@@ -114,28 +114,19 @@ void appendTensorData(TensorDataType& tensor_data, std::unique_ptr<Ort::Session>
   }
 }
 
-// This is an initial configuration based on ONNX documentation. Adjust as needed.
-OrtCUDAProviderOptions createCudaProviderOptions() {
-  OrtCUDAProviderOptions cuda_options;
-  cuda_options.device_id = 0;
-  cuda_options.arena_extend_strategy = 0;
-  cuda_options.gpu_mem_limit = SIZE_MAX;
-  cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchExhaustive;
-  cuda_options.do_copy_in_default_stream = 1;
+OrtCUDAProviderOptions createCudaProviderOptions(const OnnxRuntimeOptions::CudaOptions& options) {
+  // Value-initialized so fields that this struct does not expose keep their ONNX Runtime defaults.
+  OrtCUDAProviderOptions cuda_options{};
+  cuda_options.device_id = options.device_id;
+  cuda_options.arena_extend_strategy = options.arena_extend_strategy;
+  cuda_options.gpu_mem_limit = options.gpu_mem_limit;
+  cuda_options.cudnn_conv_algo_search = options.cudnn_conv_algo_search;
+  cuda_options.do_copy_in_default_stream = options.do_copy_in_default_stream ? 1 : 0;
   return cuda_options;
 }
 
-}  // namespace
-
-bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOptions& options) {
-  if (not std::filesystem::exists(model_path)) {
-    LOG_STREAM(WARN, "model file not found " << model_path)
-    return false;
-  }
-
-  env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "OnnxRuntime");
+Ort::SessionOptions createSessionOptions(const OnnxRuntimeOptions& options) {
   Ort::SessionOptions session_options;
-
   session_options.SetIntraOpNumThreads(options.intra_op_num_threads);
   session_options.SetInterOpNumThreads(options.inter_op_num_threads);
   session_options.SetExecutionMode(options.execution_mode);
@@ -149,24 +140,34 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
                                  options.allow_spinning ? "1" : "0");
   if (options.profiling_path.has_value())
     session_options.EnableProfiling(options.profiling_path.value().c_str());
+  if (options.provider == OnnxRuntimeOptions::ExecutionProvider::CUDA)
+    session_options.AppendExecutionProvider_CUDA(createCudaProviderOptions(options.cuda));
+  return session_options;
+}
 
-  switch (options.provider) {
-    case OnnxRuntimeOptions::ExecutionProvider::CUDA:
-      try {
-        session_options.AppendExecutionProvider_CUDA(createCudaProviderOptions());
-        session_ = std::make_unique<Ort::Session>(*env_, model_path.c_str(), session_options);
-      } catch (const Ort::Exception& e) {
-        LOG_STREAM(WARN, "Failed to enable CUDA execution provider: " << e.what()
-                                                                      << ". Falling back to CPU.");
-        OnnxRuntimeOptions fallback_options = options;
-        fallback_options.provider = OnnxRuntimeOptions::ExecutionProvider::CPU;
-        return initialize(model_path, fallback_options);
-      }
-      break;
-    case OnnxRuntimeOptions::ExecutionProvider::CPU:
-    default:
-      session_ = std::make_unique<Ort::Session>(*env_, model_path.c_str(), session_options);
-      break;
+}  // namespace
+
+bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOptions& options) {
+  if (not std::filesystem::exists(model_path)) {
+    LOG_STREAM(WARN, "model file not found " << model_path)
+    return false;
+  }
+
+  env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "OnnxRuntime");
+
+  try {
+    session_ =
+        std::make_unique<Ort::Session>(*env_, model_path.c_str(), createSessionOptions(options));
+  } catch (const Ort::Exception& e) {
+    if (options.provider != OnnxRuntimeOptions::ExecutionProvider::CUDA) {
+      LOG_STREAM(ERROR, "Failed to create ONNX Runtime session: " << e.what());
+      return false;
+    }
+    LOG_STREAM(
+        WARN, "Failed to enable CUDA execution provider: " << e.what() << ". Falling back to CPU.");
+    OnnxRuntimeOptions fallback_options = options;
+    fallback_options.provider = OnnxRuntimeOptions::ExecutionProvider::CPU;
+    return initialize(model_path, fallback_options);
   }
 
   input_ = TensorData{};

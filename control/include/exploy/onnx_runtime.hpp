@@ -49,6 +49,20 @@ struct OnnxRuntimeOptions {
     CUDA,
   };
 
+  /// Options forwarded to the CUDA execution provider, ignored for other providers.
+  struct CudaOptions {
+    // Index of the GPU to run on.
+    int device_id = 0;
+    // How cuDNN picks convolution algorithms: exhaustive benchmarking, heuristics or defaults.
+    OrtCudnnConvAlgoSearch cudnn_conv_algo_search = OrtCudnnConvAlgoSearchExhaustive;
+    // Copy inputs and outputs in the compute stream instead of a separate one.
+    bool do_copy_in_default_stream = true;
+    // Arena growth: 0 extends by the next power of two, 1 by the requested size.
+    int arena_extend_strategy = 0;
+    // Upper bound for the GPU memory arena in bytes.
+    size_t gpu_mem_limit = SIZE_MAX;
+  };
+
   // Execution provider to use (default: CPU).
   ExecutionProvider provider = ExecutionProvider::CPU;
   // Optional path to save profiling data. If not set, profiling is disabled.
@@ -67,6 +81,8 @@ struct OnnxRuntimeOptions {
   bool denormal_as_zero = false;
   // Let the thread pools busy-wait between runs, trading CPU load for lower wake-up latency.
   bool allow_spinning = true;
+  // Configuration of the CUDA execution provider.
+  CudaOptions cuda = {};
 };
 
 /**

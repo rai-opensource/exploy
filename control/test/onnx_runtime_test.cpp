@@ -52,6 +52,20 @@ TEST_F(OnnxRuntimeTest, InitializeWithCuda) {
   ASSERT_TRUE(runtime.evaluate());
 }
 
+TEST_F(OnnxRuntimeTest, InitializeWithNonDefaultSessionOptions) {
+  OnnxRuntime runtime;
+  OnnxRuntimeOptions options{};
+  options.intra_op_num_threads = 2;
+  options.inter_op_num_threads = 2;
+  options.execution_mode = ORT_PARALLEL;
+  options.graph_optimization_level = GraphOptimizationLevel::ORT_ENABLE_BASIC;
+  options.enable_mem_pattern = false;
+  options.denormal_as_zero = true;
+  options.allow_spinning = false;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_, options));
+  ASSERT_TRUE(runtime.evaluate());
+}
+
 TEST_F(OnnxRuntimeTest, GetCustomMetadataSimpleModel) {
   OnnxRuntime runtime;
   ASSERT_TRUE(runtime.initialize(simple_model_path_));
