@@ -147,9 +147,9 @@ def test_body_pose_inputs_are_wxyz_leaves(make_env):
 
     # The root quaternion is derived from the root body's input only.
     root_quat_comp = comp_by_name[f"obj.robot.{articulation.body_names[0]}.w_Q_b"]
-    root_quat_comp.data.copy_(torch.tensor([0.0, 1.0, 0.0, 0.0]))
+    root_quat_comp.data.copy_(torch.tensor([0.0, 1.0, 0.0, 0.0], device=env.device))
     torch.testing.assert_close(
-        source.root_link_quat_w.torch, torch.tensor([[1.0, 0.0, 0.0, 0.0]] * 2)
+        source.root_link_quat_w.torch, torch.tensor([[1.0, 0.0, 0.0, 0.0]] * 2, device=env.device)
     )
 
     exportable_env.cleanup()
@@ -222,10 +222,10 @@ def test_add_body_inputs_rigid_object(make_env):
 
         # Writing new state into the data source is visible through the registered inputs.
         new_state = {
-            f"body.{obj_name}.pos": torch.tensor([1.0, 2.0, 3.0]),
-            f"body.{obj_name}.quat": torch.tensor([0.0, 1.0, 0.0, 0.0]),
-            f"body.{obj_name}.lin_vel": torch.tensor([4.0, 5.0, 6.0]),
-            f"body.{obj_name}.ang_vel": torch.tensor([7.0, 8.0, 9.0]),
+            f"body.{obj_name}.pos": torch.tensor([1.0, 2.0, 3.0], device=env.device),
+            f"body.{obj_name}.quat": torch.tensor([0.0, 1.0, 0.0, 0.0], device=env.device),
+            f"body.{obj_name}.lin_vel": torch.tensor([4.0, 5.0, 6.0], device=env.device),
+            f"body.{obj_name}.ang_vel": torch.tensor([7.0, 8.0, 9.0], device=env.device),
         }
         dict_to_rigid_object_data(data=new_state, object_name=obj_name, target=source, env_id=0)
         torch.testing.assert_close(pos_comp.data[0], new_state[f"body.{obj_name}.pos"])
