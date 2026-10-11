@@ -143,6 +143,12 @@ You can export an ONNX policy for an existing [IsaacLab][isaaclab] task:
 pixi run export-isaaclab
 ```
 
+Or for an existing Isaac Lab 3 task, which runs without a GPU with the Newton physics backend:
+
+```bash
+pixi run export-isaaclab3
+```
+
 Or for an existing [MjLab][mjlab] task:
 
 ```bash

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+import importlib.util
 import logging
 import pathlib
 
@@ -8,7 +9,8 @@ import pytest
 try:
     from isaaclab.app import AppLauncher
 
-    HAS_ISAACLAB = True
+    # Isaac Lab 3 (detected by its API) is supported by `exploy.exporter.frameworks.isaaclab3`.
+    HAS_ISAACLAB = importlib.util.find_spec("isaaclab.utils.warp.proxy_array") is None
 except ImportError:
     HAS_ISAACLAB = False
 

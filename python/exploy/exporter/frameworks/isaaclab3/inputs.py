@@ -1,0 +1,302 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+import torch
+from isaaclab.assets import Articulation, RigidObject
+from isaaclab.envs.mdp.commands.velocity_command import UniformVelocityCommand
+from isaaclab.managers import CommandManager
+from isaaclab.sensors import SensorBase
+from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg, PatternBaseCfg
+
+from exploy.exporter.core.context_manager import ContextManager, Group, Input
+from exploy.exporter.frameworks.isaaclab3 import utils
+from exploy.exporter.frameworks.isaaclab3.body_data import BodyDataSource
+from exploy.exporter.frameworks.isaaclab3.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
+from exploy.exporter.frameworks.isaaclab3.env import is_ray_caster
+from exploy.exporter.frameworks.isaaclab3.proxy_array import xyzw_to_wxyz
+
+OBJ_PREFIX = "obj"
+SENSOR_PREFIX = "sensor"
+CMD_PREFIX = "cmd"
+
+
+def body_link_quat_w_wxyz(data) -> torch.Tensor:
+    """Return the orientation (w, x, y, z) of all bodies' link frames, the convention of exploy's ONNX
+    interface.
+
+    During export, these are the stored quaternions of the data source, which are inputs of the ONNX
+    graph. Otherwise (e.g. during evaluation) they are converted from the asset's (x, y, z, w) quaternions.
+    """
+    if isinstance(data, BodyDataSource):
+        return data.body_link_quat_w_wxyz()
+    return xyzw_to_wxyz(data.body_link_quat_w.torch)
+
+
+def add_commands(
+    command_manager: CommandManager,
+    context_manager: ContextManager,
+):
+    """Add command inputs from the command manager to the context manager.
+
+    This function processes all active command terms in the command manager and adds them
+    as inputs to the context manager. Currently supports UniformVelocityCommand.
+
+    Args:
+        command_manager: The IsaacLab command manager containing active command terms.
+        context_manager: The context manager to add command inputs to.
+    """
+    for command_name in command_manager.active_terms:
+        command = command_manager.get_term(name=command_name)
+
+        if isinstance(command, UniformVelocityCommand):
+            # Capture command_name in closure to avoid B023
+            def make_command_getter(cmd_name: str):
+                def inner_getter() -> torch.Tensor:
+                    term: UniformVelocityCommand = command_manager.get_term(name=cmd_name)
+                    return term.vel_command_b
+
+                return inner_getter
+
+            getter = make_command_getter(command_name)
+
+            onnx_input = Input(
+                name=f"{CMD_PREFIX}.se2_velocity.{command_name}",
+                get_from_env_cb=getter,
+                metadata={
+                    "ranges": {
+                        "lin_vel_x": command.cfg.ranges.lin_vel_x,
+                        "lin_vel_y": command.cfg.ranges.lin_vel_y,
+                        "ang_vel_z": command.cfg.ranges.ang_vel_z,
+                    },
+                },
+            )
+
+            context_manager.add_component(onnx_input)
+
+
+def _body_ids(articulation: Articulation | RigidObject, obj_name: str) -> list[tuple[str, int]]:
+    """Return the name and index of each body of an articulation or rigid object."""
+    body_ids = []
+    for body_name in articulation.data.body_names:
+        ids, _ = articulation.find_bodies(body_name)
+        assert len(ids) == 1, (
+            f"Body name {body_name} is not unique in articulation {obj_name}. Found body IDs: {ids}"
+        )
+        body_ids.append((body_name, ids[0]))
+    return body_ids
+
+
+def add_body_pos(
+    articulations: Mapping[str, Articulation | RigidObject],
+    context_manager: ContextManager,
+):
+    """Add body position inputs for all articulations or rigid objects.
+
+    For each articulation, this function adds inputs for the position
+    of each body belonging to that articulation.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body pose inputs to.
+    """
+    for obj_name, articulation in articulations.items():
+        for body_name, body_idx in _body_ids(articulation, obj_name):
+            pos_b_rt_w_in_w = Input(
+                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.pos_b_rt_w_in_w",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: (
+                    art.data.body_link_pos_w.torch[:, idx]
+                ),
+            )
+            context_manager.add_component(pos_b_rt_w_in_w)
+
+
+def add_body_quat(
+    articulations: Mapping[str, Articulation | RigidObject],
+    context_manager: ContextManager,
+):
+    """Add body orientation inputs for all articulations or rigid objects.
+
+    For each articulation, this function adds inputs for the quaternion (w, x, y, z) of each body
+    belonging to that articulation. The quaternions keep the (w, x, y, z) convention of exploy's ONNX
+    interface, and are converted to the (x, y, z, w) convention of Isaac Lab 3 within the graph.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body pose inputs to.
+    """
+    for obj_name, articulation in articulations.items():
+        for body_name, body_idx in _body_ids(articulation, obj_name):
+            w_Q_b = Input(
+                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.w_Q_b",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: body_link_quat_w_wxyz(
+                    art.data
+                )[:, idx],
+            )
+            context_manager.add_component(w_Q_b)
+
+
+def add_body_pos_and_quat(
+    articulations: Mapping[str, Articulation | RigidObject],
+    context_manager: ContextManager,
+):
+    """Add body position and orientation inputs for all articulations or rigid objects.
+
+    For each articulation, this function adds inputs for the position and quaternion
+    of each body belonging to that articulation.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body pose inputs to.
+    """
+    add_body_pos(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+    add_body_quat(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
+
+def add_body_vel(
+    articulations: Mapping[str, Articulation | RigidObject],
+    context_manager: ContextManager,
+):
+    """Add body velocity inputs for all articulations or rigid objects.
+
+    For each articulation, this function adds inputs for the body linear and angular
+    velocities relative to the world/inertial frame expressed in their local frame.
+
+    Stock Isaac Lab only exposes per-body velocities in the world frame, so the body-frame
+    quantities are derived from the world-frame link velocities and the body orientations. They
+    are materialized as stored per-body leaves against the `ArticulationDataSource` when
+    `IsaacLabExportableEnvironment` swaps it in, so the input callbacks and observation functions
+    read the exact stored objects during tracing, making these inputs ONNX graph inputs.
+
+    During evaluation, after the original articulation data has been restored, the input callbacks
+    fall back to computing the same quantities from the live world-frame data.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body velocity inputs to.
+    """
+    for obj_name, articulation in articulations.items():
+        for body_name, body_idx in _body_ids(articulation, obj_name):
+            input_name_prefix = f"{OBJ_PREFIX}.{obj_name}.{body_name}"
+
+            if body_name == articulation.body_names[0]:
+                # Unlike the poses, `ArticulationDataSource` does not derive the root velocity
+                # from the body velocities: it keeps `root_lin_vel_b`/`root_ang_vel_b` as separate
+                # stored leaves. The root inputs must therefore be bound to those attributes.
+                # Binding them to the derived body-frame tensors would leave the root leaves
+                # disconnected from the traced graph, and observation terms reading them (e.g.
+                # `base_lin_vel`/`base_ang_vel`) would be baked into the ONNX graph as constants.
+                lin_vel_b_rt_w_in_b = Input(
+                    name=f"{input_name_prefix}.lin_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda art=articulation: art.data.root_lin_vel_b.torch,
+                )
+                ang_vel_b_rt_w_in_b = Input(
+                    name=f"{input_name_prefix}.ang_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda art=articulation: art.data.root_ang_vel_b.torch,
+                )
+            else:
+                lin_vel_b_rt_w_in_b = Input(
+                    name=f"{input_name_prefix}.lin_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda art=articulation, idx=body_idx: body_link_lin_vel_b(
+                        art.data
+                    )[:, idx],
+                )
+                ang_vel_b_rt_w_in_b = Input(
+                    name=f"{input_name_prefix}.ang_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda art=articulation, idx=body_idx: body_link_ang_vel_b(
+                        art.data
+                    )[:, idx],
+                )
+
+            context_manager.add_component(lin_vel_b_rt_w_in_b)
+            context_manager.add_component(ang_vel_b_rt_w_in_b)
+
+
+def add_joint_pos_and_vel(
+    articulations: dict[str, Articulation],
+    context_manager: ContextManager,
+):
+    """Add joint position and velocity inputs for all articulations.
+
+    For each articulation, this function creates a group containing joint positions
+    and velocities, along with metadata about joint names.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add joint state inputs to.
+    """
+    for obj_name, articulation in articulations.items():
+        input_name_prefix = f"{OBJ_PREFIX}.{obj_name}"
+
+        joint_group = Group(
+            name=f"{input_name_prefix}.joints",
+            items=[
+                Input(
+                    name="pos",
+                    get_from_env_cb=lambda art=articulation: art.data.joint_pos.torch,
+                ),
+                Input(
+                    name="vel",
+                    get_from_env_cb=lambda art=articulation: art.data.joint_vel.torch,
+                ),
+            ],
+            metadata={
+                "joint_names": articulation.joint_names,
+            },
+        )
+
+        context_manager.add_group(joint_group)
+
+
+def add_sensor_inputs(
+    sensors: dict[str, SensorBase],
+    context_manager: ContextManager,
+):
+    """Add sensor inputs to the context manager.
+
+    This function processes all sensors and adds their data as inputs to the context manager.
+    Currently supports RayCaster sensors with GridPatternCfg.
+
+    Args:
+        sensors: Dictionary mapping sensor names to SensorBase instances.
+        context_manager: The context manager to add sensor inputs to.
+    """
+    for sensor_name_in_source in sensors:
+        sensor: SensorBase = sensors[sensor_name_in_source]
+
+        if is_ray_caster(sensor):
+            pattern_cfg: PatternBaseCfg = sensor.cfg.pattern_cfg
+            if isinstance(pattern_cfg, GridPatternCfg):
+                context_manager.add_group(
+                    Group(
+                        name=f"{SENSOR_PREFIX}.ray_caster.{sensor_name_in_source}",
+                        metadata={
+                            "pattern_type": "grid_pattern",
+                            "articulation_name": utils.prim_path_to_articulation_name(
+                                prim_path=sensor.cfg.prim_path
+                            ),
+                            "offset_x": sensor.cfg.offset.pos[0],
+                            "offset_y": sensor.cfg.offset.pos[1],
+                            "resolution": pattern_cfg.resolution,
+                            "size_x": pattern_cfg.size[0],
+                            "size_y": pattern_cfg.size[1],
+                        },
+                        items=[
+                            Input(
+                                name="height",
+                                get_from_env_cb=lambda s=sensor: s._data.ray_hits_w.torch[..., 2],
+                            ),
+                        ],
+                    )
+                )

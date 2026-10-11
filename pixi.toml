@@ -342,6 +342,45 @@ inputs = [
 ]
 outputs = ["examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx"]
 
+# ----------------------
+# Environment: isaaclab3
+# ----------------------
+
+# Isaac Lab 3 runs without Isaac Sim (kit-less), e.g. with the Newton physics backend, also on CPU.
+# Like the 'isaaclab' environment, it is kept out of the main solve group because of its strict pinnings
+# (e.g. Python 3.12 and numpy>=2).
+[environments.isaaclab3]
+features = [
+  # Specific features.
+  "env-isaaclab3",
+  "isaaclab-300",
+  "editable-exploy-python-isaaclab3",
+  # Common features.
+  "python-dev",
+]
+no-default-feature = true
+
+[feature.env-isaaclab3.tasks]
+# Tasks to export policies for Isaac Lab 3, with the Newton physics backend on the CPU.
+export-isaaclab3-g1 = "python examples/exporter_scripts/isaaclab3/export_isaaclab3.py --task Isaac-Velocity-Flat-G1 physics=newton_mjwarp --pause-on-failure"
+export-isaaclab3-g1-rnn = "python examples/exporter_scripts/isaaclab3/export_isaaclab3.py --task Exploy-Velocity-Flat-G1-RNN physics=newton_mjwarp --pause-on-failure"
+export-isaaclab3-anymal = "python examples/exporter_scripts/isaaclab3/export_isaaclab3.py --task Isaac-Velocity-Rough-AnymalD physics=newton_mjwarp --pause-on-failure"
+export-isaaclab3 = { depends-on = ["export-isaaclab3-g1"] }
+
+test-python-isaaclab3 = "pytest python/exploy/exporter/frameworks/isaaclab3"
+test-import-isaaclab3 = "python -c \"import isaaclab_newton; from isaaclab.utils.warp import ProxyArray; print('Isaac Lab 3 installed')\""
+verify-isaaclab3 = { depends-on = ["test-import-isaaclab3"] }
+test-isaaclab3 = { depends-on = ["verify-isaaclab3", "test-python-isaaclab3"] }
+
+[feature.env-isaaclab3.tasks.export-isaaclab3-ci]
+cmd = "python examples/exporter_scripts/isaaclab3/export_isaaclab3.py --task Isaac-Velocity-Flat-G1 physics=newton_mjwarp"
+inputs = [
+  "python/exploy/exporter/core/*",
+  "python/exploy/exporter/frameworks/isaaclab3/*",
+  "examples/exporter_scripts/isaaclab3/export_isaaclab3.py",
+]
+outputs = ["examples/exporter_scripts/isaaclab3/exporter_tests/test_export.onnx"]
+
 # ========
 # Features
 # ========
@@ -383,6 +422,10 @@ exploy = { path = ".", extras = ["mjlab"], editable = true }
 # Editable installation of: exploy[isaaclab].
 [feature.editable-exploy-python-isaaclab.pypi-dependencies]
 exploy = { path = ".", extras = ["isaaclab"], editable = true }
+
+# Editable installation of: exploy, for Isaac Lab 3 (installed by the 'isaaclab-300' feature).
+[feature.editable-exploy-python-isaaclab3.pypi-dependencies]
+exploy = { path = ".", editable = true }
 
 # -------------------
 # Feature: python-dev
@@ -458,3 +501,22 @@ libglu = "*"
 
 [feature.isaaclab-232.pypi-dependencies]
 isaacsim = { extras = ["all"], version = "==5.1.0.0" }
+
+# ------------------
+# Feature: isaaclab3
+# ------------------
+
+[feature.isaaclab-300]
+platforms = ["linux-64-cpu", "linux-64-cuda13"]
+
+[feature.isaaclab-300.activation.env]
+OMNI_KIT_ACCEPT_EULA = "yes"
+
+[feature.isaaclab-300.pypi-options]
+extra-index-urls = ["https://pypi.nvidia.com"]
+
+[feature.isaaclab-300.dependencies]
+python = "3.12.*"
+
+[feature.isaaclab-300.pypi-dependencies]
+isaaclab = "==3.0.0rc1"

@@ -33,6 +33,18 @@ class TensorProxy:
         if split_dim < 0:
             raise IndexError(f"split_dim must be non-negative, got {split_dim}")
 
+    @classmethod
+    def from_tensors(cls, tensors: list[torch.Tensor], split_dim: int) -> "TensorProxy":
+        """Make a `TensorProxy` from the tensors it splits into, e.g. computed from the tensors of another
+        `TensorProxy`, keeping one tensor per index of the split dimension."""
+        if split_dim < 0:
+            raise IndexError(f"split_dim must be non-negative, got {split_dim}")
+        proxy = cls.__new__(cls)
+        proxy._tensors = list(tensors)
+        proxy._split_dim = split_dim
+        proxy._total_dim = tensors[0].dim() + 1
+        return proxy
+
     def __getitem__(self, idx):
         """Index into a `TensorProxy` as if the user was indexing into the un-split list of tensors."""
         if not isinstance(idx, tuple):
