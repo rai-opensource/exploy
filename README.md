@@ -313,7 +313,7 @@ button in the sidebar, or using the following BibTeX entry:
 
 ```bibtex
 @misc{exploy2026,
-  author = {Dario Bellicoso, Annika Wollschläger},
+  author = {Dario Bellicoso and Annika Wollschläger},
   title = {Exploy: EXport and dePLOY Reinforcement Learning policies},
   month = {March},
   year = {2026},
